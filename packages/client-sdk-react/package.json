@@ -1,0 +1,36 @@
+{
+    "name": "@vonage/client-sdk-react",
+    "description": "React wrapper for the Vonage Client SDK",
+    "version": "1.0.0",
+    "scripts": {
+        "build:css": "tailwindcss -i styles/index.css -o dist/vonage-client-sdk-react.css",
+        "dev:css": "tailwindcss -i styles/index.css -o dist/vonage-client-sdk-react.css --watch",
+        "build": "npm run build:css",
+        "dev": "npm run dev:css"
+    },
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "files": [
+        "dist",
+        "src"
+    ],
+    "peerDependencies": {
+        "@types/react": "*",
+        "@types/react-dom": "*",
+        "@vonage/client-sdk": "*",
+        "react": "*",
+        "react-dom": "*"
+    },
+    "devDependencies": {
+        "@types/react": "*",
+        "@types/react-dom": "*",
+        "@vonage/client-sdk": "*",
+        "daisyui": "^2.51.6",
+        "react": "*",
+        "react-dom": "*",
+        "tsconfig": "*"
+    },
+    "dependencies": {
+        "@tabler/icons-react": "^2.22.0"
+    }
+}

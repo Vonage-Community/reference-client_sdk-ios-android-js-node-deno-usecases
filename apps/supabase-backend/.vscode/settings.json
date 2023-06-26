@@ -1,0 +1,11 @@
+{
+    "deno.enable": true,
+    "deno.config": "./deno.jsonc",
+    "deno.lint": true,
+    "deno.importMap": "./supabase/functions/import_map.json",
+    "eslint.enable": false,
+    "editor.formatOnSave": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "denoland.vscode-deno"
+    }
+}

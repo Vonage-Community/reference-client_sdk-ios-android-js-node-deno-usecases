@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    .vonage-container {
+        @apply vg-flex vg-flex-col vg-items-center vg-justify-center vg-w-full vg-h-full;
+    }
+}
+
+@layer components {
+
+    /* ServerCall Component Styles */
+    .vg-server-call {
+        @apply vonage-container;
+    }
+
+    .vg-server-call__action {
+        @apply vg-btn vg-btn-outline;
+    }
+
+    /* IncomingCall Component Styles */
+    .vg-incoming-call {
+        @apply vonage-container vg-gap-2;
+    }
+
+    .vg-incoming-call__info {
+        @apply vg-text-lg;
+    }
+
+    .vg-incoming-call__actions {
+        @apply vg-flex vg-flex-row vg-justify-center vg-gap-4;
+    }
+
+    .vg-incoming-call__actions__action {
+        @apply vg-btn;
+    }
+    
+    .vg-incoming-call__actions__action__answer {
+        @apply vg-btn-success;
+    }
+
+    .vg-incoming-call__actions__action__reject {
+        @apply vg-btn-error;
+    }
+
+
+}

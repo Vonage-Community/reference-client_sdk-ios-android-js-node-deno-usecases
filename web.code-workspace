@@ -1,0 +1,47 @@
+{
+  "folders": [
+    {
+      "name": "project-root",
+      "path": "./"
+    },
+    {
+      "name": "main-app",
+      "path": "apps/main-app",
+      "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib",
+      }
+    },
+    {
+      "name": "@Vonage/client-sdk-react",
+      "path": "packages/client-sdk-react",
+    },
+    {
+      "name": "@Vonage/client-sdk",
+      "path": "../../vonagesdk_js"
+    },
+    {
+      "name": "supabase backend",
+      "path": "apps/supabase-backend",
+      "settings": {
+        "deno.lint": true,
+        "eslint.enable":false
+      }
+    },
+    {
+      "name": "workflows",
+      "path": "../../.github/workflows",
+      "settings": {
+        "editor.tabSize": 2
+      }
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "apps/supabase-backend/": true,
+      "apps/main-app/": true,
+      "packages/client-sdk-react/": true,
+    },
+    "deno.importMap": "./apps/supabase-backend/supabase/functions/import_map.json",
+    "deno.config": "./apps/supabase-backend/deno.jsonc",
+  }
+}

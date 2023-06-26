@@ -1,0 +1,16 @@
+{
+    "name": "setup-project-webhooks",
+    "bin": "index.js",
+    "private": true,
+    "scripts": {
+        "dev": "node ./index.js",
+        "deploy": "node ./index.js --no-tunnel"
+    },
+    "dependencies": {
+        "@vonage/server-sdk": "3.4.0",
+        "local-portal": "*",
+        "node-fetch": "^3.3.1",
+        "yargs": "^17.7.2"
+    },
+    "type": "module"
+}

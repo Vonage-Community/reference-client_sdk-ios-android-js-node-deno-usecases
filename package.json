@@ -1,0 +1,33 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "dotenv -- turbo run dev",
+    "dev:contact-center": "dotenv -- turbo run dev --filter=main-app --filter=setup-project-webhooks --filter=supabase-backend",
+    "db:start": "turbo run db:start",
+    "db:stop": "turbo run db:stop",
+    "db:reset": "turbo run db:reset",
+    "lint": "turbo run lint",
+    "deploy": "turbo run deploy"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.2.1",
+    "eslint": "^7.32.0",
+    "eslint-config-custom": "*",
+    "prettier": "^2.5.1",
+    "tailwindcss": "^3.3.2",
+    "turbo": "^1.10.1"
+  },
+  "name": "web",
+  "packageManager": "npm@8.19.3",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "scripts/*"
+  ],
+  "dependencies": {
+    "@vonage/client-sdk": "1.1.0-alpha.5",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.23"
+  }
+}
