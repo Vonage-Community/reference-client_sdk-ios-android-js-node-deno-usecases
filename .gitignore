@@ -41,3 +41,6 @@ vonage_app.json
 
 dist/
 
+# iOS Pods
+Pods/
+

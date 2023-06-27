@@ -1,0 +1,898 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		418EDADB8961A4E7D855B3F7 /* Pods_VonageChatSDKExampleApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 608667DA826632DFE1A35662 /* Pods_VonageChatSDKExampleApp.framework */; };
+		577D64DAD6D6CF7B7855CA17 /* Pods_VonageChatSDKExampleApp_VonageChatSDKExampleAppUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F896C3107719F11D5DF8DBF1 /* Pods_VonageChatSDKExampleApp_VonageChatSDKExampleAppUITests.framework */; };
+		970709A12A14E4CB00F7A93D /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 970709A02A14E4CB00F7A93D /* PushManager.swift */; };
+		97070A0A2A14F76700F7A93D /* ChatsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A082A14F76700F7A93D /* ChatsListView.swift */; };
+		97070A0B2A14F76700F7A93D /* ChatsListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A092A14F76700F7A93D /* ChatsListViewModel.swift */; };
+		97070A0F2A14F77400F7A93D /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A0D2A14F77400F7A93D /* ChatViewModel.swift */; };
+		97070A102A14F77400F7A93D /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A0E2A14F77400F7A93D /* ChatView.swift */; };
+		97070A142A14F78200F7A93D /* CreateConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A122A14F78200F7A93D /* CreateConversationView.swift */; };
+		97070A152A14F78200F7A93D /* CreateConversationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A132A14F78200F7A93D /* CreateConversationViewModel.swift */; };
+		97070A192A14F78B00F7A93D /* MembersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A172A14F78B00F7A93D /* MembersViewModel.swift */; };
+		97070A1A2A14F78B00F7A93D /* MembersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A182A14F78B00F7A93D /* MembersView.swift */; };
+		97070A1D2A1C168600F7A93D /* ChatClientManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A1C2A1C168600F7A93D /* ChatClientManager.swift */; };
+		97CCB97E2A3F333200C9424B /* LoginAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CCB97D2A3F333200C9424B /* LoginAPI.swift */; };
+		97D43D4C2A49EF6D0076EC77 /* secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 97D43D4B2A49EF6D0076EC77 /* secrets.xcconfig */; };
+		97E4C2F12A308D8E00DBAD55 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E4C2F02A308D8E00DBAD55 /* Extensions.swift */; };
+		97E4C2F32A30E82F00DBAD55 /* MemberViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E4C2F22A30E82F00DBAD55 /* MemberViewModel.swift */; };
+		97E4C2F52A30E85D00DBAD55 /* MemberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E4C2F42A30E85D00DBAD55 /* MemberView.swift */; };
+		97F93B9D2A35E23E001B8DCC /* NetworkClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F93B9C2A35E23E001B8DCC /* NetworkClient.swift */; };
+		97F93BA12A35E4A9001B8DCC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F93BA02A35E4A9001B8DCC /* Constants.swift */; };
+		97F93BA32A35F410001B8DCC /* ChatDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F93BA22A35F410001B8DCC /* ChatDataModels.swift */; };
+		97F93BA52A35F462001B8DCC /* LoginDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F93BA42A35F462001B8DCC /* LoginDataModels.swift */; };
+		97FD32F02A123CF700BF3873 /* VonageChatSDKExampleAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FD32EF2A123CF700BF3873 /* VonageChatSDKExampleAppApp.swift */; };
+		97FD32F22A123CF700BF3873 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FD32F12A123CF700BF3873 /* LoginView.swift */; };
+		97FD32F42A123CF800BF3873 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97FD32F32A123CF800BF3873 /* Assets.xcassets */; };
+		97FD32F72A123CF800BF3873 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97FD32F62A123CF800BF3873 /* Preview Assets.xcassets */; };
+		97FD33012A123CF800BF3873 /* VonageChatSDKExampleAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FD33002A123CF800BF3873 /* VonageChatSDKExampleAppTests.swift */; };
+		97FD330B2A123CF800BF3873 /* VonageChatSDKExampleAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FD330A2A123CF800BF3873 /* VonageChatSDKExampleAppUITests.swift */; };
+		97FD330D2A123CF800BF3873 /* VonageChatSDKExampleAppUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FD330C2A123CF800BF3873 /* VonageChatSDKExampleAppUITestsLaunchTests.swift */; };
+		97FD331A2A127FFA00BF3873 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97FD33192A127FFA00BF3873 /* LoginViewModel.swift */; };
+		F0094B6256FC54E97895C715 /* Pods_VonageChatSDKExampleAppTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F3B0937384EB293CEAB1672 /* Pods_VonageChatSDKExampleAppTests.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		97FD32FD2A123CF800BF3873 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97FD32E42A123CF700BF3873 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 97FD32EB2A123CF700BF3873;
+			remoteInfo = VonageChatSDKExampleApp;
+		};
+		97FD33072A123CF800BF3873 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97FD32E42A123CF700BF3873 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 97FD32EB2A123CF700BF3873;
+			remoteInfo = VonageChatSDKExampleApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		31E6D6078738B0F40A67B5B4 /* Pods-VonageChatSDKExampleAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VonageChatSDKExampleAppTests.release.xcconfig"; path = "Target Support Files/Pods-VonageChatSDKExampleAppTests/Pods-VonageChatSDKExampleAppTests.release.xcconfig"; sourceTree = "<group>"; };
+		608667DA826632DFE1A35662 /* Pods_VonageChatSDKExampleApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VonageChatSDKExampleApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		74EB7738A0FA5547C95FD369 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.release.xcconfig"; path = "Target Support Files/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.release.xcconfig"; sourceTree = "<group>"; };
+		9707099C2A14DF8400F7A93D /* VonageChatSDKExampleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VonageChatSDKExampleApp.entitlements; sourceTree = "<group>"; };
+		9707099D2A14DFAA00F7A93D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		970709A02A14E4CB00F7A93D /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
+		97070A082A14F76700F7A93D /* ChatsListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatsListView.swift; sourceTree = "<group>"; };
+		97070A092A14F76700F7A93D /* ChatsListViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatsListViewModel.swift; sourceTree = "<group>"; };
+		97070A0D2A14F77400F7A93D /* ChatViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		97070A0E2A14F77400F7A93D /* ChatView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		97070A122A14F78200F7A93D /* CreateConversationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateConversationView.swift; sourceTree = "<group>"; };
+		97070A132A14F78200F7A93D /* CreateConversationViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreateConversationViewModel.swift; sourceTree = "<group>"; };
+		97070A172A14F78B00F7A93D /* MembersViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MembersViewModel.swift; sourceTree = "<group>"; };
+		97070A182A14F78B00F7A93D /* MembersView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MembersView.swift; sourceTree = "<group>"; };
+		97070A1C2A1C168600F7A93D /* ChatClientManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatClientManager.swift; sourceTree = "<group>"; };
+		97CCB97D2A3F333200C9424B /* LoginAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginAPI.swift; sourceTree = "<group>"; };
+		97D43D4B2A49EF6D0076EC77 /* secrets.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = secrets.xcconfig; sourceTree = SOURCE_ROOT; };
+		97E4C2F02A308D8E00DBAD55 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		97E4C2F22A30E82F00DBAD55 /* MemberViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberViewModel.swift; sourceTree = "<group>"; };
+		97E4C2F42A30E85D00DBAD55 /* MemberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberView.swift; sourceTree = "<group>"; };
+		97F93B9C2A35E23E001B8DCC /* NetworkClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkClient.swift; sourceTree = "<group>"; };
+		97F93BA02A35E4A9001B8DCC /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		97F93BA22A35F410001B8DCC /* ChatDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDataModels.swift; sourceTree = "<group>"; };
+		97F93BA42A35F462001B8DCC /* LoginDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginDataModels.swift; sourceTree = "<group>"; };
+		97FD32EC2A123CF700BF3873 /* VonageChatSDKExampleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VonageChatSDKExampleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		97FD32EF2A123CF700BF3873 /* VonageChatSDKExampleAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VonageChatSDKExampleAppApp.swift; sourceTree = "<group>"; };
+		97FD32F12A123CF700BF3873 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		97FD32F32A123CF800BF3873 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		97FD32F62A123CF800BF3873 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		97FD32FC2A123CF800BF3873 /* VonageChatSDKExampleAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VonageChatSDKExampleAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		97FD33002A123CF800BF3873 /* VonageChatSDKExampleAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VonageChatSDKExampleAppTests.swift; sourceTree = "<group>"; };
+		97FD33062A123CF800BF3873 /* VonageChatSDKExampleAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VonageChatSDKExampleAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		97FD330A2A123CF800BF3873 /* VonageChatSDKExampleAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VonageChatSDKExampleAppUITests.swift; sourceTree = "<group>"; };
+		97FD330C2A123CF800BF3873 /* VonageChatSDKExampleAppUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VonageChatSDKExampleAppUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		97FD33192A127FFA00BF3873 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModel.swift; sourceTree = "<group>"; };
+		9F3B0937384EB293CEAB1672 /* Pods_VonageChatSDKExampleAppTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VonageChatSDKExampleAppTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA4DAE4EBF6B88084D4F3813 /* Pods-VonageChatSDKExampleApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VonageChatSDKExampleApp.debug.xcconfig"; path = "Target Support Files/Pods-VonageChatSDKExampleApp/Pods-VonageChatSDKExampleApp.debug.xcconfig"; sourceTree = "<group>"; };
+		E85F1529581E65A4A0437837 /* Pods-VonageChatSDKExampleApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VonageChatSDKExampleApp.release.xcconfig"; path = "Target Support Files/Pods-VonageChatSDKExampleApp/Pods-VonageChatSDKExampleApp.release.xcconfig"; sourceTree = "<group>"; };
+		F1F14A1361D2150F805A7E26 /* Pods-VonageChatSDKExampleAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VonageChatSDKExampleAppTests.debug.xcconfig"; path = "Target Support Files/Pods-VonageChatSDKExampleAppTests/Pods-VonageChatSDKExampleAppTests.debug.xcconfig"; sourceTree = "<group>"; };
+		F896C3107719F11D5DF8DBF1 /* Pods_VonageChatSDKExampleApp_VonageChatSDKExampleAppUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VonageChatSDKExampleApp_VonageChatSDKExampleAppUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FAEF0785EE15550D9A078528 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.debug.xcconfig"; path = "Target Support Files/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.debug.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		97FD32E92A123CF700BF3873 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				418EDADB8961A4E7D855B3F7 /* Pods_VonageChatSDKExampleApp.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FD32F92A123CF800BF3873 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F0094B6256FC54E97895C715 /* Pods_VonageChatSDKExampleAppTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FD33032A123CF800BF3873 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				577D64DAD6D6CF7B7855CA17 /* Pods_VonageChatSDKExampleApp_VonageChatSDKExampleAppUITests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		97070A072A14F76700F7A93D /* ChatsListView */ = {
+			isa = PBXGroup;
+			children = (
+				97070A082A14F76700F7A93D /* ChatsListView.swift */,
+				97070A092A14F76700F7A93D /* ChatsListViewModel.swift */,
+			);
+			path = ChatsListView;
+			sourceTree = "<group>";
+		};
+		97070A0C2A14F77400F7A93D /* ChatView */ = {
+			isa = PBXGroup;
+			children = (
+				97070A0D2A14F77400F7A93D /* ChatViewModel.swift */,
+				97F93BA22A35F410001B8DCC /* ChatDataModels.swift */,
+				97070A0E2A14F77400F7A93D /* ChatView.swift */,
+			);
+			path = ChatView;
+			sourceTree = "<group>";
+		};
+		97070A112A14F78200F7A93D /* CreateConversation */ = {
+			isa = PBXGroup;
+			children = (
+				97070A122A14F78200F7A93D /* CreateConversationView.swift */,
+				97070A132A14F78200F7A93D /* CreateConversationViewModel.swift */,
+			);
+			path = CreateConversation;
+			sourceTree = "<group>";
+		};
+		97070A162A14F78B00F7A93D /* MembersView */ = {
+			isa = PBXGroup;
+			children = (
+				97E4C2F62A30E87900DBAD55 /* ListView */,
+				97E4C2F22A30E82F00DBAD55 /* MemberViewModel.swift */,
+				97E4C2F42A30E85D00DBAD55 /* MemberView.swift */,
+			);
+			path = MembersView;
+			sourceTree = "<group>";
+		};
+		97070A1B2A14FD2300F7A93D /* LoginView */ = {
+			isa = PBXGroup;
+			children = (
+				97FD33192A127FFA00BF3873 /* LoginViewModel.swift */,
+				97CCB97D2A3F333200C9424B /* LoginAPI.swift */,
+				97F93BA42A35F462001B8DCC /* LoginDataModels.swift */,
+				97FD32F12A123CF700BF3873 /* LoginView.swift */,
+			);
+			path = LoginView;
+			sourceTree = "<group>";
+		};
+		97E4C2F62A30E87900DBAD55 /* ListView */ = {
+			isa = PBXGroup;
+			children = (
+				97070A172A14F78B00F7A93D /* MembersViewModel.swift */,
+				97070A182A14F78B00F7A93D /* MembersView.swift */,
+			);
+			path = ListView;
+			sourceTree = "<group>";
+		};
+		97F93B9E2A35E486001B8DCC /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				970709A02A14E4CB00F7A93D /* PushManager.swift */,
+				97070A1C2A1C168600F7A93D /* ChatClientManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		97F93B9F2A35E498001B8DCC /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				97F93B9C2A35E23E001B8DCC /* NetworkClient.swift */,
+				97E4C2F02A308D8E00DBAD55 /* Extensions.swift */,
+				97F93BA02A35E4A9001B8DCC /* Constants.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		97FD32E32A123CF700BF3873 = {
+			isa = PBXGroup;
+			children = (
+				97FD32EE2A123CF700BF3873 /* VonageChatSDKExampleApp */,
+				97FD32FF2A123CF800BF3873 /* VonageChatSDKExampleAppTests */,
+				97FD33092A123CF800BF3873 /* VonageChatSDKExampleAppUITests */,
+				97FD32ED2A123CF700BF3873 /* Products */,
+				ADADD240F856DC5D56F2749C /* Pods */,
+				E1EF0359BCD6BD267DE2C929 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		97FD32ED2A123CF700BF3873 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				97FD32EC2A123CF700BF3873 /* VonageChatSDKExampleApp.app */,
+				97FD32FC2A123CF800BF3873 /* VonageChatSDKExampleAppTests.xctest */,
+				97FD33062A123CF800BF3873 /* VonageChatSDKExampleAppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		97FD32EE2A123CF700BF3873 /* VonageChatSDKExampleApp */ = {
+			isa = PBXGroup;
+			children = (
+				97D43D4B2A49EF6D0076EC77 /* secrets.xcconfig */,
+				9707099D2A14DFAA00F7A93D /* Info.plist */,
+				9707099C2A14DF8400F7A93D /* VonageChatSDKExampleApp.entitlements */,
+				97FD32EF2A123CF700BF3873 /* VonageChatSDKExampleAppApp.swift */,
+				97F93B9E2A35E486001B8DCC /* Managers */,
+				97F93B9F2A35E498001B8DCC /* Utils */,
+				97070A1B2A14FD2300F7A93D /* LoginView */,
+				97070A072A14F76700F7A93D /* ChatsListView */,
+				97070A112A14F78200F7A93D /* CreateConversation */,
+				97070A0C2A14F77400F7A93D /* ChatView */,
+				97070A162A14F78B00F7A93D /* MembersView */,
+				97FD32F32A123CF800BF3873 /* Assets.xcassets */,
+				97FD32F52A123CF800BF3873 /* Preview Content */,
+			);
+			path = VonageChatSDKExampleApp;
+			sourceTree = "<group>";
+		};
+		97FD32F52A123CF800BF3873 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				97FD32F62A123CF800BF3873 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		97FD32FF2A123CF800BF3873 /* VonageChatSDKExampleAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				97FD33002A123CF800BF3873 /* VonageChatSDKExampleAppTests.swift */,
+			);
+			path = VonageChatSDKExampleAppTests;
+			sourceTree = "<group>";
+		};
+		97FD33092A123CF800BF3873 /* VonageChatSDKExampleAppUITests */ = {
+			isa = PBXGroup;
+			children = (
+				97FD330A2A123CF800BF3873 /* VonageChatSDKExampleAppUITests.swift */,
+				97FD330C2A123CF800BF3873 /* VonageChatSDKExampleAppUITestsLaunchTests.swift */,
+			);
+			path = VonageChatSDKExampleAppUITests;
+			sourceTree = "<group>";
+		};
+		ADADD240F856DC5D56F2749C /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				DA4DAE4EBF6B88084D4F3813 /* Pods-VonageChatSDKExampleApp.debug.xcconfig */,
+				E85F1529581E65A4A0437837 /* Pods-VonageChatSDKExampleApp.release.xcconfig */,
+				FAEF0785EE15550D9A078528 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.debug.xcconfig */,
+				74EB7738A0FA5547C95FD369 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.release.xcconfig */,
+				F1F14A1361D2150F805A7E26 /* Pods-VonageChatSDKExampleAppTests.debug.xcconfig */,
+				31E6D6078738B0F40A67B5B4 /* Pods-VonageChatSDKExampleAppTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		E1EF0359BCD6BD267DE2C929 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				608667DA826632DFE1A35662 /* Pods_VonageChatSDKExampleApp.framework */,
+				F896C3107719F11D5DF8DBF1 /* Pods_VonageChatSDKExampleApp_VonageChatSDKExampleAppUITests.framework */,
+				9F3B0937384EB293CEAB1672 /* Pods_VonageChatSDKExampleAppTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		97FD32EB2A123CF700BF3873 /* VonageChatSDKExampleApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97FD33102A123CF800BF3873 /* Build configuration list for PBXNativeTarget "VonageChatSDKExampleApp" */;
+			buildPhases = (
+				00313E0645308C034DB9BD01 /* [CP] Check Pods Manifest.lock */,
+				97FD32E82A123CF700BF3873 /* Sources */,
+				97FD32E92A123CF700BF3873 /* Frameworks */,
+				97FD32EA2A123CF700BF3873 /* Resources */,
+				D4DD0B91AAEE4D5664DAF105 /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VonageChatSDKExampleApp;
+			productName = VonageChatSDKExampleApp;
+			productReference = 97FD32EC2A123CF700BF3873 /* VonageChatSDKExampleApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		97FD32FB2A123CF800BF3873 /* VonageChatSDKExampleAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97FD33132A123CF800BF3873 /* Build configuration list for PBXNativeTarget "VonageChatSDKExampleAppTests" */;
+			buildPhases = (
+				B3AE6B7A71D84E2D55214C46 /* [CP] Check Pods Manifest.lock */,
+				97FD32F82A123CF800BF3873 /* Sources */,
+				97FD32F92A123CF800BF3873 /* Frameworks */,
+				97FD32FA2A123CF800BF3873 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				97FD32FE2A123CF800BF3873 /* PBXTargetDependency */,
+			);
+			name = VonageChatSDKExampleAppTests;
+			productName = VonageChatSDKExampleAppTests;
+			productReference = 97FD32FC2A123CF800BF3873 /* VonageChatSDKExampleAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		97FD33052A123CF800BF3873 /* VonageChatSDKExampleAppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 97FD33162A123CF800BF3873 /* Build configuration list for PBXNativeTarget "VonageChatSDKExampleAppUITests" */;
+			buildPhases = (
+				37354F7EA9EF008753DBE920 /* [CP] Check Pods Manifest.lock */,
+				97FD33022A123CF800BF3873 /* Sources */,
+				97FD33032A123CF800BF3873 /* Frameworks */,
+				97FD33042A123CF800BF3873 /* Resources */,
+				B7E9C6E6CE6082A39DB532DB /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				97FD33082A123CF800BF3873 /* PBXTargetDependency */,
+			);
+			name = VonageChatSDKExampleAppUITests;
+			productName = VonageChatSDKExampleAppUITests;
+			productReference = 97FD33062A123CF800BF3873 /* VonageChatSDKExampleAppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		97FD32E42A123CF700BF3873 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1430;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					97FD32EB2A123CF700BF3873 = {
+						CreatedOnToolsVersion = 14.3;
+					};
+					97FD32FB2A123CF800BF3873 = {
+						CreatedOnToolsVersion = 14.3;
+						TestTargetID = 97FD32EB2A123CF700BF3873;
+					};
+					97FD33052A123CF800BF3873 = {
+						CreatedOnToolsVersion = 14.3;
+						TestTargetID = 97FD32EB2A123CF700BF3873;
+					};
+				};
+			};
+			buildConfigurationList = 97FD32E72A123CF700BF3873 /* Build configuration list for PBXProject "VonageChatSDKExampleApp" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 97FD32E32A123CF700BF3873;
+			productRefGroup = 97FD32ED2A123CF700BF3873 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				97FD32EB2A123CF700BF3873 /* VonageChatSDKExampleApp */,
+				97FD32FB2A123CF800BF3873 /* VonageChatSDKExampleAppTests */,
+				97FD33052A123CF800BF3873 /* VonageChatSDKExampleAppUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		97FD32EA2A123CF700BF3873 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97D43D4C2A49EF6D0076EC77 /* secrets.xcconfig in Resources */,
+				97FD32F72A123CF800BF3873 /* Preview Assets.xcassets in Resources */,
+				97FD32F42A123CF800BF3873 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FD32FA2A123CF800BF3873 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FD33042A123CF800BF3873 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		00313E0645308C034DB9BD01 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-VonageChatSDKExampleApp-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		37354F7EA9EF008753DBE920 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B3AE6B7A71D84E2D55214C46 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-VonageChatSDKExampleAppTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B7E9C6E6CE6082A39DB532DB /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D4DD0B91AAEE4D5664DAF105 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp/Pods-VonageChatSDKExampleApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp/Pods-VonageChatSDKExampleApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp/Pods-VonageChatSDKExampleApp-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		97FD32E82A123CF700BF3873 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97F93B9D2A35E23E001B8DCC /* NetworkClient.swift in Sources */,
+				97E4C2F12A308D8E00DBAD55 /* Extensions.swift in Sources */,
+				97F93BA52A35F462001B8DCC /* LoginDataModels.swift in Sources */,
+				97070A1D2A1C168600F7A93D /* ChatClientManager.swift in Sources */,
+				97070A142A14F78200F7A93D /* CreateConversationView.swift in Sources */,
+				97FD32F22A123CF700BF3873 /* LoginView.swift in Sources */,
+				97070A1A2A14F78B00F7A93D /* MembersView.swift in Sources */,
+				97F93BA32A35F410001B8DCC /* ChatDataModels.swift in Sources */,
+				97070A0F2A14F77400F7A93D /* ChatViewModel.swift in Sources */,
+				97070A152A14F78200F7A93D /* CreateConversationViewModel.swift in Sources */,
+				97FD32F02A123CF700BF3873 /* VonageChatSDKExampleAppApp.swift in Sources */,
+				97E4C2F32A30E82F00DBAD55 /* MemberViewModel.swift in Sources */,
+				97070A0A2A14F76700F7A93D /* ChatsListView.swift in Sources */,
+				97070A102A14F77400F7A93D /* ChatView.swift in Sources */,
+				97FD331A2A127FFA00BF3873 /* LoginViewModel.swift in Sources */,
+				97F93BA12A35E4A9001B8DCC /* Constants.swift in Sources */,
+				97CCB97E2A3F333200C9424B /* LoginAPI.swift in Sources */,
+				97070A0B2A14F76700F7A93D /* ChatsListViewModel.swift in Sources */,
+				97070A192A14F78B00F7A93D /* MembersViewModel.swift in Sources */,
+				97E4C2F52A30E85D00DBAD55 /* MemberView.swift in Sources */,
+				970709A12A14E4CB00F7A93D /* PushManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FD32F82A123CF800BF3873 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97FD33012A123CF800BF3873 /* VonageChatSDKExampleAppTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97FD33022A123CF800BF3873 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97FD330D2A123CF800BF3873 /* VonageChatSDKExampleAppUITestsLaunchTests.swift in Sources */,
+				97FD330B2A123CF800BF3873 /* VonageChatSDKExampleAppUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		97FD32FE2A123CF800BF3873 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 97FD32EB2A123CF700BF3873 /* VonageChatSDKExampleApp */;
+			targetProxy = 97FD32FD2A123CF800BF3873 /* PBXContainerItemProxy */;
+		};
+		97FD33082A123CF800BF3873 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 97FD32EB2A123CF700BF3873 /* VonageChatSDKExampleApp */;
+			targetProxy = 97FD33072A123CF800BF3873 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		97FD330E2A123CF800BF3873 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 97D43D4B2A49EF6D0076EC77 /* secrets.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		97FD330F2A123CF800BF3873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 97D43D4B2A49EF6D0076EC77 /* secrets.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		97FD33112A123CF800BF3873 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = DA4DAE4EBF6B88084D4F3813 /* Pods-VonageChatSDKExampleApp.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = VonageChatSDKExampleApp/VonageChatSDKExampleApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"VonageChatSDKExampleApp/Preview Content\"";
+				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VonageChatSDKExampleApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vonage.chatApp.VonageChatSDKExampleApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		97FD33122A123CF800BF3873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E85F1529581E65A4A0437837 /* Pods-VonageChatSDKExampleApp.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = VonageChatSDKExampleApp/VonageChatSDKExampleApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"VonageChatSDKExampleApp/Preview Content\"";
+				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VonageChatSDKExampleApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vonage.chatApp.VonageChatSDKExampleApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		97FD33142A123CF800BF3873 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F1F14A1361D2150F805A7E26 /* Pods-VonageChatSDKExampleAppTests.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vonage.chatApp.VonageChatSDKExampleAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VonageChatSDKExampleApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VonageChatSDKExampleApp";
+			};
+			name = Debug;
+		};
+		97FD33152A123CF800BF3873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 31E6D6078738B0F40A67B5B4 /* Pods-VonageChatSDKExampleAppTests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vonage.chatApp.VonageChatSDKExampleAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VonageChatSDKExampleApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VonageChatSDKExampleApp";
+			};
+			name = Release;
+		};
+		97FD33172A123CF800BF3873 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FAEF0785EE15550D9A078528 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vonage.chatApp.VonageChatSDKExampleAppUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VonageChatSDKExampleApp;
+			};
+			name = Debug;
+		};
+		97FD33182A123CF800BF3873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 74EB7738A0FA5547C95FD369 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vonage.chatApp.VonageChatSDKExampleAppUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VonageChatSDKExampleApp;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		97FD32E72A123CF700BF3873 /* Build configuration list for PBXProject "VonageChatSDKExampleApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97FD330E2A123CF800BF3873 /* Debug */,
+				97FD330F2A123CF800BF3873 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97FD33102A123CF800BF3873 /* Build configuration list for PBXNativeTarget "VonageChatSDKExampleApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97FD33112A123CF800BF3873 /* Debug */,
+				97FD33122A123CF800BF3873 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97FD33132A123CF800BF3873 /* Build configuration list for PBXNativeTarget "VonageChatSDKExampleAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97FD33142A123CF800BF3873 /* Debug */,
+				97FD33152A123CF800BF3873 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		97FD33162A123CF800BF3873 /* Build configuration list for PBXNativeTarget "VonageChatSDKExampleAppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97FD33172A123CF800BF3873 /* Debug */,
+				97FD33182A123CF800BF3873 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 97FD32E42A123CF700BF3873 /* Project object */;
+}

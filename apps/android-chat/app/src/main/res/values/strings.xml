@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">ChatSampleApp</string>
+    <string name="logo_description">Logo</string>
+    <string name="token_hint">Token</string>
+    <string name="login_code_hint">Login Code</string>
+    <string name="empty_token_error">Token cannot be empty</string>
+    <string name="login_text">Login</string>
+    <string name="login_with_token_text">Login with Vonage Token</string>
+    <string name="logout_label">Logout</string>
+    <string name="add_conversation_label">Add Conversation</string>
+    <string name="new_conversation_label">New Conversation</string>
+    <string name="existing_conversation_label">Existing Conversation</string>
+    <string name="create_conversation_label">Create Conversation</string>
+    <string name="conversation_display_name_hint">Conversation Display Name</string>
+    <string name="conversation_name_hint">Conversation Name</string>
+    <string name="conversation_id_hint">Conversation ID</string>
+    <string name="member_state_hint">Joined</string>
+    <string name="no_conversations_found_label">No Conversations Found</string>
+    <string name="delete_conversation_hint">Delete Conversation</string>
+    <string name="arrow_back_description">Back</string>
+    <string name="no_conversation_name_error">Conversation must not be empty</string>
+    <string name="invalid_conversation_name_error">Conversation must not contain spaces or special characters</string>
+    <string name="no_conversation_id_error">Conversation ID must not be empty</string>
+    <string name="invalid_conversation_id_error">Insert a valid Conversation ID</string>
+    <string name="create_conversation_and_join_label">Create Conversation &amp; Join</string>
+    <string name="text_message_hint">Enter Message…</string>
+    <string name="send_message_text">Send</string>
+    <string name="join_conversation_text">Join Conversation</string>
+    <string name="leave_conversation_text">Leave Conversation</string>
+    <string name="conversation_details_text">Details</string>
+    <string name="title_activity_conversation_details">ConversationDetailsActivity</string>
+    <string name="invite_to_conversation_text">Invite</string>
+    <string name="invited_username_hint">Enter Username…</string>
+</resources>
