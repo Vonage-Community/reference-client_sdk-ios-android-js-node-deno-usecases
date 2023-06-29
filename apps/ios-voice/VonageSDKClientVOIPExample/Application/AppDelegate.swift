@@ -92,6 +92,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         NotificationCenter.default.post(name: NSNotification.didFailToRegisterForRemoteNotification, object: nil, userInfo: ["error":error])
     }
+    
+    func applicationWillTerminate(_ application: UIApplication) {
+        userController.logout()
+    }
 }
 
 
@@ -122,14 +126,11 @@ extension AppDelegate {
         // startup flow so we can handle incoming calls
         userController.user
             .replaceError(with: nil)
-            .compactMap { $0 }
             .sink { (user) in
                 // update vonage bearer token
-                self.callController.updateSessionToken(user.1)
+                self.callController.updateSessionToken(user?.1)
             }
             .store(in: &cancellables)
-        
-        //userController.restoreUser()
         
         // Once the device has registered for push AND we have an authenticated user
         // register device tokens with vonage
