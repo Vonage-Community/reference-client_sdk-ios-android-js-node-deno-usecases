@@ -20,6 +20,7 @@ export const onMemberLeft = async (
         const prefix = conversation.name.split(':')[0] as Channel;
         switch (prefix) {
             case 'whatsapp':
+            case 'viber_service':
             case 'sms':
             case 'messenger':
                 {

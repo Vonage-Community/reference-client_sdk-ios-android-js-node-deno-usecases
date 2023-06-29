@@ -12,8 +12,7 @@
     "types:copy:deno": "cp ./types.ts supabase/functions/database.types.ts",
     "types:copy": "npm run types:copy:node && npm run types:copy:deno",
     "types": "npm run types:gen:ts && npm run types:copy",
-    "dev": "supabase functions serve --no-verify-jwt --env-file ../../.env --import-map ./supabase/functions/import_map.json",
-    "postinstall": "npm run db:start && npm run migration:up && npm run types"
+    "dev": "supabase functions serve --no-verify-jwt --env-file ../../.env --import-map ./supabase/functions/import_map.json"
   },
   "devDependencies": {
     "supabase": "^1.68.6"
