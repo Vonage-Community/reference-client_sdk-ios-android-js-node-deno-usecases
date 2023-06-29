@@ -1,0 +1,136 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  GITHUB_CLIENT_ID: ${{ vars.GH_CLIENT_ID }}
+  GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
+
+
+jobs:
+  migrateDatabase:
+    name: Migrate Supabase Database
+    environment:
+      name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: apps/supabase-backend
+    env:
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 1.64.3
+      - name: Link Supabase Project
+        run: supabase link --project-ref ${{ vars.SUPABASE_PROJECT_ID }}
+      - name: Deploy Supabase Database
+        run: supabase db push
+      
+  supabaseFunctions:
+    name: Deploy Supabase Functions
+    needs: migrateDatabase
+    if: github.event_name == 'push'
+    environment:
+      name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/supabase-backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 1.64.3
+      - name: Deploy Supabase Functions
+        run: supabase functions deploy --project-ref ${{ vars.SUPABASE_PROJECT_ID }}
+
+  deployMainSample:
+    name: Deploy Main Sample (Next.js)
+    environment:
+      name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+      url: ${{ steps.deployment-url.outputs.DEPLOYMENT_URL }}
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Install Vercel CLI
+        run: npm i -g vercel
+      - name: Pull Vercel Environment Variables (Prod)
+        if: github.event_name == 'push'
+        run: vercel pull -y --environment=production --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Pull Vercel Environment Variables (preview )
+        if: github.event_name == 'pull_request'
+        run: vercel pull --yes --environment=preview  --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Build (Prod)
+        if: github.event_name == 'push'
+        run: vercel build --prod --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Build (Preview)
+        if: github.event_name == 'pull_request'
+        run: vercel build --token ${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy (Prod)
+        if: github.event_name == 'push'
+        run: vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
+      - name: Deploy (Preview)
+        if: github.event_name == 'pull_request'
+        run: vercel deploy --prebuilt --token ${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
+      - name: Set deployment URL
+        id: deployment-url
+        run: echo DEPLOYMENT_URL=$(cat deployment-url.txt) >> $GITHUB_OUTPUT
+  
+  updateVonageApp:
+    name: Update Vonage Application
+    runs-on: ubuntu-latest
+    needs: supabaseFunctions
+    if: github.event_name == 'push'
+    environment:
+      name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install
+      - name: Update Webhooks
+        run: npm run deploy
+        env:
+          WEBHOOK_PATH: /
+          VONAGE_API_KEY: ${{ vars.VONAGE_API_KEY }}
+          VONAGE_API_SECRET: ${{ secrets.VONAGE_API_SECRET }}
+          VONAGE_APPLICATION_ID: ${{ vars.VONAGE_APPLICATION_ID }}
+          VONAGE_APPLICATION_PRIVATE_KEY: ${{ secrets.VONAGE_PRIVATE_KEY }}
+          VONAGE_PRIVATE_KEY: ${{ secrets.VONAGE_PRIVATE_KEY }}
+          ENDPOINT: ${{ vars.ENDPOINT }}
+          ENABLE_FACEBOOK: true
+          BOT_NAME: ${{ vars.BOT_NAME }}
+          BOT_DISPLAY_NAME: ${{ vars.BOT_DISPLAY_NAME }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          FACEBOOK_APP_ID: ${{ secrets.FACEBOOK_APP_ID }}
+          FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          VERIFY_TOKEN: ${{ secrets.VERIFY_TOKEN }}
+          VONAGE_ENDPOINT: ${{ vars.VONAGE_ENDPOINT }}
+  
