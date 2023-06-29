@@ -131,6 +131,6 @@ export const isBot = (username: string) => username.includes('bot:');
 export const isAgent = (username: string) =>
     !(isCustomer(username) || isBot(username));
 
-export type Channel = 'whatsapp' | 'messenger' | 'sms';
+export type Channel = 'whatsapp' | 'messenger' | 'sms' | 'viber_service';
 
 export type AgentMemberState = 'JOINED' | 'LEFT';

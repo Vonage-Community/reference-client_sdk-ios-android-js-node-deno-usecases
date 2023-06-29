@@ -156,6 +156,7 @@ serve(async (req) => {
         await createCustomerUser(data);
         switch (data.channel) {
             case 'sms':
+            case 'viber_service':
             case 'messenger':
                 logger.info(`${data.channel} Channel`);
                 return new Response(JSON.stringify(messageAction(data)), {

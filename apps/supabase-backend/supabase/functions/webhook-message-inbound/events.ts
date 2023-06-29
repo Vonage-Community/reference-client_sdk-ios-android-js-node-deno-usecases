@@ -83,10 +83,18 @@ export const smsSchema = inboundMessageBaseSchema.extend({
 
 export type InboundSMS = z.infer<typeof smsSchema>;
 
+// Viber Schema
+export const inboundViberSchema = inboundMessageBaseSchema.extend({
+    channel: z.literal('viber_service'),
+}).passthrough();
+
+export type inboundViber = z.infer<typeof inboundMessageSchema>;
+
 export const inboundMessageSchema = z.discriminatedUnion('channel', [
     inboundFacebookMessageSchema,
     whatsappBaseSchema,
     smsSchema,
+    inboundViberSchema,
 ]);
 
 export type InboundMessage = z.infer<typeof inboundMessageSchema>;
