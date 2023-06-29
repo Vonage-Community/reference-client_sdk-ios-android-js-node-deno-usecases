@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { memberInvitedEvent } from './events.ts';
+import { getRTCLogger } from '../logger.ts';
+
+const logger = getRTCLogger('member-invited');
 
 export const onMemberInvited = (event: z.infer<typeof memberInvitedEvent>) => {
-  console.log('---- MEMBER INVITED ----');
+    logger.info('Event received');
+    logger.debug({ event });
 };

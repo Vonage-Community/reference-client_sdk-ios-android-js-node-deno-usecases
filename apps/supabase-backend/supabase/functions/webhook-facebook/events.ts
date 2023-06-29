@@ -60,9 +60,8 @@ export const replyMessageEventSchema = messageEventBaseSchema.omit({
 });
 
 export const attachmentMessageEventSchema = messageEventBaseSchema.extend({
-    attachments: z.array(messageAttachmentSchema)
+    attachments: z.array(messageAttachmentSchema),
 });
-
 
 export const messagingBaseSchema = z.object({
     sender: z.object({
@@ -72,7 +71,6 @@ export const messagingBaseSchema = z.object({
     recipient: z.object({
         id: z.string(),
     }),
-
 });
 
 export const messageMessagingSchema = messagingBaseSchema.extend({
@@ -86,19 +84,22 @@ export const messageMessagingSchema = messagingBaseSchema.extend({
 
 export const postbackPayloadSchema = z.object({
     cid: z.string(),
-    action: z.string()
+    action: z.string(),
 });
 
 export const postbackSchema = messagingBaseSchema.extend({
     postback: z.object({
         title: z.string(),
-        payload: z.preprocess((val) => typeof val == 'string' ? JSON.parse(val) : val, postbackPayloadSchema),
-    })
+        payload: z.preprocess(
+            (val) => typeof val == 'string' ? JSON.parse(val) : val,
+            postbackPayloadSchema,
+        ),
+    }),
 });
 
 export const messagingSchema = z.union([
     messageMessagingSchema,
-    postbackSchema
+    postbackSchema,
 ]);
 
 export const enitySchema = z.object({

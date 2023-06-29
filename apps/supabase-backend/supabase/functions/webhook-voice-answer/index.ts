@@ -5,6 +5,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { z } from 'zod';
 import { AdminClient } from '../supabaseClient.ts';
+import { getWebhookLogger } from '../logger.ts';
+
+const logger = getWebhookLogger('voice-answer');
+logger.info('Loading Webhook Handler');
 
 const VONAGE_LVN = Deno.env.get('VONAGE_LVN') ?? '';
 
@@ -39,12 +43,12 @@ const InboundCallSchema = VoiceAnswerSchema.extend({
 
 const schema = z.union([ServerCallSchema, InboundCallSchema]);
 
-console.log('Hello from Functions!');
-
 const handleServerCall = (
     _req: Request,
     { custom_data }: z.infer<typeof ServerCallSchema>,
 ) => {
+    logger.info('Server call received');
+    logger.debug(`custom data: ${JSON.stringify(custom_data)}`);
     const connectAction = custom_data.callType === 'app'
         ? {
             action: 'connect',
@@ -78,29 +82,31 @@ const handleServerCall = (
         },
         connectAction,
     ];
-
-    console.log(JSON.stringify(ncco));
+    logger.debug('Returning NCCO', ncco);
     return ncco;
 };
 
 const handleInboundCall = async (
-    req: Request,
+    _req: Request,
     _data: z.infer<typeof InboundCallSchema>,
 ) => {
-    const adminClient = AdminClient(req);
+    logger.info('Inbound call received');
+    const adminClient = AdminClient();
     try {
+        logger.debug('fetching available agents');
         const { data, error } = await adminClient.from(
             'user_available_view_voice',
         )
             .select('*').limit(1).maybeSingle();
         if (error) {
-            console.error(error);
+            logger.error('there was an error fetching available agents');
             throw new Error('there was an error fetching available agents');
         }
         if (!data) {
+            logger.debug('there are no agents available at this time');
             throw new Error('there are no agents available at this time');
         }
-
+        logger.debug(`available agent: ${JSON.stringify(data)}`);
         const { error: err } = await adminClient.rpc(
             'set_user_presence_email',
             {
@@ -110,8 +116,8 @@ const handleInboundCall = async (
             },
         );
 
-        if (err) console.error(err);
-        return [
+        if (err) logger.error(err);
+        const ncco = [
             {
                 action: 'talk',
                 text:
@@ -132,9 +138,13 @@ const handleInboundCall = async (
                 ],
             },
         ];
+        logger.info('Returning NCCO');
+        logger.debug('Returning NCCO', ncco);
+        return ncco;
     } catch (error) {
-        console.error(error);
-        return [
+        logger.error('there was an error handling the inbound call', error);
+        logger.info('Returning Fallback NCCO');
+        const ncco = [
             {
                 action: 'talk',
                 text:
@@ -145,12 +155,18 @@ const handleInboundCall = async (
                 text: `Sorry, ${error.message}, please try again later.`,
             },
         ];
+        logger.debug('Returning NCCO', ncco);
+        return ncco;
     }
 };
 
 serve(async (req) => {
+    logger.info(`${req.method} Request received`);
+    logger.debug({ req });
     try {
-        const data = schema.parse(await req.json());
+        const json = await req.json();
+        logger.debug({ json });
+        const data = schema.parse(json);
 
         switch (data.kind) {
             case 'server_call':
@@ -175,9 +191,9 @@ serve(async (req) => {
                 );
         }
     } catch (error) {
-        console.error(error);
+        logger.critical('there was an error handling the request', error);
         if (error instanceof z.ZodError) {
-            console.error(error.issues);
+            logger.critical('There was a Zod validation error', error.issues);
             return new Response(
                 JSON.stringify({
                     code: 'BAD_REQUEST',
@@ -188,7 +204,7 @@ serve(async (req) => {
             );
         }
         if (error instanceof Error) {
-            console.error(error.message);
+            logger.critical('There was an internal server error', error);
             return new Response(
                 JSON.stringify({
                     code: 'INTERNAL_SERVER_ERROR',
@@ -198,7 +214,7 @@ serve(async (req) => {
             );
         }
 
-        console.error('Unknown error');
+        logger.critical('There was an unknown error', error);
         return new Response(
             JSON.stringify({
                 code: 'Unknown error',
@@ -208,9 +224,3 @@ serve(async (req) => {
         );
     }
 });
-
-// To invoke:
-// curl - i--location--request POST 'http://localhost:54321/functions/v1/' \
-// --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-// --header 'Content-Type: application/json' \
-// --data '{"name":"Functions"}'

@@ -5,40 +5,50 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { UserClient } from '../supabaseClient.ts';
 import { mintVonageToken } from '../token.ts';
+import { getHandlerLogger } from '../logger.ts';
 
 const privateKey = Deno.env.get('VONAGE_PRIVATE_KEY');
 const applicationId = Deno.env.get('VONAGE_APPLICATION_ID');
-if (!privateKey || !applicationId) throw new Error('Missing VONAGE_PRIVATE_KEY or VONAGE_APPLICATION_ID');
 
-console.log('Hello from Functions!');
+const logger = getHandlerLogger('new-vonage-token');
+logger.info('Loading Webhook Handler');
 
 serve(async (req) => {
-  const client = UserClient(req);
-  const { data: { user }, error } = await client.auth.getUser();
-  if (error) {
-    console.error('Error getting user', error);
-    return new Response(JSON.stringify(error), { status: 500 });
-  }
-  if (!user || !user.email) {
-    console.error('Missing user or user.email');
-    return new Response(JSON.stringify({
-      error: 'Missing user or user.email',
-    }), { status: 401 });
-  }
-  try {
-    const token = await mintVonageToken(privateKey, applicationId, user.email);
-    return new Response(
-      JSON.stringify({ token }),
-      { headers: { 'Content-Type': 'application/json' } },
-    );
-  } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify(error), { status: 500 });
-  }
-});
+    logger.info(`${req.method} Request received`);
+    logger.debug({ req });
 
-// To invoke:
-// curl -i --location --request POST 'http://localhost:54321/functions/v1/' \
-//   --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-//   --header 'Content-Type: application/json' \
-//   --data '{"name":"Functions"}'
+    if (!privateKey || !applicationId) {
+        logger.error('Missing VONAGE_PRIVATE_KEY or VONAGE_APPLICATION_ID');
+        throw new Error('Missing VONAGE_PRIVATE_KEY or VONAGE_APPLICATION_ID');
+    }
+    const client = UserClient(req);
+    logger.debug('Getting user');
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error) {
+        logger.error('Error getting user', error);
+        return new Response(JSON.stringify(error), { status: 500 });
+    }
+    if (!user || !user.email) {
+        logger.error('Missing user or user.email');
+        return new Response(
+            JSON.stringify({
+                error: 'Missing user or user.email',
+            }),
+            { status: 401 },
+        );
+    }
+    try {
+        const token = await mintVonageToken(
+            privateKey,
+            applicationId,
+            user.email,
+        );
+        return new Response(
+            JSON.stringify({ token }),
+            { headers: { 'Content-Type': 'application/json' } },
+        );
+    } catch (error) {
+        logger.error(error);
+        return new Response(JSON.stringify(error), { status: 500 });
+    }
+});
