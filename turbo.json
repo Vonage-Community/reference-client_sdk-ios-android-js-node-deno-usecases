@@ -24,6 +24,10 @@
     "db:reset": {
       "cache": false,
       "persistent": false
+    },
+    "deploy": {
+      "cache": false,
+      "persistent": false
     }
   }
 }
