@@ -1,32 +1,59 @@
 import { z } from 'zod';
 import { messageEvent } from './events.ts';
-import { csClient, conversationHasAgents, sendFacebookActionMessage, isCustomer } from '../utils.ts';
+import { conversationHasAgents, csClient, isCustomer } from '../utils.ts';
+import { getRTCLogger } from '../logger.ts';
+import {
+    actionConnect,
+    actionStop,
+    sendFacebookActionMessage,
+    sendSMSActionMessage,
+    sendWhatsappActionMessage,
+} from '../chatActions.ts';
 
+const logger = getRTCLogger('message');
 
 export const onMessage = async (event: z.infer<typeof messageEvent>) => {
-    console.log('---Message--', event);
-    // check if conversation is messanger 
+    logger.info('Event received');
+    logger.debug({ event });
+    // check if conversation is messanger
     // verify if the chat has an agent or not
     // if not send action message again
     const cid = event.cid || event.conversation_id || '';
-    
+
     try {
         const conversation = await csClient(`/conversations/${cid}`, 'GET');
         const prefix = conversation.name.split(':')[0];
+        const sender = event._embedded?.from_user?.name || '';
+        logger.info('Checking if sender is a customer');
+        if (!isCustomer(sender)) return;
+        if (event.body.text == 'STOP' && prefix == 'sms') {
+            const userId = event._embedded?.from_user?.id || '';
+            await actionStop(cid, userId);
+            return;
+        }
+        logger.debug('Checking if conversation has agents');
+        const hasAgents = await conversationHasAgents(cid);
+        if (hasAgents) return;
+        logger.debug('No agents in conversation');
         switch (prefix) {
-            case 'messenger': {
-                const sender = event._embedded?.from_user?.name || '';
-                if (!isCustomer(sender)) return;
-                const hasAgents = await conversationHasAgents(cid);
-                if (!hasAgents) {
-                    await sendFacebookActionMessage(cid);
+            case 'messenger':
+                await sendFacebookActionMessage(cid);
+                break;
+            case 'whatsapp':
+                await sendWhatsappActionMessage(cid);
+                break;
+            case 'sms':
+                if (event.body.text == 'CONNECT') {
+                    await actionConnect(cid, 'sms');
+                } else {
+                    await sendSMSActionMessage(cid);
                 }
-            }
-              break;
+                break;
             default:
-              break;
+                logger.debug('Conversation name prefix not matched');
+                break;
         }
     } catch (error) {
-        console.log('Error in onMessage: ', error);
+        logger.error('Error onMessage', error);
     }
 };

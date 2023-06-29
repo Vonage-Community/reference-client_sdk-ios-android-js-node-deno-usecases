@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { verifyDeviceRefreshToken } from '../token.js';
-import { AdminClient } from '../supabaseClient.js';
-import { InvalidTokenError } from './tokenRefresh.js';
-import { availabilityMap, devicesBaseSchema, statusMap } from './utils.js';
-
+import { verifyDeviceRefreshToken } from '../token.ts';
+import { AdminClient } from '../supabaseClient.ts';
+import { InvalidTokenError } from './tokenRefresh.ts';
+import { availabilityMap, devicesBaseSchema, statusMap } from './utils.ts';
 
 export const updatePresenceSchema = devicesBaseSchema.extend({
     type: z.literal('update_presence'),
@@ -12,9 +11,15 @@ export const updatePresenceSchema = devicesBaseSchema.extend({
     availability: z.nativeEnum(availabilityMap),
 });
 
-export const updatePresence = async (client: ReturnType<typeof AdminClient>, data: z.infer<typeof updatePresenceSchema>): Promise<Response> => {
+export const updatePresence = async (
+    client: ReturnType<typeof AdminClient>,
+    data: z.infer<typeof updatePresenceSchema>,
+): Promise<Response> => {
     try {
-        const tokenData = await verifyDeviceRefreshToken(Deno.env.get('DEVICE_REFRESH_TOKEN_SECRET') ?? '', data.refreshToken);
+        const tokenData = await verifyDeviceRefreshToken(
+            Deno.env.get('DEVICE_REFRESH_TOKEN_SECRET') ?? '',
+            data.refreshToken,
+        );
         if (!tokenData) {
             throw InvalidTokenError;
         }
@@ -22,7 +27,7 @@ export const updatePresence = async (client: ReturnType<typeof AdminClient>, dat
         const { error } = await client.rpc('set_user_presence_device', {
             device_id: tokenData.deviceId,
             new_status: data.status,
-            new_availability: data.availability
+            new_availability: data.availability,
         });
 
         if (error) {
@@ -38,12 +43,13 @@ export const updatePresence = async (client: ReturnType<typeof AdminClient>, dat
         });
     } catch (_err) {
         return new Response(
-            JSON.stringify({ error: 'Invalid refresh token', }), {
-            status: 403,
-            headers: {
-                'Content-Type': 'application/json',
+            JSON.stringify({ error: 'Invalid refresh token' }),
+            {
+                status: 403,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             },
-        });
+        );
     }
-
 };
