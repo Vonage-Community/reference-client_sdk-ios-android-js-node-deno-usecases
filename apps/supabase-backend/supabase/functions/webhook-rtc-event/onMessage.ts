@@ -5,6 +5,7 @@ import { getRTCLogger } from '../logger.ts';
 import {
     actionConnect,
     actionStop,
+    sendBotTextMessage,
     sendFacebookActionMessage,
     sendSMSActionMessage,
     sendWhatsappActionMessage,
@@ -53,6 +54,13 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
                 } else {
                     await sendSMSActionMessage(cid);
                 }
+                break;
+            case 'viber_service':
+                // change later for viber, this is for test
+                await sendBotTextMessage(
+                    cid,
+                    'Hi, welocme to Mehboob\'s Corner, how can we help you?',
+                );
                 break;
             default:
                 logger.warning('Unsupported Channel');

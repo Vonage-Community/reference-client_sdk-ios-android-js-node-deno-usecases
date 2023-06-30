@@ -51,7 +51,7 @@ serve(async (req) => {
             default:
                 logger.debug(
                     `Unknown event type: ${event.type}`,
-                    event,
+                    event
                 );
                 break;
         }
