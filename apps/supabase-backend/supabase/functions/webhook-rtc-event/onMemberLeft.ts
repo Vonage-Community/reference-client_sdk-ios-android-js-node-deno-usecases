@@ -35,9 +35,10 @@ export const onMemberLeft = async (
                 }
                 break;
             default:
+                logger.warning('Unsupported Channel');
                 break;
         }
     } catch (error) {
-        logger.error('Error onMemberLeft', error);
+        logger.error('Error', error);
     }
 };
