@@ -39,10 +39,10 @@ export const onMemberJoined = async (
                 }
                 break;
             default:
-                logger.debug('prefix not matched');
+                logger.warning('Unsupported Channel');
                 break;
         }
     } catch (error) {
-        console.log('Error in onMemberJoined: ', error);
+        logger.error('Error', error);
     }
 };

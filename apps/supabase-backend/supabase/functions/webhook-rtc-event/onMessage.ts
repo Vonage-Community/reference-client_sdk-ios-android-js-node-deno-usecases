@@ -27,7 +27,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         const sender = event._embedded?.from_user?.name || '';
         logger.info('Checking if sender is a customer');
         if (!isCustomer(sender)) return;
-        if (event.body.text == 'STOP' && prefix == 'sms') {
+        if (
+            event.body.text == 'STOP' &&
+            (prefix == 'sms' || prefix == 'viber_service')
+        ) {
             const userId = event._embedded?.from_user?.id || '';
             await actionStop(cid, userId);
             return;
@@ -47,7 +50,7 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
             case 'sms':
                 logger.info(`Sending Message for channel: ${prefix}`);
                 if (event.body.text == 'CONNECT') {
-                    await actionConnect(cid, 'sms');
+                    await actionConnect(cid, prefix);
                 } else {
                     await sendSMSActionMessage(cid);
                 }
@@ -60,10 +63,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
                 );
                 break;
             default:
-                logger.debug('Conversation name prefix not matched');
+                logger.warning('Unsupported Channel');
                 break;
         }
     } catch (error) {
-        logger.error('Error onMessage', error);
+        logger.error('Error', error);
     }
 };

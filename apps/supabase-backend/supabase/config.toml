@@ -80,6 +80,10 @@ import_map="functions/import_map.json"
 verify_jwt = false
 import_map="functions/import_map.json"
 
+[functions.webhook-rtc-event]
+verify_jwt = false
+import_map="functions/import_map.json"
+
 [functions.webhook-facebook]
 verify_jwt = false
 import_map="functions/import_map.json"

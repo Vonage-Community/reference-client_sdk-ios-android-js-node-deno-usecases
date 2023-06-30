@@ -29,5 +29,14 @@
         "agentJoined": "Agent $AGENT_USER has joined the conversation.",
         "agentLeft": "Agent $AGENT_USER has left the conversation.",
         "noAvailableAgents": "All our agents are busy at the moment. Please try again in a while."
+    },
+    "viber_service": {
+        "welcome": "Hi, Welcome to Mehboob's Corner! How can We help you?",
+        "actionConnect": "If you wish to be connected to an agent, please send CONNECT.",
+        "actionStop": "If you wish to stop receiving messages from us, please send STOP.",
+        "actionStopResponse": "We will delete your number from our system.\nSad to see you go :(",
+        "agentJoined": "Agent $AGENT_USER has joined the conversation.",
+        "agentLeft": "Agent $AGENT_USER has left the conversation.",
+        "noAvailableAgents": "All our agents are busy at the moment. Please try again in a while."
     }
 }
