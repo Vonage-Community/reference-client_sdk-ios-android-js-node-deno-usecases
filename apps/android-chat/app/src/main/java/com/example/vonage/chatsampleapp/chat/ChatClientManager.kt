@@ -168,7 +168,7 @@ class ChatClientManager(
         val dataString = remoteMessage.data.toString()
         val type: PushType = ChatClient.getPushNotificationType(dataString)
         //TODO: Handle Push Messages
-        println("Push Message Received: $dataString")
+        println("$type Push Message Received: $dataString")
     }
 
     fun updatePushToken(token: String) {
