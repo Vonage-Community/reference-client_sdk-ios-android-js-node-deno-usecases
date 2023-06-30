@@ -49,7 +49,10 @@ serve(async (req) => {
                 onMemberLeft(memberLeftEvent.parse(event), req);
                 break;
             default:
-                logger.debug(`Unknown event type: ${event.type}`);
+                logger.debug(
+                    `Unknown event type: ${event.type}`,
+                    event
+                );
                 break;
         }
     } catch (e) {

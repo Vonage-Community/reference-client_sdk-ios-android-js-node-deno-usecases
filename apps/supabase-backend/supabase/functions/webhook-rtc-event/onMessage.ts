@@ -5,7 +5,6 @@ import { getRTCLogger } from '../logger.ts';
 import {
     actionConnect,
     actionStop,
-    sendBotTextMessage,
     sendFacebookActionMessage,
     sendSMSActionMessage,
     sendWhatsappActionMessage,
@@ -43,19 +42,14 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
             case 'whatsapp':
                 await sendWhatsappActionMessage(cid);
                 break;
+            case 'viber_service':
             case 'sms':
+                logger.info(`Sending Message for channel: ${prefix}`);
                 if (event.body.text == 'CONNECT') {
                     await actionConnect(cid, 'sms');
                 } else {
                     await sendSMSActionMessage(cid);
                 }
-                break;
-            case 'viber_service':
-                // change later for viber, this is for test
-                await sendBotTextMessage(
-                    cid,
-                    'Hi, welocme to Mehboob\'s Corner, how can we help you?',
-                );
                 break;
             default:
                 logger.debug('Conversation name prefix not matched');
