@@ -24,7 +24,7 @@ protocol CallController {
     func reportCXAction(_ cxaction:CXAction)
     
     // Provide Vonage Client with user JWT token for connection auth.
-    func updateSessionToken(_ token:String)
+    func updateSessionToken(_ token:String?)
     
     // Register device notification tokens with Vonage
     func registerPushTokens(_ t:PushToken)
@@ -108,7 +108,7 @@ extension VonageCallController: CallController {
         })
     }
     
-    func updateSessionToken(_ token: String) {
+    func updateSessionToken(_ token: String?) {
         vonageToken.value = token
     }
     
@@ -163,6 +163,11 @@ extension VonageCallController: CallController {
 extension VonageCallController {
     
     func bindCallController() {
+        vonageToken.dropFirst().filter { $0 == nil }.sink { _ in
+            self.client.deleteSession { error in
+                print("session delete: \(error?.localizedDescription ?? "successful")")
+            }
+        }.store(in: &cancellables)
         
         vonageToken.compactMap { $0 }.filter { $0 != "" } .first().flatMap { _ in
             Future<String?,Error> { p in

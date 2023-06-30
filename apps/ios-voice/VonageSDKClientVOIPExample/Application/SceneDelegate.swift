@@ -79,7 +79,8 @@ extension SceneDelegate {
                 }
             }
             .store(in: &cancellables)
-        
+
+        app.userController.restoreUser()
         // Display Custom Call UI based on incoming call publisher
         app.userController.user
             .replaceError(with: nil)
@@ -132,6 +133,7 @@ extension SceneDelegate {
         case is DialerViewController.Type:
             let dialer = DialerViewController()
             let dialerData = DialerViewModel()
+            dialerData.userController = app.userController
             dialerData.controller = app.callController
             dialer.viewModel = dialerData
             return dialer

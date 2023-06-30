@@ -43,7 +43,9 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
             case 'whatsapp':
                 await sendWhatsappActionMessage(cid);
                 break;
+            case 'viber_service':
             case 'sms':
+                logger.info(`Sending Message for channel: ${prefix}`);
                 if (event.body.text == 'CONNECT') {
                     await actionConnect(cid, 'sms');
                 } else {

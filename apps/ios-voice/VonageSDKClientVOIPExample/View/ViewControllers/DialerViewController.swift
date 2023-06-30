@@ -13,11 +13,16 @@ class DialerViewModel: ObservableObject{
     @Published var connection: Connection = .connected
     
     var controller: CallController?
+    var userController: UserController?
     
     func createOutboundCall(){
         // TODO: how to handle Errors?
         // via returned channel ?
         let _ = controller?.startOutboundCall(["callee": self.number, "callType": "phone"])
+    }
+    
+    func logout() {
+        userController?.logout()
     }
     
 }
@@ -119,6 +124,7 @@ class DialerViewController: UIViewController {
             stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -25)
         ])
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(logoutButtonPressed(_:)))
     }
     
     override func viewDidLoad() {
@@ -179,6 +185,10 @@ class DialerViewController: UIViewController {
     
     @objc func deleteDigitButtonPressed(_ sender:UIButton) {
         _ = viewModel?.number.popLast()
+    }
+    
+    @objc func logoutButtonPressed(_ sender: UIBarItem!) {
+        viewModel?.logout()
     }
 
 }
