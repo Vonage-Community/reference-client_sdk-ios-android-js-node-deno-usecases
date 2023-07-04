@@ -1,4 +1,4 @@
-# How to Set Up Facebook Page, Business Account, Business App, and Webhook
+# Guide: How to Set Up Facebook Page, Business Account, Business App, and Webhook
 
 This guide provides detailed instructions on how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, and configure a webhook to receive postback messages. Additionally, it explains where to retrieve important properties such as the Facebook Page ID, Facebook Page Access Token, Facebook App ID, and Facebook App secret.
 
@@ -128,4 +128,6 @@ To link your Facebook Page to a Vonage application, follow these steps:
 
 ## Conclusion
 
-You have successfully learned how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, configure a webhook to receive postback messages, connect the Facebook Page to the Vonage Dashboard, and retrieve essential properties. These steps will enable you to leverage the Facebook platform for your business and application needs.
+You have successfully learned how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, configure a webhook to receive postback messages, connect the Facebook Page to the Vonage Dashboard, and retrieve essential properties. 
+
+These steps will enable you to leverage the Facebook platform for your business and application needs.

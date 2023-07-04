@@ -1,4 +1,4 @@
-# How to Create and Link a WhatsApp Business Account to a Vonage Application
+# Guide: How to Create and Link a WhatsApp Business Account to a Vonage Application
 
 This guide provides step-by-step instructions on how to create a WhatsApp Business account and link it to a Vonage application. Following these instructions will allow you to leverage the WhatsApp Business API through your app.
 
@@ -15,7 +15,6 @@ To create a WhatsApp Business account, follow these steps:
 - Go to the [Vonage Dashboard](https://dashboard.nexmo.com/), and navigate to **External Accounts > WhatsApp > Set up my WhatsApp Business Account**.
 - Click on the button and choose a Facebook business account (or create a new one if you do not have it yet).
 - Follow the instructions provided to create a WhatsApp Business account.
-- You can even use the LVN linked to the account as the phone number.
 - If you already have a WhatsApp Business account linked to that phone number, please delete it and migrate all your chats following this guide: [Migrate Existing WhatsApp Number to a Business Account](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started/migrate-existing-whatsapp-number-to-a-business-account).
 
 ## 2. Link the WhatsApp Business Account to a Vonage Application
