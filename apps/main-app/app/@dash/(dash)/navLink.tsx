@@ -6,11 +6,12 @@ import { useSelectedLayoutSegments } from 'next/navigation';
 
 type NavLinkProps = {
     href: string;
+    parallelRouteKey?: string;
     children: React.ReactNode;
 };
 
-export const NavLink = ({children, href, ...props}: NavLinkProps) => {
-    const segments = useSelectedLayoutSegments();
+export const NavLink = ({ children, href, parallelRouteKey, ...props }: NavLinkProps) => {
+    const segments = useSelectedLayoutSegments().filter((segment) => segment !== '__DEFAULT__');
     const path = href.split('/').filter(Boolean);
     const isSelected = path.every((segment, index) => segments[index] === segment) && path.length === segments.length;
 

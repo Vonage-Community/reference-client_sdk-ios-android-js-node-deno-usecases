@@ -1,7 +1,7 @@
 import { LegStatus } from '@vonage/client-sdk';
 import { useEffect, useMemo } from 'react';
 import { useVoiceCallContainer } from '../VoiceCallContainer';
-import { useVonageClient } from '../VonageClientProvider';
+import { useVonageClient } from '../../VonageClientProvider';
 
 export const useServerCall = () => {
     const [call, callDispatch] = useVoiceCallContainer();

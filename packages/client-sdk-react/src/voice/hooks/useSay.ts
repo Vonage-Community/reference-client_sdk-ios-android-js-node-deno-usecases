@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useVonageClient } from '../VonageClientProvider';
+import { useVonageClient } from '../../VonageClientProvider';
 import { CallSayParams } from '@vonage/client-sdk';
 import { useVoiceCallContainer } from '../VoiceCallContainer';
 

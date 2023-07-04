@@ -35,7 +35,7 @@ export const revalidate = 0;
 
 
 const getToken = async () => {
-    const {email} = await getUserProfile();
+    const { email } = await getUserProfile();
 
     const key = await jose.importPKCS8(privateKey, undefined);
     const payload = {
@@ -56,8 +56,8 @@ const getToken = async () => {
         cookies,
     });
     const { error: pingError } = await supabase.rpc('set_user_presence', {
-        new_availability:'ALL',
-        new_status:'AVAILABLE',
+        new_availability: 'ALL',
+        new_status: 'AVAILABLE',
     });
 
     if (pingError) {
@@ -68,47 +68,52 @@ const getToken = async () => {
     return token;
 };
 
-const MainLayout = async ({ children }: { children: ReactNode}) => {
+const MainLayout = async ({ children }: { children: ReactNode }) => {
     const token = await getToken();
 
     return (
-    <div className='flex flex-col w-full h-full gap-4 lg:flex-row' >
-        <aside className='relative flex flex-row w-full rounded-lg bg-base-300 lg:w-3/12 min-h-16 lg:h-full lg:flex-col'>
-            <div className='flex flex-row items-center justify-center h-16 lg:w-full lg:h-24'>
-                <Logo />
-            </div>
-            <ul className='w-full py-4 menu menu-horizontal lg:menu-vertical '>
-                <li className='hover-bordered'>
-                    <NavLink href='/'>
-                        Home
-                    </NavLink>
-                </li>
-            <li className='hover-bordered'>
+        <div className='flex flex-col w-full h-full gap-4 lg:flex-row' >
+            <aside className='relative flex flex-row w-full rounded-lg bg-base-300 lg:w-3/12 min-h-16 lg:h-full lg:flex-col'>
+                <div className='flex flex-row items-center justify-center h-16 lg:w-full lg:h-24'>
+                    <Logo />
+                </div>
+                <ul className='w-full py-4 menu menu-horizontal lg:menu-vertical '>
+                    <li className='hover-bordered'>
+                        <NavLink href='/'>
+                            Home
+                        </NavLink>
+                    </li>
+                    <li className='hover-bordered'>
+                        <NavLink href='/chat' parallelRouteKey='conversationList'>
+                            Chat
+                        </NavLink>
+                    </li>
+                    {/* <li className='hover-bordered'>
                 <NavLink href='/profile'>
                     Profile
                 </NavLink>
-            </li>
-            <li className='hover-bordered'>
+            </li> */}
+                    {/* <li className='hover-bordered'>
                 <NavLink href='/settings'>
                     Settings
                 </NavLink>
-            </li>
-            <li className='hover-bordered'>
-                <NavLink href='/devices'>
-                    Devices
-                </NavLink>
-            </li>
-            </ul>
+            </li> */}
+                    <li className='hover-bordered'>
+                        <NavLink href='/devices'>
+                            Devices
+                        </NavLink>
+                    </li>
+                </ul>
 
-            {/* @ts-expect-error Async Server Component */}
-            <UserProfileWidget className='absolute inset-y-2 lg:top-auto right-2 lg:inset-x-2 lg:w-auto lg:bottom-4' />
-        </aside>
-        <main className='w-full h-full '>
-            <VonageClientProvider token={token} logLevel='info' >
-                {children}
-            </VonageClientProvider>
-        </main>
-    </div>
+                {/* @ts-expect-error Async Server Component */}
+                <UserProfileWidget className='absolute inset-y-2 lg:top-auto right-2 lg:inset-x-2 lg:w-auto lg:bottom-4' />
+            </aside>
+            <main className='w-full h-full '>
+                <VonageClientProvider token={token} logLevel='debug'>
+                    {children}
+                </VonageClientProvider>
+            </main>
+        </div>
     );
 };
 
