@@ -18,7 +18,7 @@ This is a Monorepo containing a collection of real world reference projects for 
 
 ## Channel Integration Guides
 
-- [Get a Vonage LVN](./docs/lvn-integration.md) (for Voice, SMS and MMS)
+- [Get a Vonage LVN](./docs/lvn-integration.md) (for PSTN Voice Calls, SMS and MMS)
 - [Facebook Messenger Integration](./docs/facebook-integration.md)
 - [Whatsapp Integration](./docs/whatsapp-integration.md)
 
