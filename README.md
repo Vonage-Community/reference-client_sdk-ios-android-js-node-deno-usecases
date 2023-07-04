@@ -16,6 +16,12 @@ This is a Monorepo containing a collection of real world reference projects for 
 
 - [Contact Center](./docs/contact-center.md) - A Contact Center like app with support for Voice and Chat
 
+## Channel Integration Guides
+
+- [Get a Vonage LVN](./docs/lvn-integration.md) (for Voice, SMS and MMS)
+- [Facebook Messenger Integration](./docs/facebook-integration.md)
+- [Whatsapp Integration](./docs/whatsapp-integration.md)
+
 ## Projects
 
 - Common Backend - [./apps/supabase-backend](./apps/supabase-backend/README.md)

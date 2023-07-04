@@ -2,7 +2,7 @@
 
 This guide provides detailed instructions on how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, and configure a webhook to receive postback messages. Additionally, it explains where to retrieve important properties such as the Facebook Page ID, Facebook Page Access Token, Facebook App ID, and Facebook App secret.
 
-## Index
+## Table of Contents
 
 1. [Create a Facebook Page](#1-create-a-facebook-page)
 2. [Create a Facebook Business Account](#2-create-a-facebook-business-account)
@@ -10,8 +10,9 @@ This guide provides detailed instructions on how to create a Facebook Page, set 
 4. [Link the Facebook Page to the App](#4-link-the-facebook-page-to-the-app)
 5. [Set Up a Webhook to Receive Postback Messages](#5-set-up-a-webhook-to-receive-postback-messages)
 6. [Retrieve Facebook Page ID, Page Access Token, App ID, and App Secret](#6-retrieving-facebook-page-id-page-access-token-app-id-and-app-secret)
-7. [Link the Facebook Page to a Vonage Application](#7-link-the-facebook-page-to-a-vonage-application)
-8. [Conclusion](#conclusion)
+7. [Connect the Facebook Page to the Vonage Dashboard](#7-connect-the-facebook-page-to-the-vonage-dashboard)
+8. [Link the Facebook Page to a Vonage Application](#8-link-the-facebook-page-to-a-vonage-application)
+9. [Conclusion](#conclusion)
 
 ## 1. Create a Facebook Page
 
@@ -101,11 +102,23 @@ To retrieve important properties such as the Facebook Page ID, Facebook Page Acc
 
 **Note:** Keep your Facebook App Secret confidential and avoid sharing it publicly.
 
-## 7. Link the Facebook Page to a Vonage Application
+## 7. Connect the Facebook Page to the Vonage Dashboard
+
+To connect your Facebook Page to the Vonage Dashboard, follow these steps:
+
+1. Go to the [Vonage Dashboard](https://dashboard.nexmo.com/).
+2. In the dashboard, navigate to **External Accounts > Facebook Messenger**.
+3. Click on the "Connect Facebook Pages" button.
+4. Login with your Facebook account.
+5. Select the Facebook Page you want to connect.
+6. Select an API key from the dropdown menu.
+7. Click on the "Complete Setup" button to finalize the connection.
+
+## 8. Link the Facebook Page to a Vonage Application
 
 To link your Facebook Page to a Vonage application, follow these steps:
 
-1. Login to the [Vonage Dashboard](https://dashboard.nexmo.com/).
+1. Log in to the [Vonage Dashboard](https://dashboard.nexmo.com/).
 2. In the dashboard, navigate to "Applications" and select the desired application you want to link the Facebook Page to.
 3. Click on the "Link Social Channels" button in the application settings.
 4. Select the Facebook channel from the list of available channels.
@@ -115,4 +128,4 @@ To link your Facebook Page to a Vonage application, follow these steps:
 
 ## Conclusion
 
-You have successfully learned how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, configure a webhook to receive postback messages, and retrieve essential properties. These steps will enable you to leverage the Facebook platform for your business and application needs.
+You have successfully learned how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, configure a webhook to receive postback messages, connect the Facebook Page to the Vonage Dashboard, and retrieve essential properties. These steps will enable you to leverage the Facebook platform for your business and application needs.
