@@ -97,7 +97,7 @@ class LoginViewController: BaseViewController {
         stackView.addArrangedSubview(passwordInput)
         stackView.addArrangedSubview(loginTypeView())
         stackView.addArrangedSubview(submitButton)
-
+        
         view.addSubview(stackView)
         
         NSLayoutConstraint.activate([
@@ -108,9 +108,9 @@ class LoginViewController: BaseViewController {
         ])
         
         viewModel?.$error
-                .compactMap { $0?.localizedDescription }
-                .receive(on: DispatchQueue.main)
-                .assign(to: &($error))
+            .compactMap { $0?.localizedDescription }
+            .receive(on: DispatchQueue.main)
+            .assign(to: &($error))
     }
     
     private func loginTypeView() -> UIStackView {
@@ -155,7 +155,7 @@ class LoginViewController: BaseViewController {
         return loginTypeView
     }
 
-    @objc func loginTypeChanged(_ sender:UISwitch!){
+    @objc func loginTypeChanged(_ sender:UISwitch!) {
         viewModel?.loginType = sender.isOn ? .code : .token
         passwordInput.placeholder = sender.isOn ? "Login Code" : "Vonage Token"
         passwordInput.text = sender.isOn ? "" : Configuration.defaultToken
