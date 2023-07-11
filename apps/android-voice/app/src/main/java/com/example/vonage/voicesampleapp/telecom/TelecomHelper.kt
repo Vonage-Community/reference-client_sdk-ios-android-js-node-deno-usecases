@@ -90,7 +90,10 @@ class TelecomHelper(private val context: Context) {
         extras.putString(Constants.EXTRA_KEY_CALL_ID, callId)
         extras.putString(Constants.EXTRA_KEY_FROM, from)
         val isManageOwnCallsPermitted = ActivityCompat.checkSelfPermission(context, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED
-        val isCallPermitted = telecomManager.isIncomingCallPermitted(phoneAccountHandle)
+        val isCallPermitted = try {
+            // This method might throw on some devices (e.g. Xiaomi)
+            telecomManager.isIncomingCallPermitted(phoneAccountHandle)
+        } catch (_ : Exception){ true }
         if (isManageOwnCallsPermitted && isPhoneAccountEnabled && isCallPermitted){
             telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
         }
