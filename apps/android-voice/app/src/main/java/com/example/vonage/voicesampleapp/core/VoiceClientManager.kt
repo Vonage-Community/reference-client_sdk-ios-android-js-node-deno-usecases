@@ -70,7 +70,7 @@ class VoiceClientManager(private val context: Context) {
                     coreContext.activeCall?.run {
                         disconnect(DisconnectCause(DisconnectCause.MISSED))
                         notifyCallDisconnectedToCallActivity(context, false)
-                    }
+                    } ?: navigateToMainActivity(context)
                 }
             )
         }
