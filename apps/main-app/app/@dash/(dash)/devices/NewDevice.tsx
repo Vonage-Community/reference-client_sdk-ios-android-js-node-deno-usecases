@@ -11,7 +11,7 @@ export const NewDevice = () => {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const [code, setCode] = useState<string>(undefined);
+    const [code, setCode] = useState<string | undefined>(undefined);
 
     const handleNewDevice = async () => {
         if (loading) return;
@@ -39,7 +39,7 @@ export const NewDevice = () => {
     };
 
     const copyCode = () => {
-        navigator.clipboard.writeText(code);
+        navigator.clipboard.writeText(code!);
     };
 
     const handleAddAnotherDevice = () => {

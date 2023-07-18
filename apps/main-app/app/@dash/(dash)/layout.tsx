@@ -37,7 +37,7 @@ export const revalidate = 0;
 const getToken = async () => {
     const { email } = await getUserProfile();
 
-    const key = await jose.importPKCS8(privateKey, undefined);
+    const key = await jose.importPKCS8(privateKey!, '');
     const payload = {
         application_id: applicationId,
         sub: email,
@@ -72,7 +72,7 @@ const MainLayout = async ({ children }: { children: ReactNode }) => {
     const token = await getToken();
 
     return (
-        <div className='flex flex-col w-full h-full gap-4 lg:flex-row' >
+        <div className='flex flex-col h-full w-full gap-4 lg:flex-row max-h-full max-w-full' >
             <aside className='relative flex flex-row w-full rounded-lg bg-base-300 lg:w-3/12 min-h-16 lg:h-full lg:flex-col'>
                 <div className='flex flex-row items-center justify-center h-16 lg:w-full lg:h-24'>
                     <Logo />
@@ -108,7 +108,7 @@ const MainLayout = async ({ children }: { children: ReactNode }) => {
                 {/* @ts-expect-error Async Server Component */}
                 <UserProfileWidget className='absolute inset-y-2 lg:top-auto right-2 lg:inset-x-2 lg:w-auto lg:bottom-4' />
             </aside>
-            <main className='w-full h-full '>
+            <main className='w-full h-full max-h-screen'>
                 <VonageClientProvider token={token} logLevel='debug'>
                     {children}
                 </VonageClientProvider>

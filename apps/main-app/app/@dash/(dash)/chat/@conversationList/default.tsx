@@ -4,9 +4,7 @@ import { Chats } from './Chats';
 
 const defaultPage = () => {
     return (
-        <ConversationListContainer>
-            <Chats />
-        </ConversationListContainer>
+        <Chats />
     );
 };
 

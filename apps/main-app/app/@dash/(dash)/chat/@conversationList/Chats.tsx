@@ -23,11 +23,17 @@ const ChatImage = ({ chat }: { chat: Conversation }) => {
 };
 
 export const Chats = () => {
-    const { conversation } = useConversationList();
+    const { conversation, isLoading } = useConversationList();
     const chatList = Array.from(conversation.values());
 
+    if (isLoading) return (
+        <div className='flex flex-col items-center justify-center w-28 h-full'>
+            <span className="loading loading-bars loading-lg"></span>
+        </div>
+    );
+
     return (
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col gap-3 w-full h-full'>
             {chatList.map((chat) => (
                 <Link href={`/chat/${chat.id}`} key={chat.id} className='alert shadow-lg'>
                     <div>

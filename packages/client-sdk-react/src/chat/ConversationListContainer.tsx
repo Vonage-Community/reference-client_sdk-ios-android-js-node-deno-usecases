@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, useTransition } from 'react';
 import { useVonageClient, useVonageSession } from '../VonageClientProvider';
 
 
@@ -11,6 +11,9 @@ export type Conversation = {
 type ConversationListContext = {
     conversation: Map<string, Conversation>;
     refresh: () => void;
+
+    isLoading: boolean;
+    error?: Error;
 };
 
 const ConversationListContext = createContext<ConversationListContext | undefined>(undefined);
@@ -21,8 +24,12 @@ type ConversationListContainerProps = {
 }
 
 export const ConversationListContainer = (props: ConversationListContainerProps) => {
+    const [isPending, startTransition] = useTransition();
     const vonageClient = useVonageClient();
     const vonageSession = useVonageSession();
+    const [conversation, setConversations] = useState<Map<string, Conversation>>(() => new Map());
+    const [error, setError] = useState<Error | undefined>(undefined);
+
     const fetchConversation = useCallback(async (id: string): Promise<Conversation> => {
         const conversation = await vonageClient.getConversation(id);
         return {
@@ -38,23 +45,25 @@ export const ConversationListContainer = (props: ConversationListContainerProps)
         if (!nextCursor) return [...newConversations, ...Conversations];
         return await fetchConversations(nextCursor, [...newConversations, ...Conversations]);
     }, [vonageClient, fetchConversation]);
-    const [conversation, setConversations] = useState<Map<string, Conversation>>(() => new Map());
+    const refresh = useCallback(() => {
+        if (!vonageClient || !vonageSession) return;
+        fetchConversations()
+            .then(Conversations => {
+                startTransition(() => setConversations(
+                    new Map(Conversations.map(Conversation => [Conversation.id, Conversation]))
+                ));
+            })
+            .catch(error => setError(error));
+    }, [fetchConversations, vonageClient, vonageSession]);
 
     useEffect(() => {
         if (!vonageClient || !vonageSession) return;
+        refresh();
+    }, [refresh, vonageClient, vonageSession]);
 
-        fetchConversations().then(Conversations => {
-            setConversations(new Map(Conversations.map(Conversation => [Conversation.id, Conversation])));
-        });
-    }, [fetchConversations, vonageClient, vonageSession]);
-
-    const refresh = useCallback(() => {
-        if (!vonageClient || !vonageSession) return;
-        fetchConversations();
-    }, [fetchConversations, vonageClient, vonageSession]);
 
     return (
-        <ConversationListContext.Provider value={{ conversation, refresh }}>
+        <ConversationListContext.Provider value={{ conversation, refresh, error, isLoading: isPending }}>
             {props.children}
         </ConversationListContext.Provider>
     );

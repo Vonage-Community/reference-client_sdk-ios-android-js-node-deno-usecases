@@ -1,6 +1,6 @@
-import { ComponentType } from "react";
-import { useCallStatus, useHangup } from "../hooks";
-import { ActionProps, defaultAction } from "./utils";
+import { ComponentType } from 'react';
+import { useCallStatus, useHangup } from '../hooks';
+import { ActionProps, defaultAction } from './utils';
 
 type HangupProps = {
   className?: string;
@@ -9,13 +9,13 @@ type HangupProps = {
 };
 
 export const Hangup = ({
-  className = "vg-btn vg-hangup",
+  className = 'vg-btn vg-hangup',
   Action = defaultAction,
-  label = "Hangup",
+  label = 'Hangup',
 }: HangupProps) => {
   const { hangup } = useHangup();
   const { callStatus } = useCallStatus();
 
-  if (callStatus !== "in-progress") return null;
+  if (callStatus !== 'in-progress') return null;
   return <Action className={className} onClick={hangup} label={label} />;
 };

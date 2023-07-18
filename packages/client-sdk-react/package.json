@@ -31,6 +31,8 @@
     "tsconfig": "*"
   },
   "dependencies": {
-    "@tabler/icons-react": "^2.22.0"
+    "@tabler/icons-react": "^2.22.0",
+    "@yaireo/relative-time": "^1.0.4",
+    "ts-pattern": "^4.3.0"
   }
 }
