@@ -24,7 +24,6 @@ class CallActivity : AppCompatActivity() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
     private val notificationManager = coreContext.notificationManager
-    private val telecomHelper = coreContext.telecomHelper
     private var isMuteToggled = false
 
     /**
@@ -92,7 +91,7 @@ class CallActivity : AppCompatActivity() {
         turnKeyguardOff {
             if(notificationManager.isIncomingCallNotificationActive){
                 notificationManager.dismissIncomingCallNotification(callId)
-                telecomHelper.startIncomingCall(callId, from, type)
+                clientManager.placeIncomingCall(callId, from, type)
             } else {
                 // If the Notification has been canceled in the meantime
                 this.finish()

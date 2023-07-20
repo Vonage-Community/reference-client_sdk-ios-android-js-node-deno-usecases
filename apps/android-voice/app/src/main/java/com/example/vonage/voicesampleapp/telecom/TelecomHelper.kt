@@ -86,17 +86,11 @@ class TelecomHelper(private val context: Context) {
      */
     fun startIncomingCall(callId:CallId, from:Username, type:VoiceChannelType){
         println(("Call from: ${from}, via channel $callId, channelType: $type"))
+        checkPermission(false)
         val extras = Bundle()
         extras.putString(Constants.EXTRA_KEY_CALL_ID, callId)
         extras.putString(Constants.EXTRA_KEY_FROM, from)
-        val isManageOwnCallsPermitted = ActivityCompat.checkSelfPermission(context, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED
-        val isCallPermitted = try {
-            // This method might throw on some devices (e.g. Xiaomi)
-            telecomManager.isIncomingCallPermitted(phoneAccountHandle)
-        } catch (_ : Exception){ true }
-        if (isManageOwnCallsPermitted && isPhoneAccountEnabled && isCallPermitted){
-            telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
-        }
+        telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
     }
 
     /**
@@ -104,6 +98,7 @@ class TelecomHelper(private val context: Context) {
      */
     fun startOutgoingCall(callId:CallId, to: PhoneNumber, isReconnected:Boolean = false){
         println(("Calling Server with callId: $callId"))
+        checkPermission(true)
         val rootExtras = Bundle()
         val extras = Bundle()
         extras.putString(Constants.EXTRA_KEY_TO, to)
@@ -111,11 +106,22 @@ class TelecomHelper(private val context: Context) {
         extras.putBoolean(Constants.EXTRA_KEY_RECONNECTED, isReconnected)
         rootExtras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle)
         rootExtras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras)
+        telecomManager.placeCall(Uri.parse("tel:123"), rootExtras)
+    }
+
+    private fun checkPermission(isOutgoingCall: Boolean){
         val isManageOwnCallsPermitted = ActivityCompat.checkSelfPermission(context, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED
         val isCallPhonePermitted = ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
-        val isCallPermitted = telecomManager.isOutgoingCallPermitted(phoneAccountHandle)
-        if (isManageOwnCallsPermitted && isCallPhonePermitted && isPhoneAccountEnabled && isCallPermitted){
-            telecomManager.placeCall(Uri.parse("tel:123"), rootExtras)
-        }
+        val isIncomingCallPermitted = try {
+            // This method might throw on some devices (e.g. Xiaomi)
+            telecomManager.isIncomingCallPermitted(phoneAccountHandle)
+        } catch (_ : Exception){ true }
+        val isOutgoingCallPermitted = telecomManager.isOutgoingCallPermitted(phoneAccountHandle)
+        // Throw the appropriate error
+        if(!isManageOwnCallsPermitted) throw Exception("MANAGE_OWN_CALLS Permission Not granted")
+        if(isOutgoingCall && !isCallPhonePermitted) throw Exception("CALL_PHONE Permission Not granted")
+        if(isOutgoingCall && !isOutgoingCallPermitted) throw Exception("Outgoing Call Not Permitted by System")
+        if(!isOutgoingCall && !isIncomingCallPermitted) throw Exception("Incoming Call Not Permitted by System")
+        if(!isPhoneAccountEnabled) throw Exception("$CUSTOM_PHONE_ACCOUNT_NAME Phone Account Not Enabled")
     }
 }
