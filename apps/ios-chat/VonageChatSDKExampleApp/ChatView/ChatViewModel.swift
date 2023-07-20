@@ -281,6 +281,7 @@ extension ChatViewModel {
             .eventPublisher
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { event in
+                print("\(event.eventType) received")
                 self.messages.append(self.getMessage(fromEvent: event))
             })
     }

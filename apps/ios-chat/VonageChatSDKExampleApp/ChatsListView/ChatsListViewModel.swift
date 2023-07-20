@@ -154,12 +154,12 @@ extension ChatsListViewModel {
             .eventPublisher
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { event in
-                switch event {
-                case is VGMemberInvitedEvent:
+                switch event.eventType {
+                case .memberInvited:
                     self.conversationId = event.conversationId
                     let event = event as! VGMemberInvitedEvent
                     self.alertType = .invite(name: event.body.inviter?.name ?? "unknown")
-                case is VGMemberJoinedEvent:
+                case .memberJoined:
                     self.conversationId = event.conversationId
                     self.alertType = .joined
                 default:
