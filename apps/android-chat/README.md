@@ -19,7 +19,8 @@ plugins is `7.3.0`. If you encounter any issues installing the `7.3.0` version o
 
 Choose the option that works best for your setup and requirements.
 
-### Set up Push Notifications (optional)
+<!-- We don't support Push Notifications for chat yet -->
+<!-- ### Set up Push Notifications (optional)
 
 To enable push notifications in the app, follow these steps:
 
@@ -34,7 +35,7 @@ If you want to proceed without push notification support:
 1. Open the `build.gradle` file in the app directory.
 2. Locate the `plugins` block.
 3. Comment out the line `id 'com.google.gms.google-services'`.
-   - **Note:** If you decide not to use push notifications and do not comment out the line, the app will not build.
+   - **Note:** If you decide not to use push notifications and do not comment out the line, the app will not build. -->
 
 ### Set up a custom back end (optional)
 
