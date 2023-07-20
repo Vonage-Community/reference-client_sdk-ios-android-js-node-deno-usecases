@@ -131,8 +131,8 @@
 		97070A072A14F76700F7A93D /* ChatsListView */ = {
 			isa = PBXGroup;
 			children = (
-				97070A082A14F76700F7A93D /* ChatsListView.swift */,
 				97070A092A14F76700F7A93D /* ChatsListViewModel.swift */,
+				97070A082A14F76700F7A93D /* ChatsListView.swift */,
 			);
 			path = ChatsListView;
 			sourceTree = "<group>";
@@ -141,8 +141,8 @@
 			isa = PBXGroup;
 			children = (
 				97070A0D2A14F77400F7A93D /* ChatViewModel.swift */,
-				97F93BA22A35F410001B8DCC /* ChatDataModels.swift */,
 				97070A0E2A14F77400F7A93D /* ChatView.swift */,
+				97F93BA22A35F410001B8DCC /* ChatDataModels.swift */,
 			);
 			path = ChatView;
 			sourceTree = "<group>";

@@ -20,12 +20,15 @@ class ChatsListViewModel: NSObject,ObservableObject {
     private let vgClient: VGChatClient
     private var conversation: VGConversation?
     private var cancellable: AnyCancellable?
-    private var cursor: String?
+    private var cursor: String? = nil
     @Published var alertType: AlertType?
     @Published var conversations: [VGConversation] = []
     @Published var isMemberInvited = false
     @Published var conversationId: String?
     @Published var navigateToConversation: Bool = false
+    var hasChats: Bool {
+        cursor != nil
+    }
 
     init(client: VGChatClient) {
         vgClient = client
@@ -37,8 +40,8 @@ class ChatsListViewModel: NSObject,ObservableObject {
         fatalError("cant continue in chats without login")
     }
     
-    func getConversations(cursor: String? = nil) {
-        vgClient.getConversations(.asc, pageSize: 30, cursor: cursor) { error, page in
+    func getConversations() {
+        vgClient.getConversations(.asc, pageSize: 10, cursor: self.cursor) { error, page in
             DispatchQueue.main.async {
                 if let error = error as? VGError {
                     self.alertType = .error(error.message)
@@ -57,6 +60,7 @@ class ChatsListViewModel: NSObject,ObservableObject {
     
     func willAppear() {
         conversations = []
+        cursor = nil
         self.getConversations()
     }
 
@@ -68,9 +72,6 @@ class ChatsListViewModel: NSObject,ObservableObject {
     }
     
     func getChatViewModel(conversation: VGConversation) -> ChatViewModel {
-        if conversation.id == conversations.last?.id, let cursor = cursor {
-            getConversations(cursor: cursor)
-        }
         return .init(client: vgClient, conversation: conversation)
     }
     

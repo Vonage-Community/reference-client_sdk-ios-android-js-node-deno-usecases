@@ -39,6 +39,12 @@ struct ChatView: View {
                     if #available(iOS 15, *) {
                         view.listRowSeparator(.hidden)
                     }
+                    if viewModel.hasMoreEvents {
+                        ProgressView("Loading..")
+                            .tint(Color.black)
+                            .progressViewStyle(.circular)
+                            .onAppear { viewModel.getConversationsEvents() }
+                    }
                 }.onAppear(perform: viewModel.onViewAppear)
                 Divider().frame(maxHeight: 1).padding(.all, 0)
                 if !viewModel.shouldShowJoin {

@@ -31,4 +31,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         PushManager.shared.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
         print(error.localizedDescription)
     }
+    
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        PushManager.shared.application(application, didReceiveRemoteNotification: userInfo, fetchCompletionHandler: completionHandler)
+    }
 }

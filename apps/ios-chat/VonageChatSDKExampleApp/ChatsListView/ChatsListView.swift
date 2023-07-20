@@ -22,6 +22,11 @@ struct ChatsListView: View {
                     Text(conversation.uiName)
                 }
             }.onDelete(perform: viewModel.deleteConversation(at:))
+            if viewModel.hasChats {
+                ProgressView("Loading..")
+                    .progressViewStyle(.circular)
+                    .onAppear { viewModel.getConversations() }
+            }
         }
         .toolbar {
             NavigationLink(destination: CreateConversationView(viewModel: viewModel.getCreateConversationViewModel()), label: { Image(systemName: "plus") })
