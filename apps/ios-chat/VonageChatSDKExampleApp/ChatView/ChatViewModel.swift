@@ -19,9 +19,14 @@ class ChatViewModel: NSObject,ObservableObject {
     @Published var error: String?
     @Published var isMyMemberAvailable: Bool = false
     @Published var messages: [Message] = []
+    var hasMoreEvents: Bool {
+        eventsPage?.nextCursor != nil
+    }
+    
     var conversationName: String {
         conversation.uiName
     }
+    
     private var eventsPage: VGEventsPage? {
         willSet {
             DispatchQueue.main.async {
@@ -129,24 +134,16 @@ class ChatViewModel: NSObject,ObservableObject {
     }
     
     func getConversationsEvents() {
-        DispatchQueue.main.async {
-            self.messages = []
-        }
-        eventsPage = nil
         Task.detached {
-            var cursor: String? = nil
-            repeat {
-                do {
-                    let events = try await self.vgClient.getConversationEvents(self.conversation.id,
-                                                                               cursor: cursor)
-                    cursor = events.nextCursor
-                    DispatchQueue.main.async {
-                        self.eventsPage = events
-                    }
-                } catch {
-                    self.processFailure(error: error)
+            do {
+                let events = try await self.vgClient.getConversationEvents(self.conversation.id,
+                                                                           cursor: self.eventsPage?.nextCursor)
+                DispatchQueue.main.async {
+                    self.eventsPage = events
                 }
-            } while(cursor?.isEmpty == false)
+            } catch {
+                self.processFailure(error: error)
+            }
         }
     }
     
