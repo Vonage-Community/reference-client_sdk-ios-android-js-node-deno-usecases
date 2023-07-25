@@ -30,7 +30,7 @@ class DialerFragment : DialogFragment() {
     private var dialedNumber : String get() {
         return binding.dialedNumberTextView.text.toString()
     } set(value) {
-        binding.dialedNumberTextView.text = value
+        binding.dialedNumberTextView.setText(value)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
