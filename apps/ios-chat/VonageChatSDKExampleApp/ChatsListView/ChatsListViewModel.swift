@@ -12,7 +12,7 @@ enum AlertType: Hashable, Identifiable {
     var id: Self {
         return self
     }
-    case error(String?), invite(name: String), joined, logout
+    case error(String?), invite(name: String), joined, logout, conversation(sender: String, text: String)
 }
 
 
@@ -120,6 +120,18 @@ class ChatsListViewModel: NSObject,ObservableObject {
         }
     }
     
+    func onViewConversation() {
+        guard let id = conversationId else { return }
+        vgClient.getConversation(id) { error, conversation in
+            DispatchQueue.main.async {
+                if let conversation = conversation {
+                    self.conversation = conversation
+                    self.navigateToConversation = true
+                }
+            }
+        }
+    }
+    
     func onConversationJoinEvent() {
         guard let id = conversationId else { return }
         vgClient.getConversation(id) { error, conversation in
@@ -163,6 +175,11 @@ extension ChatsListViewModel {
                 case .memberJoined:
                     self.conversationId = event.conversationId
                     self.alertType = .joined
+                case .messageText:
+                    let event = event as! VGTextMessageEvent
+                    self.conversationId = event.conversationId
+                    let sender = event.body.sender
+                    self.alertType = .conversation(sender: sender.displayName ?? sender.name, text: event.body.text)
                 default:
                     break // in progress
                 }
