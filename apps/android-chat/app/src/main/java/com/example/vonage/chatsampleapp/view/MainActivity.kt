@@ -1,10 +1,14 @@
 package com.example.vonage.chatsampleapp.view
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -39,9 +45,34 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    companion object {
+        private const val PERMISSIONS_REQUEST_CODE = 123
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private val permissions = arrayOf(
+        Manifest.permission.POST_NOTIFICATIONS
+    )
+
+    private val arePermissionsGranted : Boolean get() {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.all {
+                ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+            }
+        } else { true }
+    }
+
+    private fun checkPermissions(){
+        if (!arePermissionsGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Request permissions
+            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE)
+        }
+    }
+
     private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        checkPermissions()
         handleIntent(intent)
         subscribeToEvents()
         setContent {
