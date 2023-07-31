@@ -131,8 +131,8 @@
 		97070A072A14F76700F7A93D /* ChatsListView */ = {
 			isa = PBXGroup;
 			children = (
-				97070A082A14F76700F7A93D /* ChatsListView.swift */,
 				97070A092A14F76700F7A93D /* ChatsListViewModel.swift */,
+				97070A082A14F76700F7A93D /* ChatsListView.swift */,
 			);
 			path = ChatsListView;
 			sourceTree = "<group>";
@@ -141,8 +141,8 @@
 			isa = PBXGroup;
 			children = (
 				97070A0D2A14F77400F7A93D /* ChatViewModel.swift */,
-				97F93BA22A35F410001B8DCC /* ChatDataModels.swift */,
 				97070A0E2A14F77400F7A93D /* ChatView.swift */,
+				97F93BA22A35F410001B8DCC /* ChatDataModels.swift */,
 			);
 			path = ChatView;
 			sourceTree = "<group>";
@@ -306,7 +306,7 @@
 				97FD32E82A123CF700BF3873 /* Sources */,
 				97FD32E92A123CF700BF3873 /* Frameworks */,
 				97FD32EA2A123CF700BF3873 /* Resources */,
-				D4DD0B91AAEE4D5664DAF105 /* [CP] Embed Pods Frameworks */,
+				F43665EE46CB04F5645455E9 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -344,7 +344,7 @@
 				97FD33022A123CF800BF3873 /* Sources */,
 				97FD33032A123CF800BF3873 /* Frameworks */,
 				97FD33042A123CF800BF3873 /* Resources */,
-				B7E9C6E6CE6082A39DB532DB /* [CP] Embed Pods Frameworks */,
+				C2FD6E85C12E0EC9AA0E4074 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -493,7 +493,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B7E9C6E6CE6082A39DB532DB /* [CP] Embed Pods Frameworks */ = {
+		C2FD6E85C12E0EC9AA0E4074 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -510,7 +510,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests/Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		D4DD0B91AAEE4D5664DAF105 /* [CP] Embed Pods Frameworks */ = {
+		F43665EE46CB04F5645455E9 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (

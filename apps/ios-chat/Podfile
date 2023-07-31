@@ -6,7 +6,7 @@ target 'VonageChatSDKExampleApp' do
   use_frameworks!
 
   # Pods for VonageChatSDKExampleApp
-   pod 'VonageClientSDKChat', '1.1.0-alpha.7'
+   pod 'VonageClientSDKChat', '1.1.0-alpha.16'
 
   target 'VonageChatSDKExampleAppTests' do
     inherit! :search_paths
