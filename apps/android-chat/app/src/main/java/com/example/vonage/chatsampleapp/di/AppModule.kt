@@ -7,6 +7,7 @@ import com.example.vonage.chatsampleapp.data.ClientContext
 import com.example.vonage.chatsampleapp.data.remote.CustomApi
 import com.example.vonage.chatsampleapp.data.PagingDataSource
 import com.example.vonage.chatsampleapp.data.repository.CustomRepository
+import com.example.vonage.chatsampleapp.push.NotificationHelper
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.vonage.clientcore.core.api.models.*
@@ -30,6 +31,11 @@ object AppModule {
 
     @Singleton
     @Provides
+    fun provideNotificationHelper(@ApplicationContext context: Context) =
+        NotificationHelper(context)
+
+    @Singleton
+    @Provides
     fun provideCustomApi() : CustomApi =
         Retrofit.Builder()
             // Placeholder base URL:
@@ -48,9 +54,10 @@ object AppModule {
     fun provideChatClientManager(
         @ApplicationContext context: Context,
         clientContext: ClientContext,
+        notificationHelper: NotificationHelper,
         customRepository: CustomRepository
     ) =
-        ChatClientManager(context, clientContext, customRepository)
+        ChatClientManager(context, clientContext, notificationHelper, customRepository)
 
     @Provides
     fun provideConversationsPageFactory(clientManager: ChatClientManager) =

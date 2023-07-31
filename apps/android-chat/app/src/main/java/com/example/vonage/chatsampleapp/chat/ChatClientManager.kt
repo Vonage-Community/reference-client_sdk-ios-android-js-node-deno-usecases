@@ -3,7 +3,9 @@ package com.example.vonage.chatsampleapp.chat
 import android.content.Context
 import com.example.vonage.chatsampleapp.data.ClientContext
 import com.example.vonage.chatsampleapp.data.repository.CustomRepository
+import com.example.vonage.chatsampleapp.push.NotificationHelper
 import com.example.vonage.chatsampleapp.utils.Constants
+import com.example.vonage.chatsampleapp.utils.displayName
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
 import com.vonage.android_core.Subscription
@@ -18,7 +20,8 @@ import kotlinx.coroutines.*
 class ChatClientManager(
     context: Context,
     private val clientContext: ClientContext,
-    private val repository: CustomRepository
+    private val notificationHelper: NotificationHelper,
+    private val repository: CustomRepository,
 ) {
     private val client : ChatClient
     var sessionId:String? = null
@@ -167,8 +170,27 @@ class ChatClientManager(
     private fun processIncomingPush(remoteMessage: RemoteMessage) {
         val dataString = remoteMessage.data.toString()
         val type: PushType = ChatClient.getPushNotificationType(dataString)
-        //TODO: Handle Push Messages
         println("$type Push Message Received: $dataString")
+        val message: MessageEvent = when(type){
+            PushType.NEW_MESSAGE -> client.parsePushConversationMessage(dataString) ?: return
+            else -> return
+        }
+        val messageText = when(message){
+            is CustomMessageEvent -> message.body.customData
+            is TextMessageEvent -> message.body.text
+        }
+        // TODO: Provide utility to parse Conversation?
+        val conversationJson = dataString.substringAfter("\"conversation\":{").substringBefore("}")
+        val conversationName = conversationJson.substringAfter("\"name\":\"").substringBefore("\"")
+        val conversationDisplayName = conversationJson.substringAfter("\"display_name\":\"", "").substringBefore("\"")
+        val conversationTitle = conversationDisplayName.takeUnless { it.isBlank() } ?: conversationName
+        notificationHelper.showNotification(
+            message.conversationId,
+            conversationTitle,
+            message.body.sender.displayName(),
+            messageText,
+            message.timestamp
+        )
     }
 
     fun updatePushToken(token: String) {

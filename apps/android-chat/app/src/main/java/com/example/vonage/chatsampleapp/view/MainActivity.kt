@@ -1,5 +1,6 @@
 package com.example.vonage.chatsampleapp.view
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +22,7 @@ import androidx.paging.PagingData
 import androidx.paging.compose.*
 import com.example.vonage.chatsampleapp.view.ui.theme.ChatSampleAppTheme
 import com.example.vonage.chatsampleapp.R
+import com.example.vonage.chatsampleapp.push.NotificationHelper
 import com.example.vonage.chatsampleapp.utils.*
 import com.example.vonage.chatsampleapp.utils.navigateToChatActivity
 import com.example.vonage.chatsampleapp.utils.navigateToCreateConversationActivity
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleIntent(intent)
         subscribeToEvents()
         setContent {
             ChatSampleAppTheme {
@@ -55,6 +58,17 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         if(!viewModel.isLoggedIn){
             navigateToLoginActivity()
+        }
+    }
+
+    private fun handleIntent(intent: Intent){
+        val conversationId = intent.getStringExtra(NotificationHelper.CONVERSATION_ID) ?: return
+        viewModel.selectConversation(conversationId){
+            navigateToChatActivity(
+                Bundle().apply {
+                    putBoolean(ChatActivity.HAS_JOINED, true)
+                }
+            )
         }
     }
 
