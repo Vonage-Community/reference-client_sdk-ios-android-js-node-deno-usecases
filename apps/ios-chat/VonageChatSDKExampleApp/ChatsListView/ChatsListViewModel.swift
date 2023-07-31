@@ -9,15 +9,16 @@ import Combine
 import VonageClientSDKChat
 
 enum AlertType: Hashable, Identifiable {
-    var id: Self {
+    var id: AlertType {
         return self
     }
-    case error(String?), invite(name: String), joined, logout
+    case error(String?), invite(name: String), joined, logout, conversation(sender: String, text: String)
 }
 
 
 class ChatsListViewModel: NSObject,ObservableObject {
     private let vgClient: VGChatClient
+    private var myUser: VGUser?
     private var conversation: VGConversation?
     private var cancellable: AnyCancellable?
     private var cursor: String? = nil
@@ -34,6 +35,14 @@ class ChatsListViewModel: NSObject,ObservableObject {
         vgClient = client
         super.init()
         self.bindDelegates()
+        self.vgClient.getUser("me") { error, user in
+            if let user = user {
+                self.myUser = user
+            } else {
+                let error = error != nil ? "\(error!)" : "Unknown"
+                print("Error in fetching self user \(error)")
+            }
+        }
     }
     
     override init() {
@@ -120,6 +129,18 @@ class ChatsListViewModel: NSObject,ObservableObject {
         }
     }
     
+    func onViewConversation() {
+        guard let id = conversationId else { return }
+        vgClient.getConversation(id) { error, conversation in
+            DispatchQueue.main.async {
+                if let conversation = conversation {
+                    self.conversation = conversation
+                    self.navigateToConversation = true
+                }
+            }
+        }
+    }
+    
     func onConversationJoinEvent() {
         guard let id = conversationId else { return }
         vgClient.getConversation(id) { error, conversation in
@@ -163,6 +184,12 @@ extension ChatsListViewModel {
                 case .memberJoined:
                     self.conversationId = event.conversationId
                     self.alertType = .joined
+                case .messageText:
+                    let event = event as! VGTextMessageEvent
+                    if event.body.sender.name == self.myUser?.name { return }
+                    self.conversationId = event.conversationId
+                    let sender = event.body.sender
+                    self.alertType = .conversation(sender: sender.displayName ?? sender.name, text: event.body.text)
                 default:
                     break // in progress
                 }
