@@ -16,10 +16,6 @@
       "path": "packages/client-sdk-react",
     },
     {
-      "name": "@Vonage/client-sdk",
-      "path": "../../vonagesdk_js"
-    },
-    {
       "name": "supabase backend",
       "path": "apps/supabase-backend",
       "settings": {
@@ -29,7 +25,7 @@
     },
     {
       "name": "workflows",
-      "path": "../../.github/workflows",
+      "path": ".github/workflows",
       "settings": {
         "editor.tabSize": 2
       }

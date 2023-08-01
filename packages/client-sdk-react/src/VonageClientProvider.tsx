@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { VonageClient, ConfigRegion, ClientConfig, setVonageClientLoggingLevel, LoggingLevel } from '@vonage/client-sdk';
+import { VonageClient, ConfigRegion, ClientConfig, setVonageClientLoggingLevel, LoggingLevel, User } from '@vonage/client-sdk';
 
 export const VonageRegion = {
     US: ConfigRegion.US,
@@ -11,6 +11,7 @@ export const VonageRegion = {
 export type VonageClientContextType = {
     client: VonageClient | null;
     session: string | null;
+    user: User | null;
 } | null;
 
 export const VonageClientContext = React.createContext<VonageClientContextType>(null);
@@ -37,37 +38,44 @@ export type VonageClientProviderProps = {
     children: React.ReactNode;
 };
 
-export const VonageClientProvider = ({ token, options, children, logLevel ='error' }: VonageClientProviderProps) => {
-    const [client, setClient] = React.useState<VonageClient>(()=> {
+export const VonageClientProvider = ({ token, options, children, logLevel = 'error' }: VonageClientProviderProps) => {
+    const [config] = React.useState<ClientConfig>(() => {
+        const clientConfig = new ClientConfig(options?.region ? VonageRegion[options.region] : VonageRegion.US);
+        if (options?.websocketUrl) clientConfig.websocketUrl = options.websocketUrl;
+        if (options?.apiURL) clientConfig.apiUrl = options.apiURL;
+        return clientConfig;
+    });
+    const [client] = React.useState<VonageClient>(() => {
         setVonageClientLoggingLevel(logLevelMap[logLevel]);
-        return new VonageClient();
+        const client = new VonageClient();
+        client.setConfig(config);
+        return client;
     });
     const [session, setSession] = React.useState<string | null>(null);
-    const [pending, setPending] = React.useState<boolean>(false);
-
-    React.useEffect(() => {
-        if (!client) return;
-        const config: ClientConfig = new ClientConfig(options?.region ? VonageRegion[options.region] : VonageRegion.US);
-        if (options?.websocketUrl) config.websocketUrl = options.websocketUrl;
-        if (options?.apiURL) config.apiUrl = options.apiURL;
-        client.setConfig(config);
-    }, [client, options]);
+    const [user, setUser] = React.useState<User | null>(null);
 
     React.useEffect(() => {
         if (!client) return;
         client.createSession(token)
             .then((session) => {
                 setSession(session);
-                setPending(false);
             })
             .catch((error) => {
                 console.error(error);
-                setPending(false);
             });
     }, [client, token]);
 
+    React.useEffect(() => {
+        if (!client || !session) return;
+        client.getUser('me').then((user) => {
+            setUser(user);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }, [client, session]);
+
     return (
-        <VonageClientContext.Provider value={ { client, session}}>
+        <VonageClientContext.Provider value={{ client, session, user }}>
             {children}
         </VonageClientContext.Provider>
     );
@@ -75,7 +83,11 @@ export const VonageClientProvider = ({ token, options, children, logLevel ='erro
 
 export const useVonageClient = () => {
     const context = React.useContext(VonageClientContext);
-    if (!context?.client) {
+
+    if (!context) {
+        throw new Error('useVonageClient must be used within a VonageClientProvider');
+    }
+    if (!context.client) {
         throw new Error('useVonageClient must be used within a VonageClientProvider');
     }
     return context.client;
@@ -83,8 +95,16 @@ export const useVonageClient = () => {
 
 export const useVonageSession = () => {
     const context = React.useContext(VonageClientContext);
-    if (!context?.session) {
+    if (!context) {
         throw new Error('useVonageSession must be used within a VonageClientProvider');
     }
     return context.session;
+};
+
+export const useVonageUser = () => {
+    const context = React.useContext(VonageClientContext);
+    if (!context) {
+        throw new Error('useVonageUser must be used within a VonageClientProvider');
+    }
+    return context.user;
 };

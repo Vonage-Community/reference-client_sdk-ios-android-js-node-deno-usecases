@@ -7,7 +7,7 @@ export const getUserProfile = async () => {
         headers,
         cookies,
     });
-    const { data, error } = await supabase.from('user_profile').select('*').eq('user_id', (await supabase.auth.getUser()).data?.user.id).single();
+    const { data, error } = await supabase.from('user_profile').select('*').eq('user_id', (await supabase.auth.getUser()).data?.user?.id).single();
 
     if (error) {
         console.error(error);
