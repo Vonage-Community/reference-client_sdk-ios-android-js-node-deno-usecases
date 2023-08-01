@@ -10,7 +10,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.vonage.chatsampleapp.chat.ChatClientManager
 import com.example.vonage.chatsampleapp.utils.Constants
-import com.example.vonage.chatsampleapp.view.ConversationDetailsActivity
+import com.example.vonage.chatsampleapp.view.ChatActivity
 import com.vonage.clientcore.core.api.models.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -38,7 +38,7 @@ class ConversationDetailsViewModel @Inject constructor(
     var isRefreshing by mutableStateOf(false)
         private set
 
-    var hasJoinedConversation : Boolean by mutableStateOf(savedStateHandle[ConversationDetailsActivity.HAS_JOINED]!!)
+    var hasJoinedConversation : Boolean by mutableStateOf(savedStateHandle[ChatActivity.HAS_JOINED]!!)
         private set
 
     private val clearSubscription = clientManager.setConversationEventListener { event ->

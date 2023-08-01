@@ -14,8 +14,7 @@ import com.example.vonage.chatsampleapp.utils.Constants
 import com.vonage.clientcore.core.api.SessionErrorReason
 import com.vonage.clientcore.core.api.models.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -96,6 +95,14 @@ class MainViewModel @Inject constructor(
 
     fun selectConversation(conversation: Conversation){
         clientManager.currentConversation = conversation
+    }
+
+    fun selectConversation(conversationId: ConversationId, callback: () -> Unit){
+        viewModelScope.launch {
+            val conversation = clientManager.getConversation(conversationId)
+            selectConversation(conversation)
+            callback()
+        }
     }
 
     override fun onCleared() {

@@ -41,6 +41,9 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class ChatActivity : ComponentActivity() {
     private val viewModel: ChatViewModel by viewModels()
+    companion object {
+        const val HAS_JOINED = "HAS_JOINED"
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         subscribeToEvents()

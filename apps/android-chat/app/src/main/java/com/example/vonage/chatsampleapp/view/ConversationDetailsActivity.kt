@@ -55,9 +55,6 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class ConversationDetailsActivity : ComponentActivity() {
     private val viewModel: ConversationDetailsViewModel by viewModels()
-    companion object {
-        const val HAS_JOINED = "HAS_JOINED"
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         subscribeToEvents()

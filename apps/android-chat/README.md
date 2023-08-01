@@ -19,8 +19,7 @@ plugins is `7.3.0`. If you encounter any issues installing the `7.3.0` version o
 
 Choose the option that works best for your setup and requirements.
 
-<!-- We don't support Push Notifications for chat yet -->
-<!-- ### Set up Push Notifications (optional)
+### Set up Push Notifications (optional)
 
 To enable push notifications in the app, follow these steps:
 
@@ -35,7 +34,7 @@ If you want to proceed without push notification support:
 1. Open the `build.gradle` file in the app directory.
 2. Locate the `plugins` block.
 3. Comment out the line `id 'com.google.gms.google-services'`.
-   - **Note:** If you decide not to use push notifications and do not comment out the line, the app will not build. -->
+   - **Note:** If you decide not to use push notifications and do not comment out the line, the app will not build.
 
 ### Set up a custom back end (optional)
 
@@ -90,6 +89,33 @@ Follow these steps to log in using a login code:
 5. Generate a code for that device.
 6. Un-tick the `Login with Vonage Token` option on the app login screen.
 7. Paste the code into the text field and log in.
+
+## Migrate to Combined Client
+
+To migrate to the Vonage Combined Client from the Chat client, follow these steps:
+
+1. Open the `build.gradle` file located in the `app` folder and replace the following line:
+   ```gradle
+   implementation("com.vonage:client-sdk-chat:$VERSION")
+   ```
+   
+   with:
+   
+   ```gradle
+   implementation("com.vonage:client-sdk:$VERSION")
+   ```
+2. Sync your project with Gradle to apply the changes.
+3. In the `ChatClientManager.kt` file, update the client initialization as follows:
+   ```
+   private val client : VonageClient
+
+   init {
+      client = VonageClient(context)
+   }
+   ```
+4. Rebuild your app.
+
+By following these steps, you'll have successfully migrated your project to use the Vonage Combined Client. Now, your project is ready to work seamlessly with both the chat and voice functionality.
 
 ## License
 
