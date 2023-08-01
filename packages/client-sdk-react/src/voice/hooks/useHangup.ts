@@ -1,7 +1,7 @@
 import { HangupReason } from '@vonage/client-sdk';
 import { useEffect } from 'react';
 import { useVoiceCallContainer } from '../VoiceCallContainer';
-import { useVonageClient } from '../VonageClientProvider';
+import { useVonageClient } from '../../VonageClientProvider';
 
 export const useHangup = () => {
     const [call, callDispatch] = useVoiceCallContainer();

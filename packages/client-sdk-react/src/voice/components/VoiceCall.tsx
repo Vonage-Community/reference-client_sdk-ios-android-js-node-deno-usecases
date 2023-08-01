@@ -9,8 +9,11 @@ type VoiceCallProps = {
 
     outgoingCallContext?: Record<string, unknown>;
 };
-export const VoiceCall = ({enableIncomingCall = true, enableOutgoingCall = true, outgoingCallContext}: VoiceCallProps) => {
-
+export const VoiceCall = ({
+    enableIncomingCall = true,
+    enableOutgoingCall = true,
+    outgoingCallContext,
+}: VoiceCallProps) => {
     return (
         <VoiceCallContainer enableLocalCache={true}>
             {enableIncomingCall && <IncomingCall />}
