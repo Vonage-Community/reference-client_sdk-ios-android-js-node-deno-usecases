@@ -10,13 +10,12 @@ import UIKit
 import Combine
 
 enum LoginType: Int {
-    case code, token
+    case token, code
 }
 
 class LoginViewModel {
     @Published var user: Result<User,UserControllerErrors>? =  nil
-    
-    var loginType: LoginType = .token
+    @Published var loginType: LoginType = .token
     @Published var error: Error?
 
     var cancellables = Set<AnyCancellable>()
@@ -62,103 +61,119 @@ class LoginViewController: BaseViewController {
     
     var userNameInput: UITextField!
     var passwordInput: UITextField!
+    var DescriptionView: UITextView!
+
     var submitButton: UIButton!
     var loginTypeSwitch: UISwitch!
+    var loginTypeControl: UISegmentedControl!
     
-    var viewModel: LoginViewModel?
+    var viewModel: LoginViewModel? {
+        didSet(value) {
+            if (self.isViewLoaded) { bind()}
+        }
+    }
+    
+    var cancels = Set<AnyCancellable>()
 
     override func loadView() {
         super.loadView()
         view = UIView()
         view.backgroundColor = .white
         
+        loginTypeControl = UISegmentedControl (items: ["Local Token","Server Auth"])
+        loginTypeControl.addTarget(self, action: #selector(loginTypeChanged), for: .valueChanged)
+        loginTypeControl.selectedSegmentIndex = 0
+        loginTypeControl.setContentHuggingPriority(.defaultHigh, for: .vertical)
+
         userNameInput = UITextField()
         userNameInput.translatesAutoresizingMaskIntoConstraints = false
         userNameInput.placeholder = "Username"
         
         passwordInput = UITextField()
         passwordInput.translatesAutoresizingMaskIntoConstraints = false
-        passwordInput.placeholder = "Vonage Token"
-        passwordInput.text = Configuration.defaultToken
+        passwordInput.placeholder = "Password"
+        
+        DescriptionView = UITextView()
+        DescriptionView.translatesAutoresizingMaskIntoConstraints = false
         
         submitButton = UIButton()
-        submitButton.setTitle("submit", for: .normal)
+        submitButton.setTitle("Sign In", for: .normal)
         submitButton.backgroundColor = UIColor.black
         submitButton.addTarget(self, action: #selector(submitButtonPressed), for: .touchUpInside)
         submitButton.isEnabled = true
         
-        let stackView = UIStackView()
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
-        stackView.distribution = .equalSpacing
-        stackView.alignment = .fill
-        stackView.spacing = 5;
-        stackView.addArrangedSubview(userNameInput)
-        stackView.addArrangedSubview(passwordInput)
-        stackView.addArrangedSubview(loginTypeView())
-        stackView.addArrangedSubview(submitButton)
+        let formContainerView = UIStackView()
+        formContainerView.translatesAutoresizingMaskIntoConstraints = false
+        formContainerView.axis = .vertical
+        formContainerView.distribution = .equalSpacing
+        formContainerView.alignment = .fill
+        formContainerView.spacing = 20;
+        formContainerView.setContentHuggingPriority(.defaultLow, for: .vertical)
+
+        formContainerView.addArrangedSubview(userNameInput)
+        formContainerView.addArrangedSubview(passwordInput)
+        formContainerView.addArrangedSubview(submitButton)
+        formContainerView.addArrangedSubview(UIView())
+        formContainerView.addArrangedSubview(DescriptionView)
+
+        let formContainerParentView = UIView()
+        formContainerParentView.addSubview(formContainerView)
+
         
-        view.addSubview(stackView)
+        let RootView = UIStackView()
+        RootView.translatesAutoresizingMaskIntoConstraints = false
+        RootView.axis = .vertical
+        RootView.distribution = .fill
+        RootView.alignment = .fill
+        RootView.addArrangedSubview(loginTypeControl)
+        RootView.addArrangedSubview(formContainerParentView)
+
+        view.addSubview(RootView)
         
         NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stackView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-            stackView.heightAnchor.constraint(equalToConstant: 200)
+            RootView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 22.5),
+            RootView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            RootView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            RootView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
+            
+            formContainerView.widthAnchor.constraint(equalTo: formContainerParentView.widthAnchor),
+            formContainerView.centerXAnchor.constraint(equalTo: formContainerParentView.centerXAnchor),
+            formContainerView.centerYAnchor.constraint(equalTo: formContainerParentView.centerYAnchor),
+            
+            loginTypeControl.heightAnchor.constraint(equalToConstant: 45.0),
+            userNameInput.heightAnchor.constraint(equalToConstant: 45.0),
+            passwordInput.heightAnchor.constraint(equalToConstant: 45.0),
+            submitButton.heightAnchor.constraint(equalToConstant: 45.0),
+            DescriptionView.heightAnchor.constraint(equalToConstant: 150.0),
         ])
         
         viewModel?.$error
             .compactMap { $0?.localizedDescription }
             .receive(on: DispatchQueue.main)
             .assign(to: &($error))
+        
+        bind()
     }
     
-    private func loginTypeView() -> UIStackView {
-        loginTypeSwitch = UISwitch(frame:CGRect(x: 150, y: 150, width: 0, height: 0))
-        loginTypeSwitch.addTarget(self, action: #selector(self.loginTypeChanged(_:)), for: .valueChanged)
-        loginTypeSwitch.onTintColor = .black
-
-        let tokenLabel = UILabel()
-        tokenLabel.text = "Token"
-        tokenLabel.textColor = UIColor.black
-        tokenLabel.font = .systemFont(ofSize: 13)
-
-        let codeLabel = UILabel()
-        codeLabel.textColor = UIColor.black
-        codeLabel.font = .systemFont(ofSize: 13)
-        codeLabel.text = "Code"
-
-        let loginTypeLabel = UILabel()
-        loginTypeLabel.text = "LoginType: "
-        loginTypeLabel.textColor = UIColor.lightGray
-        loginTypeLabel.font = .systemFont(ofSize: 13)
-        loginTypeLabel.textAlignment = .left
-
-        let stackView = UIStackView()
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .horizontal
-        stackView.distribution = .fill
-        stackView.alignment = .fill
-        stackView.spacing = 5;
-        stackView.addArrangedSubview(tokenLabel)
-        stackView.addArrangedSubview(loginTypeSwitch)
-        stackView.addArrangedSubview(codeLabel)
-
-        let loginTypeView = UIStackView()
-        loginTypeView.axis = .horizontal
-        loginTypeView.translatesAutoresizingMaskIntoConstraints = false
-        loginTypeView.spacing = 10
-        loginTypeView.distribution = .equalSpacing
-        loginTypeView.alignment = .fill
-        loginTypeView.addArrangedSubview(loginTypeLabel)
-        loginTypeView.addArrangedSubview(stackView)
-        return loginTypeView
+    func bind() {
+        
+        guard let viewModel else {
+            return
+        }
+        
+        viewModel.$loginType.sink { auth_type in
+            switch auth_type {
+            case .code:
+                self.DescriptionView.text = "NOTE: Applications with their own auth/login flow should generate a vonage JWT for the ios client on succesful login"
+            case.token:
+                self.DescriptionView.text = "NOTE: For testing purposes we can skip real login and use JWT from the config file"
+            }
+        }.store(in: &cancels)
     }
+    
+    @objc func loginTypeChanged(_ sender:UISegmentedControl!) {
+        viewModel?.loginType = LoginType(rawValue: sender.selectedSegmentIndex)!
 
-    @objc func loginTypeChanged(_ sender:UISwitch!) {
-        viewModel?.loginType = sender.isOn ? .code : .token
-        passwordInput.placeholder = sender.isOn ? "Login Code" : "Vonage Token"
-        passwordInput.text = sender.isOn ? "" : Configuration.defaultToken
     }
 
     @objc func submitButtonPressed(_ sender:UIButton) {
