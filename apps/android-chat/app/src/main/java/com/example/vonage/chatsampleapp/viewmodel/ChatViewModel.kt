@@ -12,7 +12,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.vonage.chatsampleapp.chat.ChatClientManager
 import com.example.vonage.chatsampleapp.utils.Constants
-import com.example.vonage.chatsampleapp.view.ConversationDetailsActivity
+import com.example.vonage.chatsampleapp.view.ChatActivity
 import com.vonage.clientcore.core.api.models.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,12 +23,18 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val clientManager: ChatClientManager,
-    eventsFactory: InvalidatingPagingSourceFactory<Int, ConversationEvent>
+    eventsFactory: InvalidatingPagingSourceFactory<Int, ConversationEvent>,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     val conversation = clientManager.currentConversation
     val user = clientManager.currentUser
 
-    var hasJoinedConversation by mutableStateOf(conversation.memberState == MemberState.JOINED)
+    var hasJoinedConversation by mutableStateOf(
+        // Intent extras will be used when navigating from notification's pending intent
+        savedStateHandle[ChatActivity.HAS_JOINED]
+            // Instead currentConversation will be used when navigating from MainActivity UI
+            ?: (conversation.memberState == MemberState.JOINED)
+    )
         private set
 
     private val _events = MutableSharedFlow<Event>()
@@ -96,7 +102,7 @@ class ChatViewModel @Inject constructor(
     // Sending current joining state to Details Activity
     fun intentExtras(): Bundle {
         return Bundle().apply {
-            putSerializable(ConversationDetailsActivity.HAS_JOINED, hasJoinedConversation)
+            putBoolean(ChatActivity.HAS_JOINED, hasJoinedConversation)
         }
     }
 

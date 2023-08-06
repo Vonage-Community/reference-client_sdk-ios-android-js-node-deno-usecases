@@ -20,7 +20,7 @@ const getSession = async () => {
 export default async function RootLayout({login, dash}: { login: React.ReactNode, dash: React.ReactNode}) {
   const session = await getSession();
 
-  const isSessionValid = session && session.expires_at > Date.now() / 1000;
+  const isSessionValid = session?.expires_at && session.expires_at > Date.now() / 1000;
   return (
     <html lang="en">
       <SupabaseProvider>

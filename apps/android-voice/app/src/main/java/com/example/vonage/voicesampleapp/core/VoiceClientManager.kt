@@ -1,7 +1,9 @@
 package com.example.vonage.voicesampleapp.core
 
 import android.content.Context
+import android.net.Uri
 import android.telecom.DisconnectCause
+import android.telecom.TelecomManager
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.push.PushNotificationService
 import com.example.vonage.voicesampleapp.telecom.CallConnection
@@ -14,6 +16,7 @@ import com.vonage.android_core.PushType
 import com.vonage.android_core.VGClientConfig
 import com.vonage.clientcore.core.api.*
 import com.vonage.clientcore.core.api.models.User
+import com.vonage.clientcore.core.conversation.VoiceChannelType
 import com.vonage.voice.api.VoiceClient
 import java.lang.Exception
 
@@ -70,7 +73,7 @@ class VoiceClientManager(private val context: Context) {
                     coreContext.activeCall?.run {
                         disconnect(DisconnectCause(DisconnectCause.MISSED))
                         notifyCallDisconnectedToCallActivity(context, false)
-                    }
+                    } ?: navigateToMainActivity(context)
                 }
             )
         }
@@ -81,7 +84,7 @@ class VoiceClientManager(private val context: Context) {
             if(isDeviceLocked(context)){
                 coreContext.notificationManager.showIncomingCallNotification(callId, from, type)
             } else {
-                coreContext.telecomHelper.startIncomingCall(callId, from, type)
+                placeIncomingCall(callId, from, type)
             }
         }
 
@@ -103,6 +106,7 @@ class VoiceClientManager(private val context: Context) {
                     HangupReason.remoteHangup -> DisconnectCause.REMOTE to true
                     HangupReason.localHangup -> DisconnectCause.LOCAL to false
                     HangupReason.mediaTimeout -> DisconnectCause.BUSY to true
+                    HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED to true
                 }
                 disconnect(DisconnectCause(cause))
                 notifyCallDisconnectedToCallActivity(context, isRemote)
@@ -196,7 +200,7 @@ class VoiceClientManager(private val context: Context) {
             } ?: callId?.let {
                 println("Outbound Call successfully started with Call ID: $it")
                 val callee = callContext?.get(Constants.CONTEXT_KEY_CALLEE) ?: Constants.DEFAULT_DIALED_NUMBER
-                coreContext.telecomHelper.startOutgoingCall(it, callee)
+                placeOutgoingCall(it, callee)
             }
         }
     }
@@ -210,7 +214,7 @@ class VoiceClientManager(private val context: Context) {
                     showToast(context, "Call with $callerDisplayName successfully reconnected")
                     coreContext.activeCall ?:
                     // Start a new Outgoing Call if there is not an active one
-                    coreContext.telecomHelper.startOutgoingCall(this.callId, this.callerDisplayName, isReconnected = true)
+                    placeOutgoingCall(this.callId, this.callerDisplayName, isReconnected = true)
                 }
             }
         }
@@ -337,7 +341,64 @@ class VoiceClientManager(private val context: Context) {
         }
     }
 
-    // Utilities to filter active calls
+    /*
+     * Utilities to handle errors on telecomHelper
+     */
+    private fun placeOutgoingCall(callId:CallId, callee: String, isReconnected:Boolean = false){
+        try {
+            coreContext.telecomHelper.startOutgoingCall(callId, callee, isReconnected)
+            // If ConnectionService does not respond within 3 seconds
+            // then mock an outgoing connection
+            TimerManager.startTimer(TimerManager.CONNECTION_SERVICE_TIMER, 3000){
+                mockOutgoingConnection(callId, callee, isReconnected)
+            }
+        } catch (e: Exception){
+            abortOutboundCall(callId, e.message)
+        }
+    }
+
+    fun placeIncomingCall(callId: CallId, caller: String, type: VoiceChannelType){
+        try {
+            coreContext.telecomHelper.startIncomingCall(callId, caller, type)
+        } catch (e: Exception){
+            abortInboundCall(callId, e.message)
+        }
+    }
+
+    private fun abortOutboundCall(callId: CallId, message: String?){
+        showToast(context, "Outgoing Call Error: $message")
+        client.hangup(callId){}
+        notifyCallDisconnectedToCallActivity(context, false)
+    }
+
+    private fun abortInboundCall(callId: CallId, message: String?){
+        showToast(context, "Incoming Call Error: $message")
+        client.reject(callId){}
+        notifyCallDisconnectedToCallActivity(context, false)
+    }
+
+    /**
+     *  ConnectionService not working on some devices (e.g. Samsung)
+     *  is a known issue.
+     *
+     *  This method will mock
+     *  `ConnectionService#onCreateOutgoingConnection`
+     *  and allow outgoing calls without interacting with the Telecom framework.
+     */
+    private fun mockOutgoingConnection(callId: CallId, to: String, isReconnected: Boolean) : CallConnection {
+        showToast(context, "ConnectionService Not Available")
+        val connection = CallConnection(callId).apply {
+            setAddress(Uri.parse(to), TelecomManager.PRESENTATION_ALLOWED)
+            setCallerDisplayName(to, TelecomManager.PRESENTATION_ALLOWED)
+            setDialing()
+            if(isReconnected){ setActive() }
+        }
+        return connection
+    }
+
+    /*
+     * Utilities to filter active calls
+     */
     private fun takeIfActive(callId: CallId) : CallConnection? {
         return coreContext.activeCall?.takeIf { it.callId == callId }
     }

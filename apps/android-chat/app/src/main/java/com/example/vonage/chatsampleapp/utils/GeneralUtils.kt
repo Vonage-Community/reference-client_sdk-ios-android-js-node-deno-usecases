@@ -53,6 +53,10 @@ internal fun convertUTCToDateAndTime(utcDate: String) : String {
     return "$date at $time"
 }
 
+internal fun convertUTCToTimestamp(utcDate: String) : Long {
+    return utcFormat.parse(utcDate)?.time ?: System.currentTimeMillis()
+}
+
 internal fun User.displayName() : String =
     displayName?.takeUnless { it.isBlank() } ?: name
 

@@ -9,36 +9,48 @@ import Combine
 import VonageClientSDKChat
 
 enum AlertType: Hashable, Identifiable {
-    var id: Self {
+    var id: AlertType {
         return self
     }
-    case error(String?), invite(name: String), joined, logout
+    case error(String?), invite(name: String), joined, logout, conversation(sender: String, text: String)
 }
 
 
 class ChatsListViewModel: NSObject,ObservableObject {
     private let vgClient: VGChatClient
+    private var myUser: VGUser?
     private var conversation: VGConversation?
     private var cancellable: AnyCancellable?
-    private var cursor: String?
+    private var cursor: String? = nil
     @Published var alertType: AlertType?
     @Published var conversations: [VGConversation] = []
     @Published var isMemberInvited = false
     @Published var conversationId: String?
     @Published var navigateToConversation: Bool = false
+    var hasChats: Bool {
+        cursor != nil
+    }
 
     init(client: VGChatClient) {
         vgClient = client
         super.init()
         self.bindDelegates()
+        self.vgClient.getUser("me") { error, user in
+            if let user = user {
+                self.myUser = user
+            } else {
+                let error = error != nil ? "\(error!)" : "Unknown"
+                print("Error in fetching self user \(error)")
+            }
+        }
     }
     
     override init() {
         fatalError("cant continue in chats without login")
     }
     
-    func getConversations(cursor: String? = nil) {
-        vgClient.getConversations(.asc, pageSize: 30, cursor: cursor) { error, page in
+    func getConversations() {
+        vgClient.getConversations(.asc, pageSize: 10, cursor: self.cursor) { error, page in
             DispatchQueue.main.async {
                 if let error = error as? VGError {
                     self.alertType = .error(error.message)
@@ -57,6 +69,7 @@ class ChatsListViewModel: NSObject,ObservableObject {
     
     func willAppear() {
         conversations = []
+        cursor = nil
         self.getConversations()
     }
 
@@ -68,9 +81,6 @@ class ChatsListViewModel: NSObject,ObservableObject {
     }
     
     func getChatViewModel(conversation: VGConversation) -> ChatViewModel {
-        if conversation.id == conversations.last?.id, let cursor = cursor {
-            getConversations(cursor: cursor)
-        }
         return .init(client: vgClient, conversation: conversation)
     }
     
@@ -119,6 +129,18 @@ class ChatsListViewModel: NSObject,ObservableObject {
         }
     }
     
+    func onViewConversation() {
+        guard let id = conversationId else { return }
+        vgClient.getConversation(id) { error, conversation in
+            DispatchQueue.main.async {
+                if let conversation = conversation {
+                    self.conversation = conversation
+                    self.navigateToConversation = true
+                }
+            }
+        }
+    }
+    
     func onConversationJoinEvent() {
         guard let id = conversationId else { return }
         vgClient.getConversation(id) { error, conversation in
@@ -162,6 +184,12 @@ extension ChatsListViewModel {
                 case .memberJoined:
                     self.conversationId = event.conversationId
                     self.alertType = .joined
+                case .messageText:
+                    let event = event as! VGTextMessageEvent
+                    if event.body.sender.name == self.myUser?.name { return }
+                    self.conversationId = event.conversationId
+                    let sender = event.body.sender
+                    self.alertType = .conversation(sender: sender.displayName ?? sender.name, text: event.body.text)
                 default:
                     break // in progress
                 }

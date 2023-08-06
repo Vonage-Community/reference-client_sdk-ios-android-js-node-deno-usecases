@@ -22,6 +22,11 @@ struct ChatsListView: View {
                     Text(conversation.uiName)
                 }
             }.onDelete(perform: viewModel.deleteConversation(at:))
+            if viewModel.hasChats {
+                ProgressView("Loading..")
+                    .progressViewStyle(.circular)
+                    .onAppear { viewModel.getConversations() }
+            }
         }
         .toolbar {
             NavigationLink(destination: CreateConversationView(viewModel: viewModel.getCreateConversationViewModel()), label: { Image(systemName: "plus") })
@@ -59,7 +64,11 @@ struct ChatsListView: View {
                              dismissButton: .default(Text("Okey"), action: {
                     presentation.wrappedValue.dismiss()
                 }))
-                
+            case .conversation(let sender, let text):
+                return Alert(title: Text("Message Received from \(sender)"),
+                             message: Text(text),
+                             primaryButton: .default(Text("View"), action: viewModel.onViewConversation),
+                             secondaryButton: .cancel(Text("Not Now")))
             }
         })
         .navigationTitle("Conversations")

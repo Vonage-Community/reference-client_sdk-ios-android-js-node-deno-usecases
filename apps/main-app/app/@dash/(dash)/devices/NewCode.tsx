@@ -11,7 +11,7 @@ type NewCodeProps = {
 export const NewCode = ({ device_id }: NewCodeProps) => {
     const { supabase } = useSupabase();
     const [loading, setLoading] = useState(false);
-    const [code, setCode] = useState<string>(undefined);
+    const [code, setCode] = useState<string | undefined>(undefined);
 
     const handleNewCode = async () => {
         if (loading) return;
@@ -36,7 +36,7 @@ export const NewCode = ({ device_id }: NewCodeProps) => {
     };
 
     const copyCode = () => {
-        navigator.clipboard.writeText(code);
+        navigator.clipboard.writeText(code!);
     };
 
     if (code) return (
