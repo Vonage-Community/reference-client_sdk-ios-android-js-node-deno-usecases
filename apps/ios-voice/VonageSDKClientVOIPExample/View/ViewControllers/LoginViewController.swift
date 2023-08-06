@@ -165,8 +165,13 @@ class LoginViewController: BaseViewController {
             switch auth_type {
             case .Server:
                 self.DescriptionView.text = "NOTE: Applications with their own auth/login flow should generate a vonage JWT for the ios client on succesful login"
+                self.passwordInput.text = ""
+                self.passwordInput.isEnabled = true
+
             case.Basic:
                 self.DescriptionView.text = "NOTE: For testing purposes we can skip real login and use JWT from the config file"
+                self.passwordInput.text = Configuration.defaultToken
+                self.passwordInput.isEnabled = false
             }
         }.store(in: &cancels)
     }
