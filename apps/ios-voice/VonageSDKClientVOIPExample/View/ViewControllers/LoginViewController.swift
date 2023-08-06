@@ -10,12 +10,12 @@ import UIKit
 import Combine
 
 enum LoginType: Int {
-    case token, code
+    case Basic, Server
 }
 
 class LoginViewModel {
     @Published var user: Result<User,UserControllerErrors>? =  nil
-    @Published var loginType: LoginType = .token
+    @Published var loginType: LoginType = .Basic
     @Published var error: Error?
 
     var cancellables = Set<AnyCancellable>()
@@ -26,12 +26,12 @@ class LoginViewModel {
     }
     
     func login(username: String, password: String) {
-        loginType == .token ?
+        loginType == .Basic ?
         loginUser(username: username, token: password) :
-        loginViaCode(username: username, code: password)
+        loginViaServer(username: username, code: password)
     }
 
-    private func loginViaCode(username: String, code: String) {
+    private func loginViaServer(username: String, code: String) {
         NetworkController()
             .sendRequest(apiType: CodeLoginAPI(body: LoginRequest(code: code)))
             .sink { completion in
@@ -163,9 +163,9 @@ class LoginViewController: BaseViewController {
         
         viewModel.$loginType.sink { auth_type in
             switch auth_type {
-            case .code:
+            case .Server:
                 self.DescriptionView.text = "NOTE: Applications with their own auth/login flow should generate a vonage JWT for the ios client on succesful login"
-            case.token:
+            case.Basic:
                 self.DescriptionView.text = "NOTE: For testing purposes we can skip real login and use JWT from the config file"
             }
         }.store(in: &cancels)
