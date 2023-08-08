@@ -30,7 +30,7 @@ export const useIncomingCall = () => {
     const answerCall = useCallback(async () => {
         if (!call.callId) return;
         try {
-            await vonageClient.answerCall(call.callId);
+            await vonageClient.answer(call.callId);
             callDispatch({ type: 'call:invite:answered' });
         } catch (error) {
             console.error(error);
@@ -41,7 +41,7 @@ export const useIncomingCall = () => {
     const rejectCall = useCallback(async () => {
         if (!call.callId) return;
         try {
-            await vonageClient.rejectCall(call.callId);
+            await vonageClient.reject(call.callId);
             callDispatch({ type: 'call:invite:rejected' });
         } catch (error) {
             console.error(error);

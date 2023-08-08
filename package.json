@@ -27,7 +27,7 @@
     "scripts/*"
   ],
   "dependencies": {
-    "@vonage/client-sdk": "1.1.1-alpha.0",
+    "@vonage/client-sdk": "1.1.2-alpha.0",
     
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.23"
