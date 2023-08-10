@@ -264,18 +264,19 @@ export const ChatMessageItem = (
     }: ChatMessageProps) => {
     const user = useVonageUser();
 
-    let memberName = ""
-    let displayName = ""
+    let memberName = "system"
+    let displayName = "system"
     let avatarUrl = undefined;
     let isLocal = false
     
-    if (message.from.kind === "embeddedInfo"){
-        let from = message.from as EmbeddedInfoJS
-        const { member } = useChatMember(from.user!.id);
-        memberName = member?.name || from.user!.name;
-        displayName = member?.displayName || from.user!.displayName;
-        avatarUrl = member?.avatarUrl || from.user!.imageUrl || undefined;
-        isLocal = from.user!.id === user!.id;
+    if (message.from.kind.startsWith("embeddedInfo")){
+        // Need to expose Embedded Info JS to get user info of from instead of system
+        // let from = message.from as EmbeddedInfoJS
+        // const { member } = useChatMember(from.user!.id);
+        // memberName = member?.name || from.user!.name;
+        // displayName = member?.displayName || from.user!.displayName;
+        // avatarUrl = member?.avatarUrl || from.user!.imageUrl || undefined;
+        // isLocal = from.user!.id === user!.id;
     }
 
 
