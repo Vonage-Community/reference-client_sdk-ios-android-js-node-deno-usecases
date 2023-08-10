@@ -41,11 +41,12 @@ const loadEvent = (event: ConversationEvent, oldState: ChatState) =>
             return state;
         })
         .with([P._, { kind: 'member:invited' }], ([state, event]) => {
-            state.members.set(event.body.invitee.id, {
-                userId: event.body.invitee.id,
-                name: event.body.invitee.name,
-                avatarUrl: event.body.invitee.imageUrl || undefined,
-                displayName: event.body.invitee.displayName || undefined,
+
+            state.members.set(event.body.user.id, {
+                userId: event.body.user.id,
+                name: event.body.user.name,
+                avatarUrl: event.body.user.imageUrl || undefined,
+                displayName: event.body.user.displayName || undefined,
             });
             state.events.set(event.id, event);
             return state;

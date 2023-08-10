@@ -80,7 +80,6 @@ extension SceneDelegate {
             }
             .store(in: &cancellables)
 
-        app.userController.restoreUser()
         // Display Custom Call UI based on incoming call publisher
         app.userController.user
             .replaceError(with: nil)
@@ -112,6 +111,9 @@ extension SceneDelegate {
                 }
             }
             .store(in: &cancellables)
+        
+        app.userController.restoreUser()
+
     }
 }
 
