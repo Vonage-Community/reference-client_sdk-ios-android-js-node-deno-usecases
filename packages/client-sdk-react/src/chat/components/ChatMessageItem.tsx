@@ -263,11 +263,11 @@ export const ChatMessageItem = (
         },
     }: ChatMessageProps) => {
     const user = useVonageUser();
-    const { member } = useChatMember(message.body.user.id);
-    const memberName = member?.name || message.body.user.name;
-    const displayName = member?.displayName || message.body.user.displayName;
-    const avatarUrl = member?.avatarUrl || message.body.user.imageUrl || undefined;
-    const isLocal = message.body.user.id === user!.id;
+    const { member } = useChatMember(message.from.user.id);
+    const memberName = member?.name || message.from.user.name;
+    const displayName = member?.displayName || message.from.user.displayName;
+    const avatarUrl = member?.avatarUrl || message.from.user.imageUrl || undefined;
+    const isLocal = message.from.user.id === user!.id;
 
     return (
         <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
