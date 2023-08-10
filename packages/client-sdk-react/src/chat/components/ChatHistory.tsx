@@ -43,8 +43,8 @@ const MemberJoinedEventItem = ({ event }: { event: MemberJoinedEvent }) => {
 };
 
 const MemberInvitedEventItem = ({ event }: { event: MemberInvitedEvent }) => {
-    const { member: inviter } = useChatMember(event.body.inviter!.id);
-    const { member: invitee } = useChatMember(event.body.invitee!.id);
+    const { member: inviter } = useChatMember(event.body?.inviter?.id);
+    const { member: invitee } = useChatMember(event.body?.invitee?.id);
 
     if (!inviter || !invitee) return null;
 
