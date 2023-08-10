@@ -263,18 +263,21 @@ export const ChatMessageItem = (
         },
     }: ChatMessageProps) => {
     const user = useVonageUser();
-    const { member } = useChatMember(message.from.user.id);
-    const memberName = member?.name || message.from.user.name;
-    const displayName = member?.displayName || message.from.user.displayName;
-    const avatarUrl = member?.avatarUrl || message.from.user.imageUrl || undefined;
-    const isLocal = message.from.user.id === user!.id;
+    
+    // THIS IS BROKEN BECAUSE WE NOW ALLOW SYSTEM FROM
 
-    return (
-        <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
-            <ImageComponent imageUrl={avatarUrl} name={displayName || memberName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />
-            <HeaderComponent name={displayName || memberName} className={headerClassNames.className} />
-            <BubbleComponent message={message} className={bubbleClassNames.className} componentsClassNames={{ text: bubbleClassNames.textClassName, custom: bubbleClassNames.customClassName }} />
-            <FooterComponent time={message.timestamp} className={footerClassNames.className} timeClassName={footerClassNames.timeClassName} />
-        </div>
-    );
+    // const { member } = useChatMember(message.from.user.id);
+    // const memberName = member?.name || message.from.user.name;
+    // const displayName = member?.displayName || message.from.user.displayName;
+    // const avatarUrl = member?.avatarUrl || message.from.user.imageUrl || undefined;
+    // const isLocal = message.from.user.id === user!.id;
+
+    // return (
+    //     <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
+    //         <ImageComponent imageUrl={avatarUrl} name={displayName || memberName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />
+    //         <HeaderComponent name={displayName || memberName} className={headerClassNames.className} />
+    //         <BubbleComponent message={message} className={bubbleClassNames.className} componentsClassNames={{ text: bubbleClassNames.textClassName, custom: bubbleClassNames.customClassName }} />
+    //         <FooterComponent time={message.timestamp} className={footerClassNames.className} timeClassName={footerClassNames.timeClassName} />
+    //     </div>
+    // );
 };
