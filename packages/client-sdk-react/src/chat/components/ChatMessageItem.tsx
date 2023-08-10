@@ -263,21 +263,28 @@ export const ChatMessageItem = (
         },
     }: ChatMessageProps) => {
     const user = useVonageUser();
+
+    let memberName = ""
+    let displayName = ""
+    let avatarUrl = undefined;
+    let isLocal = false
     
-    // THIS IS BROKEN BECAUSE WE NOW ALLOW SYSTEM FROM
+    if (message.from.kind === "embeddedInfo"){
+        let from = message.from as EmbeddedInfoJS
+        const { member } = useChatMember(from.user!.id);
+        memberName = member?.name || from.user!.name;
+        displayName = member?.displayName || from.user!.displayName;
+        avatarUrl = member?.avatarUrl || from.user!.imageUrl || undefined;
+        isLocal = from.user!.id === user!.id;
+    }
 
-    // const { member } = useChatMember(message.from.user.id);
-    // const memberName = member?.name || message.from.user.name;
-    // const displayName = member?.displayName || message.from.user.displayName;
-    // const avatarUrl = member?.avatarUrl || message.from.user.imageUrl || undefined;
-    // const isLocal = message.from.user.id === user!.id;
 
-    // return (
-    //     <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
-    //         <ImageComponent imageUrl={avatarUrl} name={displayName || memberName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />
-    //         <HeaderComponent name={displayName || memberName} className={headerClassNames.className} />
-    //         <BubbleComponent message={message} className={bubbleClassNames.className} componentsClassNames={{ text: bubbleClassNames.textClassName, custom: bubbleClassNames.customClassName }} />
-    //         <FooterComponent time={message.timestamp} className={footerClassNames.className} timeClassName={footerClassNames.timeClassName} />
-    //     </div>
-    // );
+    return (
+        <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
+            <ImageComponent imageUrl={avatarUrl} name={displayName || memberName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />
+            <HeaderComponent name={displayName || memberName} className={headerClassNames.className} />
+            <BubbleComponent message={message} className={bubbleClassNames.className} componentsClassNames={{ text: bubbleClassNames.textClassName, custom: bubbleClassNames.customClassName }} />
+            <FooterComponent time={message.timestamp} className={footerClassNames.className} timeClassName={footerClassNames.timeClassName} />
+        </div>
+    );
 };
