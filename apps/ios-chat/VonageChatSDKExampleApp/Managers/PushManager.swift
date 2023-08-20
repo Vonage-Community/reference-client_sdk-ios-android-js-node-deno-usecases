@@ -14,6 +14,8 @@ class PushManager: NSObject, UNUserNotificationCenterDelegate {
     static var shared: PushManager = .init()
     @Published private(set) var pushToken: Data?
     @Published private(set) var voipToken: Data?
+    @Published private(set) var pushPayload: [AnyHashable: Any]?
+    @Published private(set) var silentPushPayload: [AnyHashable: Any]?
     private let voipPushRegister: PKPushRegistry = .init(queue: nil)
     private override init() {
         super.init()
@@ -30,17 +32,18 @@ class PushManager: NSObject, UNUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        //TODO: Handle Push
+        pushPayload = response.notification.request.content.userInfo
         completionHandler()
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        //TODO: Handle Push
+        pushPayload = notification.request.content.userInfo
         completionHandler([.banner,.badge,.sound,.list])
     }
     
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        //TODO: Handle Push
+        // for silentPush
+        silentPushPayload = userInfo
         completionHandler(.newData)
     }
     

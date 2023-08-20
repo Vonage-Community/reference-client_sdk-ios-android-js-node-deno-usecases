@@ -1,16 +1,16 @@
 PODS:
-  - VonageClientSDKChat (1.1.0-alpha.16)
+  - VonageClientSDKChat (1.2.0-alpha.5)
 
 DEPENDENCIES:
-  - VonageClientSDKChat (= 1.1.0-alpha.16)
+  - VonageClientSDKChat (= 1.2.0-alpha.5)
 
 SPEC REPOS:
   trunk:
     - VonageClientSDKChat
 
 SPEC CHECKSUMS:
-  VonageClientSDKChat: fda0192b24331b2e03fa44f86eb939331b7955b5
+  VonageClientSDKChat: 948ad10634ea156cd67a4f25812d285de66eccf3
 
-PODFILE CHECKSUM: 2927b19766b4d877d5490058bc4ba8a4c064a9ca
+PODFILE CHECKSUM: f25a3aad60b4d6c36f8f39cddc23083e0c8d30db
 
 COCOAPODS: 1.11.3

@@ -70,11 +70,18 @@ class ChatViewModel: NSObject,ObservableObject {
     }
     
     private func getMessage(fromEvent event: VGConversationEvent) -> Message {
+        var sender = "Admin"
+        var displayName = sender
+        if let embeddedInfo = event.from as? VGEmbeddedInfo {
+            sender = embeddedInfo.user.name
+            displayName = embeddedInfo.user.displayName ?? sender
+        }
+        let senderName = sender == myMember?.user?.name ? "You" : displayName
         switch event {
         case let event as VGMemberInvitedEvent:
-            let content = "EVENT: '\(event.body.invitee.name)' has been invited by '\(event.body.inviter?.name ?? "unknown")'"
+            let content = "EVENT: '\(event.body.user.name)' has been invited by '\(senderName)'"
             return Message(id: event.id.intValue,
-                           sender: event.body.invitee.name,
+                           sender: event.body.user.name,
                            content: content,
                            messageType: .memberEvent)
             
@@ -93,22 +100,15 @@ class ChatViewModel: NSObject,ObservableObject {
                            messageType: .memberEvent)
         case let event as VGTextMessageEvent:
             return Message(id: event.id.intValue,
-                           sender: event.body.sender.name == myMember?.user?.name ? "You" : event.body.sender.uiName,
+                           sender: senderName,
                            content: event.body.text,
                            messageType: .text)
         
         case let event as VGCustomMessageEvent:
-            let name = event.body.sender.name == myMember?.user?.name ? "You" : event.body.sender.uiName
             return Message(id: event.id.intValue,
-                           sender: name,
+                           sender: senderName,
                            content: "",
                            messageType: getCustomMessageTemplate(dataString: event.body.customData))
-            
-        case let event as VGUnknownEvent:
-            return Message(id: event.id?.intValue ?? 0,
-                           sender: members.first{ $0.id == event.from }?.user?.name ?? event.from ?? "Unknown",
-                           content: "An unknown event with type: \(event.type) is received[parsing in progress]",
-                           messageType: .unknown(type: event.type))
             
         default:
             return Message(id: 0, sender: "N/a", content: "N/a", messageType: .unknown(type: ""))
