@@ -198,6 +198,9 @@ extension ChatsListViewModel {
     }
     
     private func processIncomingEvent(event: VGConversationEvent) {
+        if myUser?.name == (event.from as? VGEmbeddedInfo)?.user.name {
+             return
+        }
         switch event.eventType {
         case .memberInvited:
             self.conversationId = event.conversationId

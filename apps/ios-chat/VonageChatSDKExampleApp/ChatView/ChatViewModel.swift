@@ -109,7 +109,41 @@ class ChatViewModel: NSObject,ObservableObject {
                            sender: senderName,
                            content: "",
                            messageType: getCustomMessageTemplate(dataString: event.body.customData))
-            
+        case let event as VGAudioMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: event.body.audioUrl,
+                           messageType: .audio)
+        case let event as VGFileMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: event.body.fileUrl,
+                           messageType: .url)
+        case let event as VGLocationMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: "\(event.body.location)",
+                           messageType: .text)
+        case let event as VGVCardMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: event.body.vcardUrl,
+                           messageType: .url)
+        case let event as VGImageMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: event.body.imageUrl,
+                           messageType: .image)
+        case let event as VGVideoMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: event.body.videoUrl,
+                           messageType: .video)
+        case let event as VGTemplateMessageEvent:
+            return Message(id: event.id.intValue,
+                           sender: senderName,
+                           content: "\(event.body.template)",
+                           messageType: .text)
         default:
             return Message(id: 0, sender: "N/a", content: "N/a", messageType: .unknown(type: ""))
         }
@@ -198,8 +232,8 @@ class ChatViewModel: NSObject,ObservableObject {
         } catch {
             print("\n\n\nError in parsing \(error)\n\n\n")
         }
-        if let data = try? JSONDecoder().decode(CustomMessageData.self, from: data) {
-            return .facebookTemplate(data.attachment.payload)
+        if let data = try? JSONDecoder().decode(CustomMessageData.self, from: data), let payload = data.attachment?.payload {
+            return .facebookTemplate(payload)
         } else if let data = try? JSONDecoder().decode(WhatsAppResponse.self, from: data).interactive {
             return .whatsappTemplate(data)
         } else {
