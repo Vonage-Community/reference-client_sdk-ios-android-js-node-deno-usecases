@@ -20,7 +20,7 @@ class ChatsListViewModel: NSObject,ObservableObject {
     private let vgClient: VGChatClient
     private var myUser: VGUser?
     private var conversation: VGConversation?
-    private var cancellable: AnyCancellable?
+    private var cancellable: Set<AnyCancellable> = .init()
     private var cursor: String? = nil
     @Published var alertType: AlertType?
     @Published var conversations: [VGConversation] = []
@@ -34,7 +34,7 @@ class ChatsListViewModel: NSObject,ObservableObject {
     init(client: VGChatClient) {
         vgClient = client
         super.init()
-        self.bindDelegates()
+        self.bindObservables()
         self.vgClient.getUser("me") { error, user in
             if let user = user {
                 self.myUser = user
@@ -170,29 +170,55 @@ class ChatsListViewModel: NSObject,ObservableObject {
 }
 
 extension ChatsListViewModel {
-    func bindDelegates() {
-        cancellable = ChatClientManager
+    func bindObservables() {
+        cancellable.forEach { observables in
+            observables.cancel()
+        }
+        
+        PushManager.shared.$pushPayload.sink { payload in
+            guard let payload = payload else { return }
+            let pushType = VGChatClient.vonagePushType(payload)
+            switch pushType {
+            case .memberInvited, .message:
+                guard let event = self.vgClient.parsePushConversationEvent(payload) else { return }
+                self.processIncomingEvent(event: event)
+            default:
+                break
+            }
+        }.store(in: &cancellable)
+        
+        // you will receive notification by both push and socket, you have to manage it
+        ChatClientManager
             .shared
             .eventPublisher
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { event in
-                switch event.eventType {
-                case .memberInvited:
-                    self.conversationId = event.conversationId
-                    let event = event as! VGMemberInvitedEvent
-                    self.alertType = .invite(name: event.body.inviter?.name ?? "unknown")
-                case .memberJoined:
-                    self.conversationId = event.conversationId
-                    self.alertType = .joined
-                case .messageText:
-                    let event = event as! VGTextMessageEvent
-                    if event.body.sender.name == self.myUser?.name { return }
-                    self.conversationId = event.conversationId
-                    let sender = event.body.sender
-                    self.alertType = .conversation(sender: sender.displayName ?? sender.name, text: event.body.text)
-                default:
-                    break // in progress
-                }
-            })
+                self.processIncomingEvent(event: event)
+            }).store(in: &cancellable)
+    }
+    
+    private func processIncomingEvent(event: VGConversationEvent) {
+        if myUser?.name == (event.from as? VGEmbeddedInfo)?.user.name {
+             return
+        }
+        switch event.eventType {
+        case .memberInvited:
+            self.conversationId = event.conversationId
+            let event = event as! VGMemberInvitedEvent
+            self.alertType = .invite(name: event.body.user.displayName ?? event.body.user.name )
+        case .memberJoined:
+            self.conversationId = event.conversationId
+            self.alertType = .joined
+        case .messageText:
+            let from = event.from as? VGEmbeddedInfo
+            let username = from?.user.name ?? "Admin"
+            let displaName = from?.user.displayName ?? username
+            let event = event as! VGTextMessageEvent
+            if username == self.myUser?.name { return }
+            self.conversationId = event.conversationId
+            self.alertType = .conversation(sender: displaName, text: event.body.text)
+        default:
+            break // in progress
+        }
     }
 }

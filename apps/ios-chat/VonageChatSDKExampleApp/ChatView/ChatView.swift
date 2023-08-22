@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
@@ -30,10 +31,19 @@ struct ChatView: View {
                         case .customMessage(let data):
                             CustomMessageView(message: data, sender: message.sender)
                         case .image:
-                            ImageMessageView(message: message)
+                            if #available(iOS 15.0, *) {
+                                ImageMessageView(message: message)
+                            } else {
+                                URLMessageView(message: message)
+                            }
+                        case .url:
+                            URLMessageView(message: message)
                         case .memberEvent, .unknown:
                             UnknownEventView(message: message)
-                        
+                        case .video:
+                            VideoMessageView(message: message)
+                        case .audio:
+                            AudioMessageView(message: message)
                         }
                     }.listRowBackground(Color.clear)
                     if #available(iOS 15, *) {
@@ -131,35 +141,6 @@ struct TextMessageView: View {
                         .font(Font(UIFont.italicSystemFont(ofSize: 12)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-        }
-        .padding(.horizontal)
-    }
-}
-
-struct ImageMessageView: View {
-    let message: Message
-    
-    var body: some View {
-        VStack {
-            Image(message.content)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .cornerRadius(10)
-            Text("By: \(message.sender)")
-                .foregroundColor(Color(UIColor.lightGray))
-                .fontWeight(.regular)
-                .font(Font(UIFont.italicSystemFont(ofSize: 12)))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-            if message.sender != "You" {
-                Text(message.sender)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text("By: \(message.sender)")
-                    .foregroundColor(Color(UIColor.lightGray))
-                    .fontWeight(.regular)
-                    .font(Font(UIFont.italicSystemFont(ofSize: 12)))
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .padding(.horizontal)
@@ -274,3 +255,120 @@ struct CustomMessageView: View {
     }
 }
 
+struct URLMessageView: View {
+    let message: Message
+    
+    var body: some View {
+        VStack {
+            if let url = URL(string: message.content) {
+                Link("Click to view more", destination: url)
+                    .background(Color.blue)
+            } else {
+                Text("URL: \(message.content)")
+                    .background(Color.blue)
+            }
+            Text("By: \(message.sender)")
+                .foregroundColor(Color(UIColor.lightGray))
+                .fontWeight(.regular)
+                .font(Font(UIFont.italicSystemFont(ofSize: 12)))
+                .frame(maxWidth: .infinity, alignment: message.sender != "You" ? .leading : .trailing)
+        }
+        .padding(.horizontal)
+    }
+}
+
+@available(iOS 15.0, *)
+struct ImageMessageView: View {
+    let message: Message
+    var body: some View {
+        VStack {
+            if let url = URL(string: message.content) {
+                AsyncImage(url: url)
+                    .frame(height: 100)
+                    .cornerRadius(10)
+                    .aspectRatio(contentMode: .fit)
+            }
+            Text("By: \(message.sender)")
+                .foregroundColor(Color(UIColor.lightGray))
+                .fontWeight(.regular)
+                .font(Font(UIFont.italicSystemFont(ofSize: 12)))
+                .frame(maxWidth: .infinity, alignment: message.sender != "You" ? .leading : .trailing)
+        }
+        .padding(.horizontal)
+    }
+}
+
+struct VideoMessageView: View {
+    let message: Message
+    
+    var body: some View {
+        VStack {
+            if let url = URL(string: message.content) {
+                VideoPlayer(player: AVPlayer(url: url))
+                                .frame(height: 300)
+                                .padding()
+            } else {
+                Text("URL: \(message.content)")
+            }
+            Text("By: \(message.sender)")
+                .foregroundColor(Color(UIColor.lightGray))
+                .fontWeight(.regular)
+                .font(Font(UIFont.italicSystemFont(ofSize: 12)))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            if message.sender != "You" {
+                Text(message.sender)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("By: \(message.sender)")
+                    .foregroundColor(Color(UIColor.lightGray))
+                    .fontWeight(.regular)
+                    .font(Font(UIFont.italicSystemFont(ofSize: 12)))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.horizontal)
+    }
+}
+
+struct AudioMessageView: View {
+    @State private var audioPlayer: AVAudioPlayer?
+    @State private var isPlaying: Bool = false
+    let message: Message
+    var body: some View {
+        VStack {
+            Button(action: {
+                toggleAudio()
+            }) {
+                Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                    .resizable()
+                    .frame(width: 30, height: 30)
+            }
+            
+            Text("Click the play button to listen to the audio.")
+                .font(.headline)
+        }
+        .onAppear(perform: loadAudio)
+    }
+    
+    private func loadAudio() {
+        do {
+            if let url = URL(string: message.content) {
+                audioPlayer = try AVAudioPlayer.init(contentsOf: url, fileTypeHint: AVMediaType.audio.rawValue)
+                audioPlayer?.prepareToPlay()
+            }
+        } catch {
+            print("Error loading audio: \(error.localizedDescription)")
+        }
+    }
+    
+    private func toggleAudio() {
+        if let player = audioPlayer {
+            if player.isPlaying {
+                player.pause()
+            } else {
+                player.play()
+            }
+            isPlaying.toggle()
+        }
+    }
+}

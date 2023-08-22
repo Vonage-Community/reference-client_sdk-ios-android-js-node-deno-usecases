@@ -171,25 +171,43 @@ class ChatClientManager(
         val dataString = remoteMessage.data.toString()
         val type: PushType = ChatClient.getPushNotificationType(dataString)
         println("$type Push Message Received: $dataString")
-        val message: MessageEvent = when(type){
-            PushType.NEW_MESSAGE -> client.parsePushConversationMessage(dataString) ?: return
+        val event: ConversationEvent = when(type){
+            PushType.NEW_MESSAGE -> client.parsePushConversationEvent(dataString) ?: return
             else -> return
         }
-        val messageText = when(message){
-            is CustomMessageEvent -> message.body.customData
-            is TextMessageEvent -> message.body.text
+        val from = event.from
+        val senderName = when(from) {
+            is System -> "Admin"
+            is EmbeddedInfo -> from.user.displayName()
         }
-        // TODO: Provide utility to parse Conversation?
-        val conversationJson = dataString.substringAfter("\"conversation\":{").substringBefore("}")
-        val conversationName = conversationJson.substringAfter("\"name\":\"").substringBefore("\"")
-        val conversationDisplayName = conversationJson.substringAfter("\"display_name\":\"", "").substringBefore("\"")
-        val conversationTitle = conversationDisplayName.takeUnless { it.isBlank() } ?: conversationName
+
+        val messageText = when(event){
+            is CustomMessageEvent -> event.body.customData
+            is TextMessageEvent -> event.body.text
+            is MemberInvitedConversationEvent -> "${event.body.user.displayName()} has been invited by $senderName in conversation ${event.conversationId}"
+            is MemberJoinedConversationEvent -> "${senderName} has joined the conversation ${event.conversationId}"
+            is MemberLeftConversationEvent -> "${senderName} has left the conversation ${event.conversationId}"
+            is AudioMessageEvent -> "${senderName} has send an audio in the conversation ${event.conversationId}"
+            is FileMessageEvent -> "${senderName} has send a file in the conversation ${event.conversationId}"
+            is ImageMessageEvent -> "${senderName} has send an Image in the conversation ${event.conversationId}"
+            is LocationMessageEvent -> "${senderName} has send Location in the conversation ${event.conversationId}"
+            is TemplateMessageEvent -> "${senderName} has send a Template in the conversation ${event.conversationId}"
+            is VCardMessageEvent -> "${senderName} has send a Vcard in the conversation ${event.conversationId}"
+            is VideoMessageEvent -> "${senderName} has send a video in the conversation ${event.conversationId}"
+        }
+
+        val conversationTitle = when(event) {
+            is MessageEvent -> "A message has been received"
+            is MemberInvitedConversationEvent -> "Member Invited"
+            is MemberJoinedConversationEvent -> "Member joined"
+            is MemberLeftConversationEvent -> "Member Left"
+        }
         notificationHelper.showNotification(
-            message.conversationId,
+            event.conversationId,
             conversationTitle,
-            message.body.sender.displayName(),
+            senderName,
             messageText,
-            message.timestamp
+            event.timestamp
         )
     }
 

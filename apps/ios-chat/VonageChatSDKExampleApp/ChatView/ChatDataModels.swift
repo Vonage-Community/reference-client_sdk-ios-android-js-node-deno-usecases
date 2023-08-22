@@ -16,6 +16,9 @@ struct Message: Identifiable {
 
 enum MessageType {
     case text
+    case url
+    case video
+    case audio
     case image
     case memberEvent
     case facebookTemplate(CustomMessageData.CustomPayload)
@@ -25,10 +28,10 @@ enum MessageType {
 }
 
 struct CustomMessageData: Codable {
-    let attachment: CustomAttachments
+    let attachment: CustomAttachments?
     
     struct CustomAttachments: Codable {
-        let payload: CustomPayload
+        let payload: CustomPayload?
     }
     
     struct CustomPayload:Codable {

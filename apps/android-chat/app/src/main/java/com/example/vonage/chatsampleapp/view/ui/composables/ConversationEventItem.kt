@@ -19,12 +19,19 @@ fun ConversationEventItem(
     username: Username
 ){
     val time = convertUTCToLocalTime(event.timestamp)
+    val from = event.from
+    val senderName = when(from) {
+        is System -> "Admin"
+        is EmbeddedInfo -> from.user.displayName()
+        else -> {""}
+    }
+    val sendImageUrl = (from as? EmbeddedInfo)?.user?.imageUrl?.takeUnless { it.isEmpty() }
     when(event){
         is MemberInvitedConversationEvent -> {
             MemberEventItem(
-                message = event.body.invitee.displayName() +
+                message = event.body.user.displayName() +
                         " has been invited by " +
-                        (event.body.inviter?.displayName() ?: "unknown") + ".",
+                        senderName + ".",
                 time = time
             )
         }
@@ -45,14 +52,14 @@ fun ConversationEventItem(
         is TextMessageEvent -> {
             MessageItem(
                 message = event.body.text,
-                sender = event.body.sender.takeUnless { it.name == username }?.displayName(),
-                senderImageUrl = event.body.sender.imageUrl?.takeUnless { it.isEmpty() },
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
                 time = time
             )
         }
         is CustomMessageEvent -> {
-            val sender = event.body.sender.takeUnless { it.name == username }?.displayName()
-            val senderImageUrl = event.body.sender.imageUrl?.takeUnless { it.isEmpty() }
+            val sender = senderName
+            val senderImageUrl = sendImageUrl
             var message: String = event.body.customData
             var actionButtonTitles = emptyList<String>()
             try { Json.decodeFromString<MessengerActionable>(event.body.customData) } catch (_: Exception){ null }?.
@@ -73,7 +80,57 @@ fun ConversationEventItem(
                 actionButtonTitles = actionButtonTitles
             )
         }
-        is UnknownConversationEvent -> {}
+
+        // TODO(display files, or make the, clickable to view)
+        is AudioMessageEvent ->
+            MessageItem(
+                message = "Audio: ${event.body.audioUrl}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
+        is FileMessageEvent ->
+            MessageItem(
+                message = "FileMes: ${event.body.fileUrl}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
+        is ImageMessageEvent ->
+            MessageItem(
+                message = "Image: ${event.body.imageUrl}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
+        is LocationMessageEvent ->
+            MessageItem(
+                message = "Location: ${event.body.location}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
+        is TemplateMessageEvent ->
+            MessageItem(
+                message = "Template: ${event.body.template}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
+        is VCardMessageEvent ->
+            MessageItem(
+                message = "VCard: ${event.body.vcardUrl}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
+        is VideoMessageEvent ->
+            MessageItem(
+                message = "Video: ${event.body.videoUrl}",
+                sender = senderName,
+                senderImageUrl = sendImageUrl,
+                time = time
+            )
     }
     Spacer(modifier = Modifier.height(8.dp))
 }

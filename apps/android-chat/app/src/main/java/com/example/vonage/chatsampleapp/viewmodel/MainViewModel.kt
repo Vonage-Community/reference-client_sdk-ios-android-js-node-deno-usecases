@@ -41,7 +41,7 @@ class MainViewModel @Inject constructor(
 
     private val clearEventSubscription = clientManager.setConversationEventListener { event: ConversationEvent ->
         when{
-            event is MemberInvitedConversationEvent && user.name == event.body.invitee.name ||
+            event is MemberInvitedConversationEvent && user.name == event.body.user.name ||
             event is MemberLeftConversationEvent && user.name == event.body.user.name ||
             event is MemberJoinedConversationEvent && user.name == event.body.user.name -> {
                 refreshData()
