@@ -20,18 +20,17 @@ fun ConversationEventItem(
 ){
     val time = convertUTCToLocalTime(event.timestamp)
     val from = event.from
-    val senderName = when(from) {
+    val sender = when(from) {
         is System -> "Admin"
-        is EmbeddedInfo -> from.user.displayName()
-        else -> {""}
+        is EmbeddedInfo -> from.user.takeUnless { it.name == username }?.displayName()
     }
-    val sendImageUrl = (from as? EmbeddedInfo)?.user?.imageUrl?.takeUnless { it.isEmpty() }
+    val senderImageUrl = (from as? EmbeddedInfo)?.user?.imageUrl?.takeUnless { it.isEmpty() }
     when(event){
         is MemberInvitedConversationEvent -> {
             MemberEventItem(
                 message = event.body.user.displayName() +
                         " has been invited by " +
-                        senderName + ".",
+                        (sender ?: "You") + ".",
                 time = time
             )
         }
@@ -52,14 +51,12 @@ fun ConversationEventItem(
         is TextMessageEvent -> {
             MessageItem(
                 message = event.body.text,
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         }
         is CustomMessageEvent -> {
-            val sender = senderName
-            val senderImageUrl = sendImageUrl
             var message: String = event.body.customData
             var actionButtonTitles = emptyList<String>()
             try { Json.decodeFromString<MessengerActionable>(event.body.customData) } catch (_: Exception){ null }?.
@@ -85,50 +82,50 @@ fun ConversationEventItem(
         is AudioMessageEvent ->
             MessageItem(
                 message = "Audio: ${event.body.audioUrl}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         is FileMessageEvent ->
             MessageItem(
                 message = "FileMes: ${event.body.fileUrl}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         is ImageMessageEvent ->
             MessageItem(
                 message = "Image: ${event.body.imageUrl}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         is LocationMessageEvent ->
             MessageItem(
                 message = "Location: ${event.body.location}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         is TemplateMessageEvent ->
             MessageItem(
                 message = "Template: ${event.body.template}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         is VCardMessageEvent ->
             MessageItem(
                 message = "VCard: ${event.body.vcardUrl}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
         is VideoMessageEvent ->
             MessageItem(
                 message = "Video: ${event.body.videoUrl}",
-                sender = senderName,
-                senderImageUrl = sendImageUrl,
+                sender = sender,
+                senderImageUrl = senderImageUrl,
                 time = time
             )
     }
