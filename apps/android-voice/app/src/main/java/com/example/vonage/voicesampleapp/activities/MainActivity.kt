@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         Manifest.permission.ANSWER_PHONE_CALLS,
         Manifest.permission.MANAGE_OWN_CALLS,
         Manifest.permission.READ_PHONE_NUMBERS,
-        Manifest.permission.CALL_PHONE,
+        Manifest.permission.CALL_PHONE
     )
     private val arePermissionsGranted : Boolean get() {
         return permissions.all {

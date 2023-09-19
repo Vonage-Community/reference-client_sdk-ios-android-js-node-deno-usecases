@@ -1,10 +1,10 @@
 PODS:
-  - VonageClientSDKVoice (1.2.0-alpha.5):
+  - VonageClientSDKVoice (1.2.0-alpha.12):
     - VonageWebRTC (~> 99.2.39)
   - VonageWebRTC (99.2.39)
 
 DEPENDENCIES:
-  - VonageClientSDKVoice (= 1.2.0-alpha.5)
+  - VonageClientSDKVoice (= 1.2.0-alpha.12)
 
 SPEC REPOS:
   trunk:
@@ -12,9 +12,9 @@ SPEC REPOS:
     - VonageWebRTC
 
 SPEC CHECKSUMS:
-  VonageClientSDKVoice: 867f0d72238fb7aa51fa6030dd364f66a46428d1
+  VonageClientSDKVoice: 324794dc1ac2bbb5b3db6c9418e453f9e4fe41b5
   VonageWebRTC: 4b57187170ef4ea435006e932600646a0521d6b0
 
-PODFILE CHECKSUM: a3c433abd1f8a414fb8f547b4046e3cc6d412ee0
+PODFILE CHECKSUM: 551f65123ad9e8a8ee3da4855693d11b3be66337
 
 COCOAPODS: 1.11.3

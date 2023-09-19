@@ -8,11 +8,13 @@ import android.os.Looper
 import android.telephony.TelephonyManager
 import androidx.core.os.postDelayed
 import com.example.vonage.voicesampleapp.utils.navigateToCallActivity
+import com.example.vonage.voicesampleapp.utils.startForegroundService
 
 class CallBroadcastReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
         if(intent?.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED){ return }
+        /*
         val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
         when(state){
             TelephonyManager.EXTRA_STATE_RINGING -> {
@@ -27,5 +29,6 @@ class CallBroadcastReceiver: BroadcastReceiver() {
                 }
             }
         }
+         */
     }
 }
