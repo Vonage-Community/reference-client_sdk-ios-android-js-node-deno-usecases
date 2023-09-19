@@ -1,4 +1,4 @@
-package com.example.vonage.voicesampleapp.push
+package com.example.vonage.voicesampleapp.services
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,6 +11,11 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.vonage.voicesampleapp.activities.MainActivity
 
+/**
+ * This service enables audio recording even when the app is in the background.
+ *
+ * When activated, it displays a notification to inform the user that audio recording is in progress.
+ */
 class AudioRecorderService : Service() {
 
     companion object {
@@ -51,7 +56,7 @@ class AudioRecorderService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Audio Recorder Service")
-            .setContentText("Recording audio...")
+            .setContentText("Recording audio for an ongoing call...")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setLargeIcon(BitmapFactory.decodeResource(resources, android.R.drawable.ic_btn_speak_now))
             .setContentIntent(pendingIntent)

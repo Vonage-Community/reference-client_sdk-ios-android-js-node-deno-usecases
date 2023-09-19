@@ -44,3 +44,6 @@ dist/
 # iOS Pods
 Pods/
 
+# idea
+.DS_Store
+.idea

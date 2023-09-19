@@ -5,7 +5,7 @@ import android.net.Uri
 import android.telecom.DisconnectCause
 import android.telecom.TelecomManager
 import com.example.vonage.voicesampleapp.App
-import com.example.vonage.voicesampleapp.push.PushNotificationService
+import com.example.vonage.voicesampleapp.services.PushNotificationService
 import com.example.vonage.voicesampleapp.telecom.CallConnection
 import com.example.vonage.voicesampleapp.utils.*
 import com.example.vonage.voicesampleapp.utils.notifyCallAnsweredToCallActivity
@@ -35,12 +35,6 @@ class VoiceClientManager(private val context: Context) {
     init {
         initClient()
         setClientListeners()
-        registerNetworkCallback(context){
-            // TODO: Call Reconnection on network switching
-            //  is not currently supported by the SDK
-            //  but it will soon be
-            //reconnectCall()
-        }
     }
 
     private fun initClient(){
@@ -80,14 +74,8 @@ class VoiceClientManager(private val context: Context) {
         client.setCallInviteListener { callId, from, type ->
             // Reject incoming calls when there is already an active one
             coreContext.activeCall?.let { return@setCallInviteListener }
-            /*
-            if(isDeviceLocked(context)){
-                coreContext.notificationManager.showIncomingCallNotification(callId, from, type)
-            } else {
-                placeIncomingCall(callId, from, type)
-            }
-             */
             placeIncomingCall(callId, from, type)
+            // NOTE: a foreground service needs to be started to record the audio when app is in the background
             startForegroundService(context)
         }
 
@@ -125,7 +113,7 @@ class VoiceClientManager(private val context: Context) {
                     VoiceInviteCancelReason.RemoteTimeout -> DisconnectCause(DisconnectCause.MISSED)
                 }
                 cleanUp(cause, true)
-            } ?: coreContext.notificationManager.dismissIncomingCallNotification(callId)
+            } ?: stopForegroundService(context)
         }
 
         client.setCallTransferListener { callId, conversationId ->
@@ -355,7 +343,7 @@ class VoiceClientManager(private val context: Context) {
         }
     }
 
-    fun placeIncomingCall(callId: CallId, caller: String, type: VoiceChannelType){
+    private fun placeIncomingCall(callId: CallId, caller: String, type: VoiceChannelType){
         try {
             coreContext.telecomHelper.startIncomingCall(callId, caller, type)
         } catch (e: Exception){

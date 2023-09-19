@@ -8,7 +8,7 @@ import com.example.vonage.voicesampleapp.activities.CallActivity
 import com.example.vonage.voicesampleapp.activities.LoginActivity
 import com.example.vonage.voicesampleapp.activities.MainActivity
 import com.example.vonage.voicesampleapp.activities.fragments.DialerFragment
-import com.example.vonage.voicesampleapp.push.AudioRecorderService
+import com.example.vonage.voicesampleapp.services.AudioRecorderService
 
 internal fun LoginActivity.navigateToMainActivity(extras: Bundle? = null){
     val intent = Intent(this, MainActivity::class.java)
@@ -54,15 +54,6 @@ internal fun CallActivity.showDialerFragment(){
 
 internal fun navigateToMainActivity(context: Context, extras: Bundle? = null){
     val intent = Intent(context, MainActivity::class.java)
-    extras?.let {
-        intent.putExtras(it)
-    }
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-    context.startActivity(intent)
-}
-
-internal fun navigateToCallActivity(context: Context, extras: Bundle? = null){
-    val intent = Intent(context, CallActivity::class.java)
     extras?.let {
         intent.putExtras(it)
     }
