@@ -14,7 +14,6 @@ class CoreContext private constructor(context: Context) {
     private val applicationContext: Context = context.applicationContext
     val telecomHelper: TelecomHelper by lazy { TelecomHelper(applicationContext) }
     val clientManager: VoiceClientManager by lazy { VoiceClientManager(applicationContext) }
-    val notificationManager: InternalNotificationManager by lazy { InternalNotificationManager(applicationContext) }
     var activeCall: CallConnection? = null
         set(value) {
             PrivatePreferences.set(PrivatePreferences.CALL_ID, value?.callId, applicationContext)

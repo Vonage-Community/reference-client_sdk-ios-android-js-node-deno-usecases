@@ -1,4 +1,4 @@
-package com.example.vonage.voicesampleapp.push
+package com.example.vonage.voicesampleapp.services
 
 import com.example.vonage.voicesampleapp.App
 import com.google.firebase.messaging.FirebaseMessaging

@@ -8,6 +8,7 @@ import com.example.vonage.voicesampleapp.activities.CallActivity
 import com.example.vonage.voicesampleapp.activities.LoginActivity
 import com.example.vonage.voicesampleapp.activities.MainActivity
 import com.example.vonage.voicesampleapp.activities.fragments.DialerFragment
+import com.example.vonage.voicesampleapp.services.AudioRecorderService
 
 internal fun LoginActivity.navigateToMainActivity(extras: Bundle? = null){
     val intent = Intent(this, MainActivity::class.java)
@@ -60,15 +61,6 @@ internal fun navigateToMainActivity(context: Context, extras: Bundle? = null){
     context.startActivity(intent)
 }
 
-internal fun navigateToCallActivity(context: Context, extras: Bundle? = null){
-    val intent = Intent(context, CallActivity::class.java)
-    extras?.let {
-        intent.putExtras(it)
-    }
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-    context.startActivity(intent)
-}
-
 internal fun sendMessageToCallActivity(context: Context, extras: Bundle? = null){
     val intent = Intent(CallActivity.MESSAGE_ACTION)
     extras?.let {
@@ -94,4 +86,20 @@ internal fun notifyCallDisconnectedToCallActivity(context: Context, isRemote:Boo
     extras.putString(CallActivity.CALL_STATE, CallActivity.CALL_DISCONNECTED)
     extras.putBoolean(CallActivity.IS_REMOTE_DISCONNECT, isRemote)
     sendMessageToCallActivity(context, extras)
+}
+
+internal fun startForegroundService(context: Context, extras: Bundle? = null){
+    val intent = Intent(context, AudioRecorderService::class.java)
+    extras?.let {
+        intent.putExtras(it)
+    }
+    context.startForegroundService(intent)
+}
+
+internal fun stopForegroundService(context: Context, extras: Bundle? = null){
+    val intent = Intent(context, AudioRecorderService::class.java)
+    extras?.let {
+        intent.putExtras(it)
+    }
+    context.stopService(intent)
 }
