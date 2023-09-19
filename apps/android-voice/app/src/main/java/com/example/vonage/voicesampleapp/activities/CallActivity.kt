@@ -14,16 +14,13 @@ import com.example.vonage.voicesampleapp.R
 import com.example.vonage.voicesampleapp.databinding.ActivityCallBinding
 import com.example.vonage.voicesampleapp.utils.Constants
 import com.example.vonage.voicesampleapp.utils.showDialerFragment
-import com.example.vonage.voicesampleapp.utils.turnKeyguardOff
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.vonage.clientcore.core.api.models.Username
-import com.vonage.clientcore.core.conversation.VoiceChannelType
 
 class CallActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCallBinding
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
-    private val notificationManager = coreContext.notificationManager
     private var isMuteToggled = false
 
     /**
@@ -82,21 +79,9 @@ class CallActivity : AppCompatActivity() {
      */
     private fun handleIntent(intent: Intent?){
         intent ?: return
-        val callId = intent.getStringExtra(Constants.EXTRA_KEY_CALL_ID) ?: return
         val from = intent.getStringExtra(Constants.EXTRA_KEY_FROM) ?: return
-        val typeString = intent.getStringExtra(Constants.EXTRA_KEY_CHANNEL_TYPE) ?: return
-        val type = VoiceChannelType.valueOf(typeString)
         fallbackUsername = from
         fallbackState = Connection.STATE_RINGING
-        turnKeyguardOff {
-            if(notificationManager.isIncomingCallNotificationActive){
-                notificationManager.dismissIncomingCallNotification(callId)
-                clientManager.placeIncomingCall(callId, from, type)
-            } else {
-                // If the Notification has been canceled in the meantime
-                this.finish()
-            }
-        }
     }
 
     private fun setBindings(){

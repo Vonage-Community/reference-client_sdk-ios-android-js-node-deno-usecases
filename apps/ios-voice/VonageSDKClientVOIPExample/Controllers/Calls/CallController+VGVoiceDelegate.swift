@@ -62,6 +62,7 @@ extension VonageCallController: VGVoiceClientDelegate {
         case .localHangup: cxreason = .remoteEnded
         case .remoteHangup: cxreason = .remoteEnded
         case .unknown: cxreason = .unanswered
+        case .remoteNoAnswerTimeout: cxreason = .unanswered
         @unknown default:
             fatalError()
         }
