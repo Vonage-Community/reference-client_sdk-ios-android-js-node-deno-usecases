@@ -33,6 +33,7 @@ protocol CallController {
     func startOutboundCall(_ context:[String:String]) -> UUID
 }
 
+
 // Private Implementation
 
 class VonageCallController: NSObject {
@@ -58,14 +59,7 @@ class VonageCallController: NSObject {
     private let vonageToken = CurrentValueSubject<String?,Never>(nil)
     
     // Callkit
-    lazy var callProvider = { () -> CXProvider in
-        var config = CXProviderConfiguration()
-        config.supportsVideo = false
-        let provider = CXProvider(configuration: config)
-        provider.setDelegate(self, queue: nil)
-        return provider
-    }()
-    
+    var callProvider: CXProvider!
     lazy var cxController = CXCallController()
     
     // Init
@@ -73,7 +67,7 @@ class VonageCallController: NSObject {
         self.client = client
         super.init()
         client.delegate = self
-        
+        callProvider = initCXProvider()
         bindCallController()
         bindCallkit()
     }
@@ -161,6 +155,14 @@ extension VonageCallController: CallController {
 }
 
 extension VonageCallController {
+    
+    private func initCXProvider()-> CXProvider {
+        var config = CXProviderConfiguration()
+        config.supportsVideo = false
+        let provider = CXProvider(configuration: config)
+        provider.setDelegate(self, queue: nil)
+        return provider
+    }
     
     func bindCallController() {
         vonageToken.dropFirst().filter { $0 == nil }.sink { _ in

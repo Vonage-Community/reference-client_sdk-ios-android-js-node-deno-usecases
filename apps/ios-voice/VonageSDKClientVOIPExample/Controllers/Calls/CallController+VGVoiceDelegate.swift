@@ -72,11 +72,17 @@ extension VonageCallController: VGVoiceClientDelegate {
     
     // MARK: VGVoiceClientDelegate LegStatus
     
-    func voiceClient(_ client: VGVoiceClient, didReceiveLegStatusUpdateForCall callId: String, withLegId legId: String, andStatus status: VGLegStatus) {
+    func voiceClient(_ client: VGVoiceClient, didReceiveLegStatusUpdateForCall callId: VGCallId, withLegId legId: String, andStatus status: VGLegStatus) {
         if (status == .answered ) {
             let uuid = UUID(uuidString: callId)!
             vonageCallUpdates.send((uuid, CallStatus.answered))
         }
+    }
+    
+    func voiceClient(_ client: VGVoiceClient, didReceiveCallTransferForCall callId: VGCallId, withConversationId conversationId: String) {
+        // this will only be triggered for our own legs
+        let uuid = UUID(uuidString: callId)!
+        vonageCallUpdates.send((uuid, CallStatus.answered)) // report to Call Kit
     }
 
 }
