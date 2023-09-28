@@ -8,9 +8,22 @@
 import UIKit
 import Combine
 
+enum callType: Int {
+    case phone = 0, app = 1
+    
+    var description: String {
+        switch self {
+        case .app:
+            return "App"
+        case .phone:
+            return "Phone"
+        }
+    }
+}
+
 class DialerViewModel: ObservableObject{
-    @Published var number: String = ""
-    @Published var username: String = ""
+    @Published var callee: String = ""
+    @Published var callType:callType = .phone
     @Published var connection: Connection = .connected
     
     var controller: CallController?
@@ -20,11 +33,11 @@ class DialerViewModel: ObservableObject{
         // TODO: how to handle Errors?
         // via returned channel ?
         // if there is an username it will have the priority
-        if(!username.isEmpty){
-            let _ = controller?.startOutboundCall(["callee": self.username, "callType": "app"])
-        }
-        else {
-            let _ = controller?.startOutboundCall(["callee": self.number, "callType": "phone"])
+        switch callType {
+        case .app:
+            let _ = controller?.startOutboundCall(["callee": self.callee, "callType": "app"])
+        case .phone:
+            let _ = controller?.startOutboundCall(["callee": self.callee, "callType": "phone"])
         }
     }
     
@@ -44,6 +57,7 @@ class DialerViewController: UIViewController {
     var dialer: UIView!
     var dialerButtons: Array<UIButton> = []
     var deleteDigitButton: UIButton!
+    var callTypeControl: UISegmentedControl!
 
     var onlineIcon: UIView!
     
@@ -56,6 +70,11 @@ class DialerViewController: UIViewController {
         view = UIView()
         view.backgroundColor = .white
         
+        callTypeControl = UISegmentedControl (items: ["Phone number", "Username"])
+        callTypeControl.addTarget(self, action: #selector(callTypeChanged), for: .valueChanged)
+        callTypeControl.selectedSegmentIndex = 0
+        callTypeControl.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        callTypeControl.selectedSegmentIndex = viewModel?.callType.rawValue ?? 0
         // MARK: ConnectionView
 
         let online = UIStackView()
@@ -89,6 +108,7 @@ class DialerViewController: UIViewController {
         calleUsernameInput.autocapitalizationType = .none
         calleUsernameInput.addTarget(self, action: #selector(usernameInputChanged), for: .editingChanged)
         calleUsernameInput.delegate = self
+        calleUsernameInput.isHidden = callTypeControl.selectedSegmentIndex == 0
 
         // MARK: NumberView
         calleeNumberInput = UILabel()
@@ -117,7 +137,7 @@ class DialerViewController: UIViewController {
 
         let dialer = DialerView()
         dialer.onClick = {
-            self.viewModel?.number += $0
+            self.viewModel?.callee += $0
         }
         self.dialer = dialer
 
@@ -127,11 +147,12 @@ class DialerViewController: UIViewController {
         stackView.axis = .vertical
         stackView.distribution = .fill
         stackView.alignment = .fill
-        stackView.spacing = 40;
+        stackView.spacing = 10;
         stackView.addArrangedSubview(online)
+        stackView.addArrangedSubview(callTypeControl)
         stackView.addArrangedSubview(calleUsernameInput)
         stackView.addArrangedSubview(userInputStackView)
-//        stackView.addArrangedSubview(UIView()) // spacer
+        stackView.addArrangedSubview(UIView()) // spacer
 
         stackView.addArrangedSubview(dialer)
         stackView.addArrangedSubview(callButton)
@@ -154,14 +175,7 @@ class DialerViewController: UIViewController {
             return
         }
         
-        viewModel.$username.sink { username in
-            // Handle username changes here
-            // For example, you can print it or perform any other action
-            print("Username changed to: \(username)")
-        }
-        .store(in: &cancels)
-        
-        viewModel.$number.sink { s in
+        viewModel.$callee.sink { s in
             self.calleeNumberInput.text = s
             
             if(s != ""){
@@ -205,12 +219,28 @@ class DialerViewController: UIViewController {
         .store(in: &cancels)
     }
     
+    @objc func callTypeChanged(_ sender: UISegmentedControl?) {
+        viewModel?.callee = ""
+        viewModel?.callType = callType(rawValue: callTypeControl.selectedSegmentIndex) ?? .phone
+        switch callTypeControl.selectedSegmentIndex {
+        case 0:
+            dialer.isHidden = false
+            calleUsernameInput.isHidden = true
+            calleeNumberInput.superview?.isHidden = false
+        case 1:
+            dialer.isHidden = true
+            calleeNumberInput.superview?.isHidden = true
+            calleUsernameInput.isHidden = false
+        default: break
+        }
+    }
+    
     @objc func callButtonPressed(_ sender:UIButton) {
         viewModel?.createOutboundCall()
     }
     
     @objc func deleteDigitButtonPressed(_ sender:UIButton) {
-        _ = viewModel?.number.popLast()
+        _ = viewModel?.callee.popLast()
     }
     
     @objc func logoutButtonPressed(_ sender: UIBarItem!) {
@@ -219,7 +249,7 @@ class DialerViewController: UIViewController {
     
     @objc func usernameInputChanged() {
         if let usernameText = calleUsernameInput.text {
-            viewModel?.username = usernameText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            viewModel?.callee = usernameText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         }
     }
 
