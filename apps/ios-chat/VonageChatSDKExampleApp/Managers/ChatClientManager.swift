@@ -18,11 +18,10 @@ class ChatClientManager:NSObject,  VGChatClientDelegate  {
     var anyCancellable: AnyCancellable?
     
     private override init() {
-        VGBaseClient.setDefaultLoggingLevel(.debug)
-        chatClient = .init()
+        let config = VGClientInitConfig(loggingLevel: .debug, region: .US)
+        chatClient = .init(config)
         super.init()
         chatClient.delegate = self
-        chatClient.setConfig(.init(region: .US, andEnableWebsocketInvites: true))
     }
     
     func chatClient(_ client: VGChatClient, didReceiveConversationEvent event: VGConversationEvent) {

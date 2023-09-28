@@ -15,7 +15,7 @@ import androidx.core.app.Person
 import com.example.vonage.chatsampleapp.R
 import com.example.vonage.chatsampleapp.utils.convertUTCToTimestamp
 import com.example.vonage.chatsampleapp.view.MainActivity
-import com.vonage.clientcore.core.api.models.EventTimestamp
+import com.vonage.clientcore.core.api.models.Timestamp
 
 class NotificationHelper(private val context: Context) {
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -50,7 +50,7 @@ class NotificationHelper(private val context: Context) {
         conversationTitle: String,
         sender: String,
         message: String,
-        timestamp: EventTimestamp,
+        timestamp: Timestamp,
     ) {
         if(!checkPermission() || isAppInForeground) return
 

@@ -48,7 +48,7 @@ fun ConversationEventItem(
                 time = time
             )
         }
-        is TextMessageEvent -> {
+        is MessageTextEvent -> {
             MessageItem(
                 message = event.body.text,
                 sender = sender,
@@ -56,7 +56,7 @@ fun ConversationEventItem(
                 time = time
             )
         }
-        is CustomMessageEvent -> {
+        is MessageCustomEvent -> {
             var message: String = event.body.customData
             var actionButtonTitles = emptyList<String>()
             try { Json.decodeFromString<MessengerActionable>(event.body.customData) } catch (_: Exception){ null }?.
@@ -79,55 +79,58 @@ fun ConversationEventItem(
         }
 
         // TODO(display files, or make the, clickable to view)
-        is AudioMessageEvent ->
+        is MessageAudioEvent ->
             MessageItem(
                 message = "Audio: ${event.body.audioUrl}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is FileMessageEvent ->
+        is MessageFileEvent ->
             MessageItem(
                 message = "FileMes: ${event.body.fileUrl}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is ImageMessageEvent ->
+        is MessageImageEvent ->
             MessageItem(
                 message = "Image: ${event.body.imageUrl}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is LocationMessageEvent ->
+        is MessageLocationEvent ->
             MessageItem(
                 message = "Location: ${event.body.location}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is TemplateMessageEvent ->
+        is MessageTemplateEvent ->
             MessageItem(
                 message = "Template: ${event.body.template}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is VCardMessageEvent ->
+        is MessageVCardEvent ->
             MessageItem(
                 message = "VCard: ${event.body.vcardUrl}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is VideoMessageEvent ->
+        is MessageVideoEvent ->
             MessageItem(
                 message = "Video: ${event.body.videoUrl}",
                 sender = sender,
                 senderImageUrl = senderImageUrl,
                 time = time
             )
+        is CustomConversationEvent, is EphemeralConversationEvent -> {
+        //NOOP
+        }
     }
     Spacer(modifier = Modifier.height(8.dp))
 }

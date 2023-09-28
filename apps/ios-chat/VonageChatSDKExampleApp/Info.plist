@@ -8,10 +8,7 @@
 	<string>$(API_REFRESH_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>fetch</string>
-		<string>push-to-talk</string>
 		<string>remote-notification</string>
-		<string>voip</string>
 	</array>
 	<key>VONAGE_API_TOKEN</key>
 	<string>$(VONAGE_API_TOKEN)</string>

@@ -8,23 +8,18 @@
 import UserNotifications
 import Combine
 import UIKit
-import PushKit
 
 class PushManager: NSObject, UNUserNotificationCenterDelegate {
     static var shared: PushManager = .init()
-    @Published private(set) var pushToken: Data?
-    @Published private(set) var voipToken: Data?
+    @Published private(set) var deviceToken: Data?
     @Published private(set) var pushPayload: [AnyHashable: Any]?
     @Published private(set) var silentPushPayload: [AnyHashable: Any]?
-    private let voipPushRegister: PKPushRegistry = .init(queue: nil)
     private override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { isGranted, _ in
             if isGranted {
                 DispatchQueue.main.async {
-                    self.voipPushRegister.delegate = self
-                    self.voipPushRegister.desiredPushTypes = [.voIP]
                     UIApplication.shared.registerForRemoteNotifications()
                 }
             }
@@ -48,26 +43,10 @@ class PushManager: NSObject, UNUserNotificationCenterDelegate {
     }
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        pushToken = deviceToken
+        self.deviceToken = deviceToken
         print("device Token: ", deviceToken.map( { String(format: "%02.2hhx", $0) }).joined())
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
     }
-}
-
-extension PushManager: PKPushRegistryDelegate {
-    func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) {
-        if type == .voIP {
-            self.voipToken = pushCredentials.token
-            print("Voip Token: ", pushCredentials.token.map( { String(format: "%02.2hhx", $0) }).joined())
-
-        }
-    }
-    
-    func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType) async {
-        //TODO: Handle Push for Voip
-    }
-    
-    
 }
