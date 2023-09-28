@@ -222,6 +222,22 @@ class ChatViewModel: NSObject,ObservableObject {
         }
     }
     
+    func onDeleteEvent(indexSet: IndexSet) {
+        let itemsToDelete = indexSet.map { self.messages[$0] }
+        itemsToDelete.forEach { item  in
+            vgClient.deleteEvent(item.id, conversationId: conversation.id) { [item] error in
+                DispatchQueue.main.async {
+                    guard let error = error else {
+                        self.messages.removeAll(where: { item.id == $0.id})
+                        return
+                    }
+                    self.processFailure(error: error)
+                }
+            }
+        }
+        
+    }
+    
     func getCustomMessageTemplate(dataString: String) -> MessageType {
         guard let data = dataString.data(using: .utf8) else {
             return .customMessage(dataString)
