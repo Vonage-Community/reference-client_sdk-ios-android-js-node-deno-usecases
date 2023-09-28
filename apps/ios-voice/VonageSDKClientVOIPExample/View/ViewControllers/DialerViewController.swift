@@ -10,15 +10,6 @@ import Combine
 
 enum callType: Int {
     case phone = 0, app = 1
-    
-    var description: String {
-        switch self {
-        case .app:
-            return "App"
-        case .phone:
-            return "Phone"
-        }
-    }
 }
 
 class DialerViewModel: ObservableObject{
@@ -222,16 +213,17 @@ class DialerViewController: UIViewController {
     @objc func callTypeChanged(_ sender: UISegmentedControl?) {
         viewModel?.callee = ""
         viewModel?.callType = callType(rawValue: callTypeControl.selectedSegmentIndex) ?? .phone
-        switch callTypeControl.selectedSegmentIndex {
-        case 0:
-            dialer.isHidden = false
-            calleUsernameInput.isHidden = true
-            calleeNumberInput.superview?.isHidden = false
-        case 1:
+        switch viewModel?.callType {
+        case .app:
             dialer.isHidden = true
             calleeNumberInput.superview?.isHidden = true
             calleUsernameInput.isHidden = false
-        default: break
+        case .none:
+            fallthrough
+        case .phone:
+            dialer.isHidden = false
+            calleUsernameInput.isHidden = true
+            calleeNumberInput.superview?.isHidden = false
         }
     }
     
