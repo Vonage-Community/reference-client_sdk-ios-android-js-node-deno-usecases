@@ -10,6 +10,7 @@ import Combine
 
 class DialerViewModel: ObservableObject{
     @Published var number: String = ""
+    @Published var username: String = ""
     @Published var connection: Connection = .connected
     
     var controller: CallController?
@@ -18,7 +19,13 @@ class DialerViewModel: ObservableObject{
     func createOutboundCall(){
         // TODO: how to handle Errors?
         // via returned channel ?
-        let _ = controller?.startOutboundCall(["callee": self.number, "callType": "phone"])
+        // if there is an username it will have the priority
+        if(!username.isEmpty){
+            let _ = controller?.startOutboundCall(["callee": self.username, "callType": "app"])
+        }
+        else {
+            let _ = controller?.startOutboundCall(["callee": self.number, "callType": "phone"])
+        }
     }
     
     func logout() {
@@ -33,6 +40,7 @@ class DialerViewModel: ObservableObject{
 class DialerViewController: UIViewController {
     var callButton: UIButton!
     var calleeNumberInput: UILabel!
+    var calleUsernameInput: UITextField!
     var dialer: UIView!
     var dialerButtons: Array<UIButton> = []
     var deleteDigitButton: UIButton!
@@ -71,6 +79,15 @@ class DialerViewController: UIViewController {
         online.addArrangedSubview(UIView()) // Spacer
         online.addArrangedSubview(onlineLabel)
         online.addArrangedSubview(onlineIcon)
+        
+        // MARK: Username Input Field
+        calleUsernameInput = UITextField()
+        calleUsernameInput.placeholder = "Enter Username"
+        calleUsernameInput.borderStyle = .roundedRect
+        calleUsernameInput.clearButtonMode = .always
+        calleUsernameInput.autocorrectionType = .no
+        calleUsernameInput.autocapitalizationType = .none
+        calleUsernameInput.addTarget(self, action: #selector(usernameInputChanged), for: .editingChanged)
 
         // MARK: NumberView
         calleeNumberInput = UILabel()
@@ -89,6 +106,7 @@ class DialerViewController: UIViewController {
         userInputStackView.axis = .horizontal
         userInputStackView.distribution = .fill
         userInputStackView.alignment = .center
+        userInputStackView.addArrangedSubview(calleUsernameInput)
         userInputStackView.addArrangedSubview(calleeNumberInput)
         userInputStackView.addArrangedSubview(deleteDigitButton)
 
@@ -134,6 +152,13 @@ class DialerViewController: UIViewController {
         guard let viewModel else {
             return
         }
+        
+        viewModel.$username.sink { username in
+            // Handle username changes here
+            // For example, you can print it or perform any other action
+            print("Username changed to: \(username)")
+        }
+        .store(in: &cancels)
         
         viewModel.$number.sink { s in
             self.calleeNumberInput.text = s
@@ -189,6 +214,12 @@ class DialerViewController: UIViewController {
     
     @objc func logoutButtonPressed(_ sender: UIBarItem!) {
         viewModel?.logout()
+    }
+    
+    @objc func usernameInputChanged() {
+        if let usernameText = calleUsernameInput.text {
+            viewModel?.username = usernameText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        }
     }
 
 }

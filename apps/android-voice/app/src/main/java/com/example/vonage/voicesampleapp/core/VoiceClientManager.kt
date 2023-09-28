@@ -13,7 +13,6 @@ import com.example.vonage.voicesampleapp.utils.notifyCallDisconnectedToCallActiv
 import com.example.vonage.voicesampleapp.utils.notifyIsMutedToCallActivity
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
-import com.vonage.android_core.VGClientConfig
 import com.vonage.android_core.VGClientInitConfig
 import com.vonage.clientcore.core.api.*
 import com.vonage.clientcore.core.api.models.User
