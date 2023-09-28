@@ -88,6 +88,7 @@ class DialerViewController: UIViewController {
         calleUsernameInput.autocorrectionType = .no
         calleUsernameInput.autocapitalizationType = .none
         calleUsernameInput.addTarget(self, action: #selector(usernameInputChanged), for: .editingChanged)
+        calleUsernameInput.delegate = self
 
         // MARK: NumberView
         calleeNumberInput = UILabel()
@@ -106,7 +107,6 @@ class DialerViewController: UIViewController {
         userInputStackView.axis = .horizontal
         userInputStackView.distribution = .fill
         userInputStackView.alignment = .center
-        userInputStackView.addArrangedSubview(calleUsernameInput)
         userInputStackView.addArrangedSubview(calleeNumberInput)
         userInputStackView.addArrangedSubview(deleteDigitButton)
 
@@ -129,6 +129,7 @@ class DialerViewController: UIViewController {
         stackView.alignment = .fill
         stackView.spacing = 40;
         stackView.addArrangedSubview(online)
+        stackView.addArrangedSubview(calleUsernameInput)
         stackView.addArrangedSubview(userInputStackView)
 //        stackView.addArrangedSubview(UIView()) // spacer
 
@@ -222,6 +223,13 @@ class DialerViewController: UIViewController {
         }
     }
 
+}
+
+extension DialerViewController : UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
 }
 
 
