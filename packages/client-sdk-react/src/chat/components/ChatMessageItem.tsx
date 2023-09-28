@@ -4,9 +4,8 @@
 import { ComponentType, useEffect } from 'react';
 import { ChatMessage } from '../ChatContainer';
 import RelativeTime from '@yaireo/relative-time';
-import { TextMessageEvent } from '@vonage/client-sdk';
+import { MessageTextEvent, MessageCustomEvent } from '@vonage/client-sdk';
 import { match } from 'ts-pattern';
-import { CustomMessageEvent } from '@vonage/client-sdk';
 import { useVonageUser } from '../../VonageClientProvider';
 import { useChatMember } from '../hooks';
 const relativeTime = new RelativeTime();
@@ -102,14 +101,14 @@ const ChatFooter = (
 };
 
 export type TextBubbleProps = {
-    body: TextMessageEvent['body'];
+    body: MessageTextEvent['body'];
     className?: string;
 }
 type TextBubbleComponent = ComponentType<TextBubbleProps>;
 const TextBubble = ({ body: { text } }: TextBubbleProps) => <>{text}</>;
 
 export type CustomBubbleProps = {
-    body: CustomMessageEvent['body'];
+    body: MessageCustomEvent['body'];
     className?: string;
 };
 type CustomBubbleComponent = ComponentType<CustomBubbleProps>;
@@ -264,12 +263,12 @@ export const ChatMessageItem = (
     }: ChatMessageProps) => {
     const user = useVonageUser();
 
-    let memberName = "system"
-    let displayName = "system"
+    let memberName = 'system';
+    let displayName = 'system';
     let avatarUrl = undefined;
-    let isLocal = false
+    let isLocal = false;
     
-    if (message.from.kind.startsWith("embeddedInfo")){
+    if (message.from.kind.startsWith('embeddedInfo')){
         // Need to expose Embedded Info JS to get user info of from instead of system
         // let from = message.from as EmbeddedInfoJS
         // const { member } = useChatMember(from.user!.id);

@@ -1,6 +1,6 @@
 'use client';
 
-import { CustomMessageEvent, Member, MemberInvitedEvent, MemberJoinedEvent, MemberLeftEvent, TextMessageEvent, ConversationEvent, MemberState } from '@vonage/client-sdk';
+import { MessageCustomEvent, Member, MemberInvitedEvent, MemberJoinedEvent, MemberLeftEvent, MessageTextEvent, ConversationEvent, MemberState, PersistentConversationEvent } from '@vonage/client-sdk';
 import { createContext, useCallback, useContext, useEffect, useReducer, useTransition } from 'react';
 import { useVonageClient, useVonageSession } from '../VonageClientProvider';
 import { match, P } from 'ts-pattern';
@@ -14,7 +14,7 @@ export type ChatMember = {
     state?: MemberState;
 };
 export const isChatMessage = (event: ConversationEvent): event is ChatMessage => event.kind.startsWith('message:');
-export type ChatMessage = TextMessageEvent | CustomMessageEvent;
+export type ChatMessage = MessageTextEvent | MessageCustomEvent;
 export const isMemberEvent = (event: ConversationEvent): event is MemberEvent => event.kind.startsWith('member:');
 export type MemberEvent = MemberJoinedEvent | MemberInvitedEvent | MemberLeftEvent;
 
@@ -25,7 +25,7 @@ type ChatState = {
     displayName?: string;
     imageUrl?: string;
     members: Map<string, ChatMember>;
-    events: Map<number, ConversationEvent>;
+    events: Map<number, PersistentConversationEvent>;
 };
 
 export type ChatAction =
@@ -109,7 +109,7 @@ const initialState = (id: string): ChatState => ({
 type ChatContext = {
     state: ChatState;
     incomingEvent: (event: ConversationEvent) => void;
-    incomingEvents: (events: ConversationEvent[]) => void;
+    incomingEvents: (events: PersistentConversationEvent[]) => void;
     setup: (id: string, name: string, displayName?: string, imageUrl?: string) => void;
     loadMembers: (members: ChatMember[]) => void;
     isLoading: boolean;
@@ -160,7 +160,7 @@ export const ChatContainer = (props: ChatContainerProps) => {
         if (event.conversationId !== state.id) return;
         startTransition(() => dispatch({ type: 'event', event }));
     }, [state.id]);
-    const incomingEvents = useCallback((events: ConversationEvent[]) => {
+    const incomingEvents = useCallback((events: PersistentConversationEvent[]) => {
         startTransition(() => dispatch({ type: 'load:events', events }));
     }, []);
     const setup = (id: string, name: string, displayName?: string, imageUrl?: string) => {

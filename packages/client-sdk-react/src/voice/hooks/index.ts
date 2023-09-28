@@ -6,3 +6,4 @@ export * from './useServerCall';
 export * from './useMute';
 export * from './useEarmuff';
 export * from './useCallStatus';
+export * from './useSay';
