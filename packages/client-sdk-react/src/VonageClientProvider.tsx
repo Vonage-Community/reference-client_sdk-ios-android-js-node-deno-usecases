@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { VonageClient, ConfigRegion, ClientConfig, setVonageClientLoggingLevel, LoggingLevel, User } from '@vonage/client-sdk';
+import { VonageClient, ConfigRegion, LoggingLevel, User } from '@vonage/client-sdk';
 
 export const VonageRegion = {
     US: ConfigRegion.US,
@@ -39,16 +39,13 @@ export type VonageClientProviderProps = {
 };
 
 export const VonageClientProvider = ({ token, options, children, logLevel = 'error' }: VonageClientProviderProps) => {
-    const [config] = React.useState<ClientConfig>(() => {
-        const clientConfig = new ClientConfig(options?.region ? VonageRegion[options.region] : VonageRegion.US);
-        if (options?.websocketUrl) clientConfig.websocketUrl = options.websocketUrl;
-        if (options?.apiURL) clientConfig.apiUrl = options.apiURL;
-        return clientConfig;
-    });
     const [client] = React.useState<VonageClient>(() => {
-        setVonageClientLoggingLevel(logLevelMap[logLevel]);
-        const client = new VonageClient();
-        client.setConfig(config);
+        const client = new VonageClient({
+            loggingLevel: logLevelMap[logLevel],
+            region: options?.region ? VonageRegion[options.region] : VonageRegion.US,
+            websocketUrl: options?.websocketUrl,
+            apiUrl: options?.apiURL
+        });
         return client;
     });
     const [session, setSession] = React.useState<string | null>(null);

@@ -146,7 +146,7 @@ extension VonageCallController: CallController {
     
     func registerPushTokens(_ t: PushToken) {
         vonageSession.compactMap {$0}.first().sink { _ in
-            self.client.registerDevicePushToken(t.voip, userNotificationToken: t.user, isSandbox: true) { err,device in
+            self.client.registerVoipToken(t.voip, isSandbox: true) { err,device in
                 // TODO:
             }
         }
@@ -157,7 +157,7 @@ extension VonageCallController: CallController {
 extension VonageCallController {
     
     private func initCXProvider()-> CXProvider {
-        var config = CXProviderConfiguration()
+        let config = CXProviderConfiguration()
         config.supportsVideo = false
         let provider = CXProvider(configuration: config)
         provider.setDelegate(self, queue: nil)

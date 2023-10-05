@@ -9,12 +9,11 @@ import com.example.vonage.chatsampleapp.utils.displayName
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
 import com.vonage.android_core.Subscription
-import com.vonage.android_core.VGClientConfig
+import com.vonage.android_core.VGClientInitConfig
 import com.vonage.chat.ChatClient
 import com.vonage.clientcore.core.api.LoggingLevel
 import com.vonage.clientcore.core.api.SessionErrorReason
 import com.vonage.clientcore.core.api.models.*
-import com.vonage.clientcore.core.api.setDefaultLoggingLevel
 import kotlinx.coroutines.*
 
 class ChatClientManager(
@@ -39,12 +38,9 @@ class ChatClientManager(
         private set
 
     init {
-        setDefaultLoggingLevel(LoggingLevel.Info)
+        val config = VGClientInitConfig(LoggingLevel.Info)
 
-        val config = VGClientConfig()
-
-        client = ChatClient(context)
-        client.setConfig(config)
+        client = ChatClient(context, config)
     }
 
     fun setSessionErrorListener(listener: (SessionErrorReason) -> Unit): Subscription =
@@ -144,8 +140,8 @@ class ChatClientManager(
     suspend fun inviteToConversation(conversationId: ConversationId, username: Username) =
         client.inviteToConversation(conversationId, username)
 
-    suspend fun sendTextMessage(conversationId: ConversationId, message: String) : EventTimestamp =
-        client.sendTextMessage(conversationId, message)
+    suspend fun sendTextMessage(conversationId: ConversationId, message: String) : Timestamp =
+        client.sendMessageTextEvent(conversationId, message)
 
     private suspend fun registerDevicePushToken(){
         val token = clientContext.pushToken ?: return
@@ -181,18 +177,20 @@ class ChatClientManager(
         }
 
         val messageText = when(event){
-            is CustomMessageEvent -> event.body.customData
-            is TextMessageEvent -> event.body.text
+            is MessageCustomEvent -> event.body.customData
+            is MessageTextEvent -> event.body.text
             is MemberInvitedConversationEvent -> "${event.body.user.displayName()} has been invited by $sender in conversation ${event.conversationId}"
             is MemberJoinedConversationEvent -> "$sender has joined the conversation ${event.conversationId}"
             is MemberLeftConversationEvent -> "$sender has left the conversation ${event.conversationId}"
-            is AudioMessageEvent -> "$sender has sent an audio in the conversation ${event.conversationId}"
-            is FileMessageEvent -> "$sender has sent a file in the conversation ${event.conversationId}"
-            is ImageMessageEvent -> "$sender has sent an Image in the conversation ${event.conversationId}"
-            is LocationMessageEvent -> "$sender has sent Location in the conversation ${event.conversationId}"
-            is TemplateMessageEvent -> "$sender has sent a Template in the conversation ${event.conversationId}"
-            is VCardMessageEvent -> "$sender has sent a Vcard in the conversation ${event.conversationId}"
-            is VideoMessageEvent -> "$sender has sent a video in the conversation ${event.conversationId}"
+            is MessageAudioEvent -> "$sender has sent an audio in the conversation ${event.conversationId}"
+            is MessageFileEvent -> "$sender has sent a file in the conversation ${event.conversationId}"
+            is MessageImageEvent -> "$sender has sent an Image in the conversation ${event.conversationId}"
+            is MessageLocationEvent -> "$sender has sent Location in the conversation ${event.conversationId}"
+            is MessageTemplateEvent -> "$sender has sent a Template in the conversation ${event.conversationId}"
+            is MessageVCardEvent -> "$sender has sent a Vcard in the conversation ${event.conversationId}"
+            is MessageVideoEvent -> "$sender has sent a video in the conversation ${event.conversationId}"
+            is CustomConversationEvent -> "$sender has sent a custom event in the conversation ${event.conversationId}"
+            is EphemeralConversationEvent -> "$sender has sent an ephemeral event in the conversation ${event.conversationId}"
         }
 
         // TODO: Provide utility to parse Conversation?

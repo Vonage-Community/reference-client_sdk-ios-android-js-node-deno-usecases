@@ -13,7 +13,7 @@ import com.example.vonage.voicesampleapp.utils.notifyCallDisconnectedToCallActiv
 import com.example.vonage.voicesampleapp.utils.notifyIsMutedToCallActivity
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
-import com.vonage.android_core.VGClientConfig
+import com.vonage.android_core.VGClientInitConfig
 import com.vonage.clientcore.core.api.*
 import com.vonage.clientcore.core.api.models.User
 import com.vonage.clientcore.core.conversation.VoiceChannelType
@@ -38,12 +38,9 @@ class VoiceClientManager(private val context: Context) {
     }
 
     private fun initClient(){
-        setDefaultLoggingLevel(LoggingLevel.Info)
+        val config = VGClientInitConfig(LoggingLevel.Info)
 
-        val config = VGClientConfig()
-
-        client = VoiceClient(context)
-        client.setConfig(config)
+        client = VoiceClient(context, config)
     }
 
     private fun setClientListeners(){
@@ -83,8 +80,7 @@ class VoiceClientManager(private val context: Context) {
             println("Call $callId has received status update $status for leg $legId")
             takeIfActive(callId)?.apply {
                 if(status == LegStatus.answered){
-                    setActive()
-                    notifyCallAnsweredToCallActivity(context)
+                    setAnswered()
                 }
             }
         }
@@ -118,6 +114,9 @@ class VoiceClientManager(private val context: Context) {
 
         client.setCallTransferListener { callId, conversationId ->
             println("Call $callId has been transferred to conversation $conversationId")
+            takeIfActive(callId)?.apply {
+                setAnswered()
+            }
         }
 
         client.setOnMutedListener { callId, legId, isMuted ->
@@ -254,8 +253,7 @@ class VoiceClientManager(private val context: Context) {
                     cleanUp(DisconnectCause(DisconnectCause.ERROR), false)
                 } else {
                     println("Answered call with id: $callId")
-                    setActive()
-                    notifyCallAnsweredToCallActivity(context)
+                    setAnswered()
                 }
             }
         } ?: call.selfDestroy()
@@ -377,7 +375,7 @@ class VoiceClientManager(private val context: Context) {
             setAddress(Uri.parse(to), TelecomManager.PRESENTATION_ALLOWED)
             setCallerDisplayName(to, TelecomManager.PRESENTATION_ALLOWED)
             setDialing()
-            if(isReconnected){ setActive() }
+            if(isReconnected){ setAnswered() }
         }
         return connection
     }
@@ -390,6 +388,11 @@ class VoiceClientManager(private val context: Context) {
     }
     private fun CallConnection.takeIfActive() : CallConnection? {
         return takeIfActive(callId)
+    }
+
+    private fun CallConnection.setAnswered(){
+        this.setActive()
+        notifyCallAnsweredToCallActivity(context)
     }
 
     private fun CallConnection.cleanUp(disconnectCause: DisconnectCause, isRemote: Boolean){

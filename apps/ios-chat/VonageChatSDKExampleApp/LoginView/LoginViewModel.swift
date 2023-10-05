@@ -76,11 +76,10 @@ class LoginViewModel: NSObject, ObservableObject {
     }
     
     private func registerPushToken() {
-        PushManager.shared.$pushToken
+        PushManager.shared.$deviceToken
             .compactMap{ $0 }
-            .combineLatest(PushManager.shared.$voipToken.compactMap { $0 })
-            .sink { (a,b) in
-                self.chatClient.registerDevicePushToken(b, userNotificationToken: a, isSandbox: true) { error, _ in
+            .sink { token in
+                self.chatClient.registerDeviceToken(token, isSandbox: true) { error, _ in
                     DispatchQueue.main.async {
                         if let error = error as? VGError {
                             self.error = "failed to register for push \(error.message ?? "")"

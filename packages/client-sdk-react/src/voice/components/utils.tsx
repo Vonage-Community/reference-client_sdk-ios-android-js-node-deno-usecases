@@ -6,12 +6,21 @@ export type ActionProps = {
     className?: string;
     onClick: () => void;
     label: string;
+    disabled?: boolean;
+    disabledLabel?: string;
 };
 
 export type TextProps = {
     className?: string;
     children: ReactNode;
 };
+
+export type InputProps = {
+    className?: string;
+    placeholder?: string;
+    value?: string;
+    onChange: (value: string) => void
+}
 
 export type IndecatorProps = {
     isActive: boolean;
@@ -38,15 +47,21 @@ export const defaultContainer = ({children, className}: ContainerProps) => {
     );
 };
 
-export const defaultAction = ({onClick, label, className}: ActionProps) => {
+export const defaultAction = ({onClick, label, disabledLabel, className, disabled}: ActionProps) => {
     return (
-        <button className={className} onClick={onClick}>{label}</button>
+        <button className={className} onClick={onClick} disabled={disabled}>{disabled ? disabledLabel : label}</button>
     );
 };
 
 export const defaultText = ({children, className}: TextProps) => {
     return (
         <span className={className}>{children}</span>
+    );
+};
+
+export const defaultInput = ({className, placeholder, value, onChange}: InputProps) => {
+    return(
+        <input className={className} placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}></input>
     );
 };
 

@@ -50,7 +50,7 @@ class ChatsListViewModel: NSObject,ObservableObject {
     }
     
     func getConversations() {
-        vgClient.getConversations(.asc, pageSize: 10, cursor: self.cursor) { error, page in
+        vgClient.getConversations(.asc, pageSize: 10, cursor: self.cursor, includeCustomData: true, orderBy: .none) { error, page in
             DispatchQueue.main.async {
                 if let error = error as? VGError {
                     self.alertType = .error(error.message)
@@ -180,7 +180,7 @@ extension ChatsListViewModel {
             let pushType = VGChatClient.vonagePushType(payload)
             switch pushType {
             case .memberInvited, .message:
-                guard let event = self.vgClient.parsePushConversationEvent(payload) else { return }
+                guard let event = try? self.vgClient.parsePushConversationEvent(payload) else { return }
                 self.processIncomingEvent(event: event)
             default:
                 break
@@ -201,7 +201,7 @@ extension ChatsListViewModel {
         if myUser?.name == (event.from as? VGEmbeddedInfo)?.user.name {
              return
         }
-        switch event.eventType {
+        switch event.kind {
         case .memberInvited:
             self.conversationId = event.conversationId
             let event = event as! VGMemberInvitedEvent
@@ -213,7 +213,7 @@ extension ChatsListViewModel {
             let from = event.from as? VGEmbeddedInfo
             let username = from?.user.name ?? "Admin"
             let displaName = from?.user.displayName ?? username
-            let event = event as! VGTextMessageEvent
+            let event = event as! VGMessageTextEvent
             if username == self.myUser?.name { return }
             self.conversationId = event.conversationId
             self.alertType = .conversation(sender: displaName, text: event.body.text)

@@ -80,69 +80,69 @@ class ChatViewModel: NSObject,ObservableObject {
         switch event {
         case let event as VGMemberInvitedEvent:
             let content = "EVENT: '\(event.body.user.name)' has been invited by '\(senderName)'"
-            return Message(id: event.id.intValue,
+            return Message(id: event.id,
                            sender: event.body.user.name,
                            content: content,
                            messageType: .memberEvent)
             
         case let event as VGMemberJoinedEvent:
             let content = "EVENT: '\(event.body.user.name)' has Joined the conversation"
-            return Message(id: event.id.intValue,
+            return Message(id: event.id,
                            sender: event.body.user.name,
                            content: content,
                            messageType: .memberEvent)
             
         case let event as VGMemberLeftEvent:
             let content = "EVENT: '\(event.body.user.name)' has Left the conversation"
-            return Message(id: event.id.intValue,
+            return Message(id: event.id,
                            sender: event.body.user.name,
                            content: content,
                            messageType: .memberEvent)
-        case let event as VGTextMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageTextEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: event.body.text,
                            messageType: .text)
         
-        case let event as VGCustomMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageCustomEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: "",
                            messageType: getCustomMessageTemplate(dataString: event.body.customData))
-        case let event as VGAudioMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageAudioEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: event.body.audioUrl,
                            messageType: .audio)
-        case let event as VGFileMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageFileEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: event.body.fileUrl,
                            messageType: .url)
-        case let event as VGLocationMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageLocationEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: "\(event.body.location)",
                            messageType: .text)
-        case let event as VGVCardMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageVCardEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: event.body.vcardUrl,
                            messageType: .url)
-        case let event as VGImageMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageImageEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: event.body.imageUrl,
                            messageType: .image)
-        case let event as VGVideoMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageVideoEvent:
+            return Message(id: event.id,
                            sender: senderName,
                            content: event.body.videoUrl,
                            messageType: .video)
-        case let event as VGTemplateMessageEvent:
-            return Message(id: event.id.intValue,
+        case let event as VGMessageTemplateEvent:
+            return Message(id: event.id,
                            sender: senderName,
-                           content: "\(event.body.template)",
+                           content: "\(event.body.templateObject)",
                            messageType: .text)
         default:
             return Message(id: 0, sender: "N/a", content: "N/a", messageType: .unknown(type: ""))
@@ -207,7 +207,7 @@ class ChatViewModel: NSObject,ObservableObject {
         case message.isEmpty:
             error = "Message cannot be empty"
         default:
-            vgClient.sendTextMessage(conversation.id, text: message) { error, timeStamp in
+            vgClient.sendMessageTextEvent(conversation.id, text: message) { error, timeStamp in
                 DispatchQueue.main.async {
                     self.processFailure(error: error)
                 }
@@ -220,6 +220,22 @@ class ChatViewModel: NSObject,ObservableObject {
             self.processFailure(error: error)
             self.getMyMember()
         }
+    }
+    
+    func onDeleteEvent(indexSet: IndexSet) {
+        let itemsToDelete = indexSet.map { self.messages[$0] }
+        itemsToDelete.forEach { item  in
+            vgClient.deleteEvent(item.id, conversationId: conversation.id) { [item] error in
+                DispatchQueue.main.async {
+                    guard let error = error else {
+                        self.messages.removeAll(where: { item.id == $0.id})
+                        return
+                    }
+                    self.processFailure(error: error)
+                }
+            }
+        }
+        
     }
     
     func getCustomMessageTemplate(dataString: String) -> MessageType {
@@ -245,7 +261,7 @@ class ChatViewModel: NSObject,ObservableObject {
         guard let json = getCustomMessageObject() else {
             return
         }
-        vgClient.sendCustomMessage(conversation.id, customData: json) {error, timeStamp in
+        vgClient.sendMessageCustomEvent(conversation.id, customData: json) {error, timeStamp in
             DispatchQueue.main.async {
                 if let error = error as? VGError {
                     self.error = error.message
@@ -312,7 +328,7 @@ extension ChatViewModel {
             .eventPublisher
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { event in
-                print("\(event.eventType) received")
+                print("\(event.kind) received")
                 self.messages.append(self.getMessage(fromEvent: event))
             })
     }

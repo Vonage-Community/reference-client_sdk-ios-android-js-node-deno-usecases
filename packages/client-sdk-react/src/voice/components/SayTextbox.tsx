@@ -1,4 +1,4 @@
-import { ComponentType, useState } from "react";
+import { ComponentType, useState } from 'react';
 import {
   ActionProps,
   ContainerProps,
@@ -6,10 +6,10 @@ import {
   defaultText,
   defaultAction,
   defaultContainer,
-  defaultInput,
   InputProps,
-} from "./utils";
-import { useCallStatus, useSay } from "../hooks";
+  defaultInput
+} from './utils';
+import { useCallStatus, useSay } from '../hooks';
 
 type SayTextboxProps = {
   label?: string;
@@ -31,16 +31,16 @@ type SayTextboxProps = {
 };
 
 export const SayTextbox = ({
-  label = "Text to say",
-  placeholder = "Say something...",
-  className = "vg-input-group vg-w-full",
+  label = 'Text to say',
+  placeholder = 'Say something...',
+  className = 'vg-input-group vg-w-full',
 
-  textBoxClassName = "vg-input",
-  labelClassName = "vg-input-group-text",
-  buttonClassName = "vg-btn vg-btn-primary",
+  textBoxClassName = 'vg-input',
+  labelClassName = 'vg-input-group-text',
+  buttonClassName = 'vg-btn vg-btn-primary',
 
-  buttonLabel = "Say",
-  buttonDisabledLabel = "Saying...",
+  buttonLabel = 'Say',
+  buttonDisabledLabel = 'Saying...',
   buttonDisabled = false,
 
   RootContainer = defaultContainer,
@@ -49,7 +49,7 @@ export const SayTextbox = ({
   Button = defaultAction,
 }: SayTextboxProps) => {
   const { callStatus } = useCallStatus();
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const [isSaying, setIsSaying] = useState(false);
   const { say } = useSay();
 
@@ -64,7 +64,7 @@ export const SayTextbox = ({
     setIsSaying(false);
   };
 
-  if (callStatus !== "in-progress") return null;
+  if (callStatus !== 'in-progress') return null;
   return (
     <RootContainer className={className}>
       <Label className={labelClassName}>{label}</Label>

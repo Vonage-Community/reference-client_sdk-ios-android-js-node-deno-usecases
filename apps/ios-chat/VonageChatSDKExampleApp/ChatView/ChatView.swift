@@ -40,12 +40,14 @@ struct ChatView: View {
                             URLMessageView(message: message)
                         case .memberEvent, .unknown:
                             UnknownEventView(message: message)
+                                .deleteDisabled(true)
                         case .video:
                             VideoMessageView(message: message)
                         case .audio:
                             AudioMessageView(message: message)
                         }
-                    }.listRowBackground(Color.clear)
+                    }.onDelete(perform: viewModel.onDeleteEvent(indexSet:))
+                        .listRowBackground(Color.clear)
                     if #available(iOS 15, *) {
                         view.listRowSeparator(.hidden)
                     }
