@@ -40,14 +40,14 @@ You will also need a few accounts:
 
     ```bash
     # Create a new Vonage Application
-    vonage apps:create "Contact Center" --voice-answer-url=https://example.com/answer --voice-event-url=https://example.com/event
+    npx @vonage/cli apps:create "Contact Center" --voice_answer_url=https://example.com/answer --voice_event_url=https://example.com/event
     # this will output some info about the application including the ID and private key
     # this command will also create 'vonage-app.json' which contains the application ID and private key and 'private.key' which contains the private key
     ```
 
 5. Create a new copy of the `.env.example` file and name it `.env` and fill in the values from the previous steps
     - `NEXT_PUBLIC_SUPABASE_URL` - The Supabase URL from step 3
-    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - The Supabase Anon Key from step 3
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - The Supabase Anon Key from step 3, you can grab it by running supabase status in `root/apps/supabase-backend` directory
     - `VONAGE_API_KEY` - The Vonage API Key used to create the Vonage Application from step 4
     - `VONAGE_API_SECRET` - The Vonage API Secret used to create the Vonage Application from step 4
     - `VONAGE_APPLICATION_ID` - The Vonage Application ID from step 4

@@ -6,6 +6,6 @@ target 'VonageSDKClientVOIPExample' do
   use_frameworks!
 
   # Pods for VonageSDKClientVOIPExample
-  pod 'VonageClientSDKVoice', '1.2.0-rc.3'
+  pod 'VonageClientSDKVoice', '1.2.1'
 
 end

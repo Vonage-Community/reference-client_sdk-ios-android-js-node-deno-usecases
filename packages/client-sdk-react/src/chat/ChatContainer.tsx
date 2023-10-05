@@ -71,11 +71,11 @@ const loadEvent = (event: ConversationEvent, oldState: ChatState) =>
 const updateChatMemberState = (member: ChatMember, oldState: ChatState) => {
     const oldMember = oldState.members.get(member.userId);
     return match<[ChatState, ChatMember, ChatMember | undefined], ChatState>([oldState, member, oldMember])
-        .with([P._, { state: P.union(MemberState.INVITED, MemberState.JOINED) }, P._], ([state, member, _oldMember]) => {
+        .with([P._, { state: P.union('INVITED', 'JOINED') }, P._], ([state, member, _oldMember]) => {
             state.members.set(member.userId, member);
             return state;
         })
-        .with([P._, { state: MemberState.LEFT }, undefined], ([state, member, _oldMember]) => {
+        .with([P._, { state: 'LEFT' }, undefined], ([state, member, _oldMember]) => {
             state.members.delete(member.userId);
             return state;
         })
@@ -217,7 +217,7 @@ export const ChatContainer = (props: ChatContainerProps) => {
 
         const fetchMembers = async (cursor?: string) => {
             const { members, nextCursor } = await vonageClient.getConversationMembers(state.id, undefined, undefined, cursor);
-            const chatMembers = await Promise.all(members.filter(m => m.user != null).map(getChatMember));
+            const chatMembers = await Promise.all(members.filter(m => m.user != null).map((m) => getChatMember(m as Member)));
             loadMembers(chatMembers.filter(Boolean) as ChatMember[]);
             if (nextCursor) fetchMembers(nextCursor);
         };
