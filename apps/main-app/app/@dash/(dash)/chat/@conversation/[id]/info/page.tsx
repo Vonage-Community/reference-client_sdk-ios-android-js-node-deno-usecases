@@ -38,7 +38,7 @@ const ChatInfoPage = () => {
                                         {member.displayName || member.name}
                                     </span>
                                     <small className='flex gap-2'>
-                                        <div className='badge badge-outline badge-info'>{member.state?.name}</div>
+                                        <div className='badge badge-outline badge-info'>{member.state}</div>
                                         <div className='badge badge-outline badge-accent'>Channel: {member.channel}</div>
                                     </small>
                                 </div>
