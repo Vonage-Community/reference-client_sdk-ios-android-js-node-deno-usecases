@@ -22,13 +22,12 @@
   "name": "web",
   "packageManager": "npm@8.19.3",
   "workspaces": [
-    "apps/*",
+    "contact-center/*",
     "packages/*",
     "scripts/*"
   ],
   "dependencies": {
     "@vonage/client-sdk": "1.2.1",
-    
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.23"
   }
