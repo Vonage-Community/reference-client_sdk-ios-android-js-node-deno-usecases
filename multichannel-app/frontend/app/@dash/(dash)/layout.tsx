@@ -51,19 +51,6 @@ const getToken = async () => {
         .setJti(nanoid())
         .sign(key);
 
-    const supabase = createServerComponentSupabaseClient<Database>({
-        headers,
-        cookies,
-    });
-    const { error: pingError } = await supabase.rpc('set_user_presence', {
-        new_availability: 'ALL',
-        new_status: 'AVAILABLE',
-    });
-
-    if (pingError) {
-        console.error(pingError);
-        throw pingError;
-    }
 
     return token;
 };
@@ -80,7 +67,7 @@ const MainLayout = async ({ children }: { children: ReactNode }) => {
                 <ul className='w-full py-4 menu menu-horizontal lg:menu-vertical '>
                     <li className='hover-bordered'>
                         <NavLink href='/'>
-                            Home
+                            Create Conversation
                         </NavLink>
                     </li>
                     <li className='hover-bordered'>
