@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { useVonageClient, useVonageSession } from "../../VonageClientProvider";
-import { useChat } from "../ChatContainer";
+import { useCallback } from 'react';
+import { useVonageClient, useVonageSession } from '../../VonageClientProvider';
+import { useChat } from '../ChatContainer';
 
 /**
  * Returns an object with functions to perform actions on a conversation.

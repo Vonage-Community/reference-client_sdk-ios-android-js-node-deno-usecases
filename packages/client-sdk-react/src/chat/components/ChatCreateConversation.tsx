@@ -23,14 +23,15 @@ export const ChatCreateConversation = ({
     const { createConversation } = useCreateConversationActions();
     const [name, setName] = useState<string>('');
     const [displayName, setDisplayName] = useState<string>();
-    const onSubmit = () => {
+    const onSubmit = (e:  React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
         createConversation(name, displayName);
     };
 
     return (
         <form className={className} onSubmit={onSubmit}>
             <InputName className={inputNameClassName} value={name} onChange={(e) => setName(e.target.value)} />
-            <InputDisplayName className={inputDisplayNameClassName} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            <InputDisplayName className={inputDisplayNameClassName} value={displayName||''} onChange={(e) => setDisplayName(e.target.value)} />
             <Button className={buttonClassName} type='submit' />
         </form>
     );
