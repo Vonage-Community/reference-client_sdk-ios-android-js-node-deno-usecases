@@ -4,11 +4,11 @@ import { IconSend } from '@tabler/icons-react';
 
 export type InputActionProps = {
     className?: string;
-    value: string;
+    value?: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-const InputAction = ({ className, value, onChange }: InputActionProps) => {
+export const InputAction = ({ className, value, onChange }: InputActionProps) => {
     return (
         <input className={className} type='text' placeholder='Type a message...' value={value} onChange={onChange} />
     );
@@ -18,7 +18,7 @@ export type SubmitActionProps = {
     className?: string;
     type: 'submit';
 };
-const SubmitAction = ({ className, type }: SubmitActionProps) => {
+export const SubmitAction = ({ className, type }: SubmitActionProps) => {
     return (
         <button className={className} aria-label='Send Message' type={type}>
             <IconSend />
