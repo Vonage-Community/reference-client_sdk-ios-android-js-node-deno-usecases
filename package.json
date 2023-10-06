@@ -3,8 +3,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "dotenv -- turbo run dev",
-    "dev:contact-center": "dotenv -- turbo run dev --filter=main-app --filter=setup-project-webhooks --filter=supabase-backend",
-    "dev:main-app": "NODE_ENV=test turbo run dev --filter=main-app",
+    "dev:contact-center": "dotenv -- turbo run dev --filter=contact-center-* --filter=setup-project-webhooks",
     "db:start": "turbo run db:start",
     "db:stop": "turbo run db:stop",
     "db:reset": "turbo run db:reset",

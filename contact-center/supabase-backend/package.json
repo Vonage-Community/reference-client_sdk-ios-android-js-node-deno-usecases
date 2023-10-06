@@ -1,5 +1,5 @@
 {
-  "name": "supabase-backend",
+  "name": "contact-center-supabase-backend",
   "private": true,
   "scripts": {
     "db:start": "supabase start",
