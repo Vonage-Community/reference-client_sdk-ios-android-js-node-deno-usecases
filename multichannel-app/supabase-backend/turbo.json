@@ -1,0 +1,9 @@
+{
+  "extends": ["//"],
+  "pipeline": {
+    "dev": {
+      "outputMode": "none",
+      "dependsOn": ["multichannel-app-supabase-backend#db:reset"]
+    }
+  }
+}

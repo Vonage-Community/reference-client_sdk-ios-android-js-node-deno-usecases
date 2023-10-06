@@ -4,9 +4,9 @@
     ],
     "pipeline": {
         "dev": {
-            "dependsOn": [
-                "@vonage/client-sdk-react#build"
-            ]
+          "dependsOn": [
+            "@vonage/client-sdk-react#build"
+          ]
         }
     }
 }

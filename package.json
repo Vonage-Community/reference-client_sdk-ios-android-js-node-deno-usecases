@@ -3,7 +3,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "dotenv -- turbo run dev",
-    "dev:contact-center": "dotenv -- turbo run dev --filter=contact-center-* --filter=setup-project-webhooks",
+    "dev:contact-center": "dotenv -- turbo run dev --filter='./contact-center/*' --filter=setup-project-webhooks",
+    "dev:multichannel-app": "dotenv -- turbo run dev --filter='./multichannel-app/*' --filter=setup-project-webhooks",
     "db:start": "turbo run db:start",
     "db:stop": "turbo run db:stop",
     "db:reset": "turbo run db:reset",
@@ -22,6 +23,7 @@
   "packageManager": "npm@8.19.3",
   "workspaces": [
     "contact-center/*",
+    "multichannel-app/*",
     "packages/*",
     "scripts/*"
   ],
