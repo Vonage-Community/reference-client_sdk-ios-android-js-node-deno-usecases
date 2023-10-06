@@ -80,7 +80,8 @@ const argv = yargs(hideBin(process.argv))
     })
     .option('enable-facebook', {
         description: 'A flag to enable facebook event webhook',
-        type: 'boolean'
+        type: 'boolean',
+        default: false
     })
     .option('facebook-webhook-path', {
         description: 'The HTTP method to use for the facebook event webhook',
@@ -90,6 +91,7 @@ const argv = yargs(hideBin(process.argv))
     .option('bot-name', {
         description: 'The user name for the bot',
         type: 'string',
+        default: 'bot:vonage'
     })
     .option('endpoint', {
         alias: 'e',
