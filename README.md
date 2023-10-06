@@ -6,67 +6,21 @@ This is a Monorepo containing a collection of real world reference projects for 
 
 ```text
 . (Root)
-├── apps/ (Reference projects)
+├── contact-center/ (Contact Center Reference project)
+├── multichannel-app/ (multichannel-app Reference project)
 ├── packages/ (Common node packages across projects)
 ├── scripts/ (Scripts for running the projects)
 └── docs/
 ```
 
-## Usecases
-
-- [Contact Center](./docs/contact-center.md) - A Contact Center like app with support for Voice and Chat
-
 ## Projects
 
-- Common Backend - [./apps/supabase-backend](./apps/supabase-backend/README.md)
-
-    A Common backend using:
-  - [Supabase](https://supabase.io/)
-
-- Contact Center App - [./apps/main-app](./apps/main-app/README.md)
-
-    A Contact Center like app with support for Voice and Chat using:
-  - [Next.js 13 (app router)](https://nextjs.org/docs)
-  - [Common Backend](./supabase)
-  - [Vonage Client SDK React](./packages/client-sdk-react)
-  - [Tailwind CSS](https://tailwindcss.com/).
-
-- Android Voice Sample App - [./apps/android-voice](./apps/android-voice/README.md)
-  
-  An Android application powered by the Vonage Voice API to make and receive VOIP Calls using:
-  - [Android Telecom Framework](https://developer.android.com/guide/topics/connectivity/telecom)
-  - [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
-  - [Retrofit](https://square.github.io/retrofit/)
-  - [Moshi](https://github.com/square/moshi)
-
-- Android Chat Sample App - [./apps/android-chat](./apps/android-chat/README.md)
-
-  An Android application that showcases how to integrate the Vonage Chat Client SDK for real-time chat functionality using:
-  - [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
-  - [Dagger HILT](https://developer.android.com/training/dependency-injection/hilt-android)
-  - [Retrofit](https://square.github.io/retrofit/)
-  - [Moshi](https://github.com/square/moshi)
-  - [Jetpack Compose](https://developer.android.com/jetpack/compose)
-  - [Coil](https://coil-kt.github.io/coil/)
-  - [Android Paging Library v3](https://developer.android.com/topic/libraries/architecture/paging/v3-overview)
-
-- iOS Voice Sample App - [./apps/ios-voice](./apps/ios-voice/README.md)
-
-  An iOS application powered by the Vonage Voice API to make and receive VOIP Calls using:
-  - [UIKit](https://developer.apple.com/documentation/uikit)
-  - [Combine](https://developer.apple.com/documentation/combine)
-  - [CallKit](https://developer.apple.com/documentation/callkit)
-  - [Apple Push Notification service(APNs)](https://developer.apple.com/documentation/usernotifications/registering_your_app_with_apns)
-
-- iOS Chat Sample App - [./apps/ios-chat](./apps/ios-chat/README.md)
-
-  An iOS application that showcases how to integrate the Vonage Chat Client SDK for real-time chat functionality, using:
-  - [SwiftUI](https://developer.apple.com/xcode/swiftui/)
-  - [Combine](https://developer.apple.com/documentation/combine)
+- [Contact Center](./contact-center/README.md) - A Contact Center like app with support for Voice and Chat (iOS, Android, Web)
+- [Multichannel App](./multichannel-app/README.md) - A Multichannel app with support for Voice and Chat (Web)
 
 ## Packages
 
-- @vonage/client-sdk-react - [./packages/client-sdk-react](./packages/client-sdk-react/README.md.md)
+- @vonage/client-sdk-react - [./packages/client-sdk-react](./packages/client-sdk-react/README.md)
 
     A React wrapper for the Vonage Client SDK's for Voice and Chat.
   - [React](https://reactjs.org/)
@@ -74,7 +28,7 @@ This is a Monorepo containing a collection of real world reference projects for 
 
 ## Running locally
 
-Each project has it's own readme with instructions on how to run it locally in isolation however a number of projects are designed to fit together to form a complete usecase scenario. As such each usecase senario has a set of instructions on how to run the projects together. See the [Usecases](#usecases) section for a list of usecases and links to the relevant readmes and instructions.
+Each project has it's own readme with instructions on how to run it locally. Each Project has a number of frontend and backend apps that make up the project. Some of these apps are required to run the project and some are optional.
 
 ## Channel Integration Guides
 

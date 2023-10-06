@@ -1,10 +1,57 @@
-# Contact Center Usecase Senario
+# Contact Center Project
 
 This is a Contact Center like app with support for Voice and Chat.
 
 ## Features
 
-TODO: Add list of features
+<!-- TODO: Add list of features -->
+
+## Apps
+
+- Backend - [./supabase-backend](./supabase-backend/README.md)
+    A Common backend using:
+- [Supabase](https://supabase.io/)
+
+- Main Web App - [./main-app](./main-app/README.md)
+
+    A Contact Center like app with support for Voice and Chat using:
+  - [Next.js 13 (app router)](https://nextjs.org/docs)
+  - [Common Backend](./supabase-backend)
+  - [Vonage Client SDK React](../packages/client-sdk-react)
+  - [Tailwind CSS](https://tailwindcss.com/).
+
+- Android Voice Sample App - [./android-voice](./android-voice/README.md)
+
+    An Android application powered by the Vonage Voice API to make and receive VOIP Calls using:
+  - [Android Telecom Framework](https://developer.android.com/guide/topics/connectivity/telecom)
+  - [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
+  - [Retrofit](https://square.github.io/retrofit/)
+  - [Moshi](https://github.com/square/moshi)
+
+- Android Chat Sample App - [./android-chat](./android-chat/README.md)
+
+    An Android application that showcases how to integrate the Vonage Chat Client SDK for real-time chat functionality using:
+  - [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
+  - [Dagger HILT](https://developer.android.com/training/dependency-injection/hilt-android)
+  - [Retrofit](https://square.github.io/retrofit/)
+  - [Moshi](https://github.com/square/moshi)
+  - [Jetpack Compose](https://developer.android.com/jetpack/compose)
+  - [Coil](https://coil-kt.github.io/coil/)
+  - [Android Paging Library v3](https://developer.android.com/topic/libraries/architecture/paging/v3-overview)
+
+- iOS Voice Sample App - [./ios-voice](./ios-voice/README.md)
+
+    An iOS application powered by the Vonage Voice API to make and receive VOIP Calls using:
+  - [UIKit](https://developer.apple.com/documentation/uikit)
+  - [Combine](https://developer.apple.com/documentation/combine)
+  - [CallKit](https://developer.apple.com/documentation/callkit)
+  - [Apple Push Notification service(APNs)](https://developer.apple.com/documentation/usernotifications/registering_your_app_with_apns)
+
+- iOS Chat Sample App - [./ios-chat](./ios-chat/README.md)
+
+    An iOS application that showcases how to integrate the Vonage Chat Client SDK for real-time chat functionality, using:
+  - [SwiftUI](https://developer.apple.com/xcode/swiftui/)
+  - [Combine](https://developer.apple.com/documentation/combine)
 
 ## Running Locally
 

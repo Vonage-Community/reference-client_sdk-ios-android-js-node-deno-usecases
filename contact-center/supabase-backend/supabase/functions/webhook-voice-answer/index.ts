@@ -22,6 +22,7 @@ const customDataSchema = zodJson(z.object({
 const VoiceAnswerSchema = z.object({
     kind: z.enum(['server_call', 'inbound_call']),
     from: z.void(),
+    from_user: z.string().optional(),
     custom_data: customDataSchema.optional(),
 });
 
@@ -29,6 +30,7 @@ const ServerCallSchema = VoiceAnswerSchema.extend({
     kind: z.void().transform(() => 'server_call').pipe(
         z.literal('server_call'),
     ),
+    from_user: z.string(),
     custom_data: customDataSchema,
 });
 
@@ -39,6 +41,7 @@ const InboundCallSchema = VoiceAnswerSchema.extend({
     from: z.string(),
     to: z.string(),
     custom_data: z.void(),
+    from_user: z.void(),
 });
 
 const schema = z.union([ServerCallSchema, InboundCallSchema]);
