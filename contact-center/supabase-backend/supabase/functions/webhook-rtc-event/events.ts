@@ -8,7 +8,7 @@ import {
 
 export const RTCEventBase = z.object({
     type: z.string(),
-    id: z.number(),
+    id: z.number().optional(),
     timestamp: z.string().datetime({ offset: true }),
     application_id: z.string(),
     conversation_id: z.string().optional(),

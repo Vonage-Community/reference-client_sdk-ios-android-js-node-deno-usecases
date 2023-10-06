@@ -128,6 +128,6 @@ To link your Facebook Page to a Vonage application, follow these steps:
 
 ## Conclusion
 
-You have successfully learned how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, configure a webhook to receive postback messages, connect the Facebook Page to the Vonage Dashboard, and retrieve essential properties. 
+You have successfully learned how to create a Facebook Page, set up a Facebook Business account, create a Business app on the Facebook for Developers portal, link the Facebook Page to the app, configure a webhook to receive postback messages, connect the Facebook Page to the Vonage Dashboard, and retrieve essential properties.
 
 These steps will enable you to leverage the Facebook platform for your business and application needs.
