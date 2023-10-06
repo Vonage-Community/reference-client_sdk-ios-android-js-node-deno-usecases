@@ -10,7 +10,7 @@ const adminToken = () =>
         Deno.env.get('VONAGE_APPLICATION_ID') || '',
     );
 
-const VONAGE_ENDPOINT = Deno.env.get('VONAGE_ENDPOINT') || '';
+const VONAGE_ENDPOINT = Deno.env.get('VONAGE_ENDPOINT') || 'https://api-us-3.vonage.com/v1';
 const csClientLogger = getUtilsLogger('csClient');
 
 export const csClient = async <T = any>(
