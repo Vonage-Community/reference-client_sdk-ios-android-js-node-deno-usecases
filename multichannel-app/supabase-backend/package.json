@@ -1,5 +1,5 @@
 {
-  "name": "contact-center-supabase-backend",
+  "name": "multichannel-app-supabase-backend",
   "private": true,
   "scripts": {
     "db:start": "supabase start",

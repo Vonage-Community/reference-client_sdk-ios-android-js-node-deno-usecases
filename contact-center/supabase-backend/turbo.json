@@ -1,0 +1,9 @@
+{
+  "extends": ["//"],
+  "pipeline": {
+    "dev": {
+      "outputMode": "none",
+      "dependsOn": ["contact-center-supabase-backend#db:reset"]
+    }
+  }
+}
