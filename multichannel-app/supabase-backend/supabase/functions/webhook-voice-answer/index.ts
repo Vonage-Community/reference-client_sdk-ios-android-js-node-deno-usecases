@@ -49,7 +49,7 @@ const schema = z.union([ServerCallSchema, InboundCallSchema]);
 
 const handleServerCall = (
     _req: Request,
-    { custom_data }: z.infer<typeof ServerCallSchema>,
+    { custom_data, from }: z.infer<typeof ServerCallSchema>,
 ) => {
     logger.info('Server call received');
     logger.debug(`custom data: ${JSON.stringify(custom_data)}`);
@@ -81,13 +81,20 @@ const handleServerCall = (
         ncco = [
             {
                 action: 'talk',
-                text: 'Connecting you now, please wait.',
+                text: 'Hello inapp user, connecting you now, please wait.',
             },
             {
                 action: "conversation", 
                 name: custom_data.connect_to_conversation
             }
         ];
+    } else if(from) {
+
+        ncco = [{
+                action: 'talk',
+                text: 'Hello pstn user, where do you want to be connected',
+        }]
+
     } else {
         ncco = [{
                 action: 'talk',
@@ -102,56 +109,50 @@ const handleServerCall = (
 
 const handleInboundCall = async (
     _req: Request,
-    _data: z.infer<typeof InboundCallSchema>,
+    data: z.infer<typeof InboundCallSchema>,
 ) => {
     logger.info('Inbound call received');
     const adminClient = AdminClient();
     try {
-        logger.debug('fetching available agents');
-        const { data, error } = await adminClient.from(
-            'user_available_view_voice',
-        )
-            .select('*').limit(1).maybeSingle();
-        if (error) {
-            logger.error('there was an error fetching available agents');
-            throw new Error('there was an error fetching available agents');
-        }
-        if (!data) {
-            logger.debug('there are no agents available at this time');
-            throw new Error('there are no agents available at this time');
-        }
-        logger.debug(`available agent: ${JSON.stringify(data)}`);
-        const { error: err } = await adminClient.rpc(
-            'set_user_presence_email',
-            {
-                user_email: data.email!,
-                new_availability: data.availability!,
-                new_status: 'BUSY',
-            },
-        );
+        // logger.debug('fetching available agents');
+        // const { data, error } = await adminClient.from(
+        //     'user_available_view_voice',
+        // )
+        //     .select('*').limit(1).maybeSingle();
+        // if (error) {
+        //     logger.error('there was an error fetching available agents');
+        //     throw new Error('there was an error fetching available agents');
+        // }
+        // if (!data) {
+        //     logger.debug('there are no agents available at this time');
+        //     throw new Error('there are no agents available at this time');
+        // }
+        // logger.debug(`available agent: ${JSON.stringify(data)}`);
+        // const { error: err } = await adminClient.rpc(
+        //     'set_user_presence_email',
+        //     {
+        //         user_email: data.email!,
+        //         new_availability: data.availability!,
+        //         new_status: 'BUSY',
+        //     },
+        // );
 
-        if (err) logger.error(err);
+        // if (err) logger.error(err);
         const ncco = [
             {
                 action: 'talk',
-                text:
-                    'This is a Demo of the Vonage Client SDKs using Supabase Functions',
+                text: `Tell us when to you want to be connected`,
+                "bargeIn": true
             },
             {
-                action: 'talk',
-                text: `Connecting you now to ${data.name} now, please wait.`,
-            },
-            {
-                action: 'connect',
-                ringbackTone: 'https://bigsoundbank.com/UPLOAD/wav/1618.wav',
-                endpoint: [
-                    {
-                        type: 'app',
-                        user: data.email,
-                    },
-                ],
-            },
+                "action": "input",
+                "type": [ "dtmf" ],	
+                "dtmf": {
+                    "maxDigits": 1
+                }	
+            }
         ];
+
         logger.info('Returning NCCO');
         logger.debug('Returning NCCO', ncco);
         return ncco;
