@@ -60,19 +60,19 @@ const MainLayout = async ({ children }: { children: ReactNode }) => {
 
     return (
         <div className='flex flex-col h-full w-full gap-4 lg:flex-row max-h-full max-w-full' >
-            <aside className='relative flex flex-row w-full rounded-lg bg-base-300 lg:w-3/12 min-h-16 lg:h-full lg:flex-col'>
+            <aside className='relative   flex flex-row w-full rounded-lg bg-base-300 lg:w-3/12 min-h-16 lg:h-full lg:flex-col'>
                 <div className='flex flex-row items-center justify-center h-16 lg:w-full lg:h-24'>
                     <Logo />
                 </div>
                 <ul className='w-full py-4 menu menu-horizontal lg:menu-vertical '>
                     <li className='hover-bordered'>
                         <NavLink href='/'>
-                            Create Conversation
+                            Create Chat
                         </NavLink>
                     </li>
                     <li className='hover-bordered'>
                         <NavLink href='/chat' parallelRouteKey='conversationList'>
-                            Chat
+                            Chat List
                         </NavLink>
                     </li>
                     {/* <li className='hover-bordered'>

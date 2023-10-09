@@ -4,3 +4,4 @@ export * from './ChatHistory';
 export * from './ChatMessageItem';
 export * from './ChatInput';
 export * from './ChatCreateConversation';
+export * from './ChatJoinConversation';
