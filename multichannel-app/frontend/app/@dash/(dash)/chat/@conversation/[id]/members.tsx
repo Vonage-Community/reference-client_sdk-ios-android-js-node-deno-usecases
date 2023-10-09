@@ -7,7 +7,7 @@ const ChatMemberItem = ({ member }: { member: ChatMember }) => {
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
     return (
         <div className="flex items-center justify-between px-2 py-1 border-accent-focus border-2 max-w-xs rounded-box indicator ">
-            <span className='indicator-item badge badge-accent'>{member.channel || 'Unknown'}</span>
+            <span className='indicator-item badge badge-accent'>{member.channel || 'APP'}</span>
             <div className="avatar placeholder ">
                 <div className="bg-neutral-focus text-neutral-content mask mask-squircle w-16">
                     <span className="text-xl" aria-label={name}>{initials}</span>
