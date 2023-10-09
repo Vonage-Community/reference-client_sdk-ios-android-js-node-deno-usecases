@@ -10,7 +10,7 @@ export type ChatMember = {
     name: string;
     avatarUrl?: string;
     displayName?: string;
-    channel?: string;
+    channel?: string; 
     state?: MemberState;
 };
 export const isChatMessage = (event: ConversationEvent): event is ChatMessage => event.kind.startsWith('message:');
@@ -26,13 +26,16 @@ type ChatState = {
     imageUrl?: string;
     members: Map<string, ChatMember>;
     events: Map<number, PersistentConversationEvent>;
+    callId?: string;
 };
 
 export type ChatAction =
     { type: 'event', event: ConversationEvent } |
     { type: 'load:events', events: ConversationEvent[] } |
     { type: 'load:members', members: ChatMember[] } |
-    { type: 'setup', id: string, name: string, displayName?: string, imageUrl?: string };
+    { type: 'setup', id: string, name: string, displayName?: string, imageUrl?: string } |
+    { type: 'call:join', callId: string } |
+    { type: 'call:leave' };
 
 const loadEvent = (event: ConversationEvent, oldState: ChatState) =>
     match<[ChatState, ConversationEvent], ChatState>([oldState, event])
@@ -93,6 +96,8 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => match<[
     .with([P._, { type: 'load:events' }], ([state, action]) => action.events.reduce((s, event) => loadEvent(event, s), state))
     .with([P._, { type: 'load:members' }], ([state, action]) => action.members.reduce((s, member) => updateChatMemberState(member, s), state))
     .with([P._, { type: 'setup' }], ([state, action]) => ({ ...state, id: action.id, name: action.name, displayName: action.displayName, imageUrl: action.imageUrl }))
+    .with([P._, { type: 'call:join' }], ([state, action]) => ({ ...state, callId: action.callId }))
+    .with([P._, { type: 'call:leave' }], ([state, _action]) => ({ ...state, callId: undefined }))
     .exhaustive();
 
 
@@ -113,6 +118,8 @@ type ChatContext = {
     setup: (id: string, name: string, displayName?: string, imageUrl?: string) => void;
     loadMembers: (members: ChatMember[]) => void;
     isLoading: boolean;
+    joinCall: () => void;
+    leaveCall: () => void;
 };
 
 const ChatContext = createContext<ChatContext | undefined>(undefined);
@@ -170,12 +177,51 @@ export const ChatContainer = (props: ChatContainerProps) => {
         startTransition(() => dispatch({ type: 'load:members', members }));
     }, []);
 
+    const joinCall = useCallback(() => {
+        if (state.callId) return;
+        vonageClient.serverCall({ callType: 'conversation', name: state.name })
+            .then(callId => {
+                startTransition(() => dispatch({ type: 'call:join', callId }));
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    }, [state.callId, state.name, vonageClient]);
+
+    const leaveCall = useCallback(() => {
+        if (!state.callId) return;
+        vonageClient.hangup(state.callId!, 'app:user:hangup')
+            .then(() => {
+                startTransition(() => dispatch({ type: 'call:leave' }));
+            })
+            .catch(err => {
+                console.error(err);
+            });
+        startTransition(() => dispatch({ type: 'call:leave' }));
+    }, [state.callId, vonageClient]);
+
+    useEffect(() => {
+        if (!state.callId) return;
+        if (!vonageSession) return;
+
+        const l = vonageClient.on('callHangup', (hangupCallId, _, reason) => {
+            if (hangupCallId !== state.callId) return;
+            startTransition(() => dispatch({ type: 'call:leave' }));
+        });
+        return () => {
+            vonageClient.off('callHangup', l);
+        };
+    }, [vonageClient, state.callId, vonageSession]);
+
     useEffect(() => {
         if (!props.enableEventListening) return;
         if (!vonageClient) return;
         if (!vonageSession) return;
 
-        vonageClient.on('conversationEvent', incomingEvent);
+        const l = vonageClient.on('conversationEvent', incomingEvent);
+        return () => {
+            vonageClient.off('conversationEvent', l);
+        };
     }, [vonageClient, props.enableEventListening, incomingEvent, vonageSession]);
 
     useEffect(() => {
@@ -228,7 +274,7 @@ export const ChatContainer = (props: ChatContainerProps) => {
     }, [vonageClient, props.enablePreFetch, state.id, incomingEvents, loadMembers, vonageSession]);
 
     return (
-        <ChatContext.Provider value={{ state, incomingEvent, incomingEvents, setup, loadMembers, isLoading: isPending }}>
+        <ChatContext.Provider value={{ state, incomingEvent, incomingEvents, setup, loadMembers, isLoading: isPending, joinCall, leaveCall }}>
             {props.children}
         </ChatContext.Provider>
     );

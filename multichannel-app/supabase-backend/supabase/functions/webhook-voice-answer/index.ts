@@ -14,11 +14,29 @@ const VONAGE_LVN = Deno.env.get('VONAGE_LVN') ?? '';
 
 const zodJson = <T extends z.ZodTypeAny>(scheme: T) =>
     z.string().transform((value) => JSON.parse(value)).pipe(scheme);
-const customDataSchema = zodJson(z.object({
-    callType: z.enum(['app', 'phone']),
-    // callee: z.string(),
-    connect_to_conversation: z.string().optional()
-}));
+
+const appCallCustomDataSchema = z.object({
+    callType: z.literal('app'),
+    username: z.string(),
+});
+
+const phoneCallCustomDataSchema = z.object({
+    callType: z.literal('phone'),
+    number: z.string(),
+});
+
+const conversationCallCustomDataSchema = z.object({
+    callType: z.literal('conversation'),
+    name: z.string(),
+});
+
+const customDataSchema = zodJson(z.discriminatedUnion('callType', [
+    appCallCustomDataSchema,
+    phoneCallCustomDataSchema,
+    conversationCallCustomDataSchema,
+]));
+
+
 
 const VoiceAnswerSchema = z.object({
     kind: z.enum(['server_call', 'inbound_call']),
@@ -34,6 +52,7 @@ const ServerCallSchema = VoiceAnswerSchema.extend({
     from_user: z.string(),
     custom_data: customDataSchema,
 });
+
 
 const InboundCallSchema = VoiceAnswerSchema.extend({
     kind: z.void().transform(() => 'inbound_call').pipe(
@@ -75,29 +94,52 @@ const handleServerCall = (
     //         ],
     //     };
 
-    let ncco: Array<object> = []
 
-    if(custom_data.connect_to_conversation){
-        ncco = [
+    if (custom_data.callType == 'conversation') {
+        return [
             {
                 action: 'talk',
                 text: 'Connecting you now, please wait.',
             },
             {
                 action: "conversation", 
-                name: custom_data.connect_to_conversation
+                name: custom_data.name
+            }
+        ];
+    }
+    else if (custom_data.callType == 'phone') {
+        return [
+            {
+                action: 'talk',
+                text: 'Connecting you now, please wait.',
+            },
+            {
+                action: "connect",
+                endpoint: [
+                    {
+                        type: "phone",
+                        number: custom_data.number
+                    }
+                ]
             }
         ];
     } else {
-        ncco = [{
+        return [
+            {
                 action: 'talk',
-                text: 'Wrong request',
-        }]
+                text: 'Connecting you now, please wait.',
+            },
+            {
+                action: "connect",
+                endpoint: [
+                    {
+                        type: "app",
+                        user: custom_data.username
+                    }
+                ]
+            }
+        ];
     }
-
-     
-    logger.debug('Returning NCCO', ncco);
-    return ncco;
 };
 
 const handleInboundCall = async (
