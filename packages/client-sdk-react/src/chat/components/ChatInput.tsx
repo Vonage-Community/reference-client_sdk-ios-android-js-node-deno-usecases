@@ -35,6 +35,7 @@ type ChatInputProps = {
     inputClassName?: string;
     Button?: ComponentType<SubmitActionProps>;
     buttonClassName?: string;
+    displayEnableAudio? : boolean;
 };
 export const ChatInput = (
     {
@@ -42,7 +43,8 @@ export const ChatInput = (
         Input = InputAction,
         inputClassName = 'vg-input vg-join-item vg-w-full vg-input-primary ',
         Button = SubmitAction,
-        buttonClassName = 'vg-btn vg-join-item vg-w-24 vg-btn-primary'
+        buttonClassName = 'vg-btn vg-join-item vg-w-24 vg-btn-primary',
+        displayEnableAudio = false
     }: ChatInputProps) => {
     const { sendTextMessage } = useSendMessage();
     const [text, setText] = useState('');
@@ -57,7 +59,8 @@ export const ChatInput = (
         <form className={className} onSubmit={onSubmit}>
             <Input className={inputClassName} value={text} onChange={(e) => setText(e.target.value)} />
             <Button className={buttonClassName} type='submit' />
-            <ChatEnableAudio />
+            {displayEnableAudio ? <ChatEnableAudio className={buttonClassName}  />: null }
+
         </form>
     );
 };

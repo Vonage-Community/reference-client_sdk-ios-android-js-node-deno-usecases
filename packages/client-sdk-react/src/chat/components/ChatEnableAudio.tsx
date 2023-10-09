@@ -18,7 +18,7 @@ export const SubmitEnableAudio = ({ className, type, onClick }: SubmitEnableAudi
 };
 
 export const ChatEnableAudio = ({
-    buttonClassName = 'vg-btn vg-join-item vg-w-24 vg-btn-primary'
+    className = 'vg-btn vg-join-item vg-w-24 vg-btn-primary'
 
 }) => {
     const vonageClient = useVonageClient();
@@ -38,7 +38,7 @@ export const ChatEnableAudio = ({
 
     return( <div>
         <SubmitEnableAudio 
-            className={buttonClassName} 
+            className={className} 
             type='button' 
             onClick={async (e) => {
                 e.preventDefault();
