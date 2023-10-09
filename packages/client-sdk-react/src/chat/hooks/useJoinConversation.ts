@@ -5,7 +5,7 @@ export const useJoinConversationActions = () => {
   const vonageClient = useVonageClient();
   const session = useVonageSession();
 
-  const createConversation = useCallback(
+  const joinConvesation = useCallback(
     async (conversationId: string) => {
       if (!session) return;
       const memberId = await vonageClient.joinConversation(conversationId);
@@ -17,5 +17,5 @@ export const useJoinConversationActions = () => {
     [session, vonageClient]
   );
 
-  return { createConversation };
+  return { joinConvesation };
 };
