@@ -113,7 +113,7 @@ const handleServerCall = (
         return [
             {
                 action: 'talk',
-                text: 'Connecting you now, please wait.',
+                text: 'Hello inapp user, connecting you now, please wait.',
             },
             {
                 action: "connect",
@@ -125,6 +125,13 @@ const handleServerCall = (
                 ]
             }
         ];
+    } else if(from) {
+
+        ncco = [{
+                action: 'talk',
+                text: 'Hello pstn user, where do you want to be connected',
+        }]
+
     } else {
         return [
             {
@@ -159,10 +166,10 @@ const handleInboundCall = async (
             },
             {
                 "action": "input",
-                "type": ["dtmf"],
+                "type": [ "dtmf" ],	
                 "dtmf": {
                     "maxDigits": 1
-                }
+                }	
             }
         ];
 
@@ -251,4 +258,3 @@ serve(async (req) => {
             { status: 500 },
         );
     }
-});
