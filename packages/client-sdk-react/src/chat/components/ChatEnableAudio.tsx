@@ -1,5 +1,5 @@
 import { useVonageClient, useVonageSession } from '../../VonageClientProvider';
-import { IconPhoneCall } from '@tabler/icons-react';
+import { IconPhoneCall, IconPhoneOff } from '@tabler/icons-react';
 import { useChat } from '../ChatContainer';
 import {useEffect,useState} from 'react';
 
@@ -7,12 +7,15 @@ export type SubmitEnableAudioActionProps = {
     className?: string;
     type: 'button';
     onClick:  (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+    audioActive: boolean
 };
 
-export const SubmitEnableAudio = ({ className, type, onClick }: SubmitEnableAudioActionProps) => {
+export const SubmitEnableAudio = ({ className, type, onClick, audioActive=false }: SubmitEnableAudioActionProps) => {
+    const style = audioActive ? {backgroundColor: "#ff3333"} : {};
+
     return (
-        <button className={className} aria-label='Audio' type={type} onClick={onClick} >
-            <IconPhoneCall />
+        <button style={style}  className={className} aria-label='Audio' type={type} onClick={onClick} >
+            {audioActive? <IconPhoneOff /> : <IconPhoneCall /> }
         </button>
     );
 };
@@ -30,29 +33,35 @@ export const ChatEnableAudio = ({
             console.log('legStatusUpdate' ,callId, legId, status);
             let statusString = status as unknown as String;
 
-            if(callId === legId){
+            // if(callId === legId){
                 setCallStatus(statusString);
-            }
+            // }
          });
+
+
     }, [vonageClient, callId]);
 
-    return( <div>
+    return(
         <SubmitEnableAudio 
             className={className} 
             type='button' 
+            audioActive={!!callId}
             onClick={async (e) => {
                 e.preventDefault();
+                if(!callId){
+                    const convName = state.name;                
+                    const callid = await vonageClient.serverCall({
+                        callType: 'app', 
+                        connect_to_conversation: convName
+                    });
+                    setCallId(callid);
+                }else{
+                    await vonageClient.hangup(callId);
+                    setCallId("");
+                }
                 
-                const convName = state.name;                
-                const callid = await vonageClient.serverCall({
-                    callType: 'app', 
-                    connect_to_conversation: convName
-                });
-                setCallId(callid);
             }}
         />
-        <div>{callStatus} {callId} </div>
-        </div>
     );
-}
+};
 
