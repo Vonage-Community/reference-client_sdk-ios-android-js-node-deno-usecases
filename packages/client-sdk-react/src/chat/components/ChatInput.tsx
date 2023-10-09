@@ -1,16 +1,18 @@
 import { ComponentType, useState } from 'react';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { IconSend } from '@tabler/icons-react';
+import {ChatEnableAudio} from './ChatEnableAudio';
 
 export type InputActionProps = {
     className?: string;
     value?: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    placeholder?: string;
 };
 
-export const InputAction = ({ className, value, onChange }: InputActionProps) => {
+export const InputAction = ({ className, value, onChange, placeholder='Type a message...' }: InputActionProps) => {
     return (
-        <input className={className} type='text' placeholder='Type a message...' value={value} onChange={onChange} />
+        <input className={className} type='text' placeholder={placeholder} value={value} onChange={onChange} />
     );
 };
 
@@ -33,6 +35,7 @@ type ChatInputProps = {
     inputClassName?: string;
     Button?: ComponentType<SubmitActionProps>;
     buttonClassName?: string;
+    displayEnableAudio? : boolean;
 };
 export const ChatInput = (
     {
@@ -40,7 +43,8 @@ export const ChatInput = (
         Input = InputAction,
         inputClassName = 'vg-input vg-join-item vg-w-full vg-input-primary ',
         Button = SubmitAction,
-        buttonClassName = 'vg-btn vg-join-item vg-w-24 vg-btn-primary'
+        buttonClassName = 'vg-btn vg-join-item vg-w-24 vg-btn-primary',
+        displayEnableAudio = false
     }: ChatInputProps) => {
     const { sendTextMessage } = useSendMessage();
     const [text, setText] = useState('');
@@ -55,6 +59,8 @@ export const ChatInput = (
         <form className={className} onSubmit={onSubmit}>
             <Input className={inputClassName} value={text} onChange={(e) => setText(e.target.value)} />
             <Button className={buttonClassName} type='submit' />
+            {displayEnableAudio ? <ChatEnableAudio className={buttonClassName}  />: null }
+
         </form>
     );
 };
