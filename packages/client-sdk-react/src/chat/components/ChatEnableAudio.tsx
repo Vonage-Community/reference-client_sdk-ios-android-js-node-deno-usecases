@@ -56,7 +56,7 @@ export const ChatEnableAudio = ({
                     });
                     setCallId(callid);
                 }else{
-                    await vonageClient.hangup(callId);
+                    await vonageClient.hangup(callId, 'app:user:hangup');
                     setCallId('');
                 }
                 

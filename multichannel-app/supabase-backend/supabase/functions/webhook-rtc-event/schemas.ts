@@ -43,3 +43,9 @@ export const userSchema = z.object({
         custom_data: z.object({}).passthrough(),
     }).passthrough(),
 });
+
+
+export const reasonSchema = z.object({
+    text: z.string().optional()
+
+})
