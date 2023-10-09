@@ -18,26 +18,42 @@ export const onMemberLeft = async (
     try {
         const conversation = await csClient(`/conversations/${cid}`);
         const prefix = conversation.name.split(':')[0] as Channel;
-        switch (prefix) {
-            case 'whatsapp':
-            case 'viber_service':
-            case 'sms':
-            case 'messenger':
-                {
-                    logger.debug('Messenger conversation');
-                    const username = event.body.user.name;
-                    const userDisplayName = event.body.user.display_name ||
-                        username;
-                    if (!isAgent(username)) return;
-                    sendAgentStateUpdate(cid, prefix, userDisplayName, 'LEFT');
-                    // Mark the agent as available
-                    await setAgentStatus(username, 'AVAILABLE');
-                }
-                break;
-            default:
-                logger.warning('Unsupported Channel');
-                break;
+        const userId = event.body.user.id
+
+        const reason = event.body.reason?.text
+        if(reason === "app:user:hangup"){
+            await csClient(`/conversations/${cid}/members`, 'POST', {
+                user: {
+                    id: userId
+                },
+                channel: {
+                    type: "app"
+                },
+                state: "joined"
+            })
         }
+
+
+        // switch (prefix) {
+        //     case 'whatsapp':
+        //     case 'viber_service':
+        //     case 'sms':
+        //     case 'messenger':
+        //         {
+        //             logger.debug('Messenger conversation');
+        //             const username = event.body.user.name;
+        //             const userDisplayName = event.body.user.display_name ||
+        //                 username;
+        //             if (!isAgent(username)) return;
+        //             sendAgentStateUpdate(cid, prefix, userDisplayName, 'LEFT');
+        //             // Mark the agent as available
+        //             await setAgentStatus(username, 'AVAILABLE');
+        //         }
+        //         break;
+        //     default:
+        //         logger.warning('Unsupported Channel');
+        //         break;
+        // }
     } catch (error) {
         logger.error('Error', error);
     }

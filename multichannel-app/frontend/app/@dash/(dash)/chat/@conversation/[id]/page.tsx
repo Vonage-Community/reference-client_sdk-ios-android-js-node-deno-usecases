@@ -10,7 +10,7 @@ const ConversationPage = ({ }: ConversationPageProps) => {
     return (
         <>
             <ChatHistory filter='messages' scrollToEnd />
-            <ChatInput />
+            <ChatInput displayEnableAudio />
         </>
     );
 };

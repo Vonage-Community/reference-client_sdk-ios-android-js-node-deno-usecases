@@ -9,9 +9,11 @@
     "db:stop": "turbo run db:stop",
     "db:reset": "turbo run db:reset",
     "lint": "turbo run lint",
-    "deploy": "turbo run deploy"
+    "deploy": "turbo run deploy",
+    "list": "nr"
   },
   "devDependencies": {
+    "@antfu/ni": "^0.21.8",
     "dotenv-cli": "^7.2.1",
     "eslint": "^8.44.0",
     "eslint-config-custom": "*",

@@ -4,6 +4,7 @@ import {
     conversationSchema,
     mediaSchema,
     userSchema,
+    reasonSchema
 } from './schemas.ts';
 
 export const RTCEventBase = z.object({
@@ -100,8 +101,12 @@ export const memberLeftEvent = RTCEventBase.extend({
         member_id: z.string(),
         sdp: z.string().optional(),
         timestamp: z.record(z.string().datetime({ offset: true })),
+        reason: reasonSchema.optional()
     }).passthrough(),
 });
+
+
+
 
 export const rtcHangupEvent = RTCEventBase.extend({
     type: z.literal('rtc:hangup'),

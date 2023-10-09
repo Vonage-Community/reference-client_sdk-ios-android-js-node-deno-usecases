@@ -16,7 +16,8 @@ const zodJson = <T extends z.ZodTypeAny>(scheme: T) =>
     z.string().transform((value) => JSON.parse(value)).pipe(scheme);
 const customDataSchema = zodJson(z.object({
     callType: z.enum(['app', 'phone']),
-    callee: z.string(),
+    // callee: z.string(),
+    connect_to_conversation: z.string().optional()
 }));
 
 const VoiceAnswerSchema = z.object({
@@ -52,39 +53,49 @@ const handleServerCall = (
 ) => {
     logger.info('Server call received');
     logger.debug(`custom data: ${JSON.stringify(custom_data)}`);
-    const connectAction = custom_data.callType === 'app'
-        ? {
-            action: 'connect',
-            ringbackTone: 'https://bigsoundbank.com/UPLOAD/wav/1618.wav',
-            endpoint: [
-                {
-                    type: 'app',
-                    user: custom_data.callee,
-                },
-            ],
-        }
-        : {
-            action: 'connect',
-            from: VONAGE_LVN,
-            endpoint: [
-                {
-                    type: 'phone',
-                    number: custom_data.callee,
-                },
-            ],
-        };
-    const ncco = [
-        {
-            action: 'talk',
-            text:
-                'This is a Demo of the Vonage Client SDKs using Supabase Functions',
-        },
-        {
-            action: 'talk',
-            text: 'Connecting you now, please wait.',
-        },
-        connectAction,
-    ];
+    // const connectAction = custom_data.callType === 'app'
+    //     ? {
+    //         action: 'connect',
+    //         ringbackTone: 'https://bigsoundbank.com/UPLOAD/wav/1618.wav',
+    //         endpoint: [
+    //             {
+    //                 type: 'app',
+    //                 user: custom_data.callee,
+    //             },
+    //         ],
+    //     }
+    //     : {
+    //         action: 'connect',
+    //         from: VONAGE_LVN,
+    //         endpoint: [
+    //             {
+    //                 type: 'phone',
+    //                 number: custom_data.callee,
+    //             },
+    //         ],
+    //     };
+
+    let ncco: Array<object> = []
+
+    if(custom_data.connect_to_conversation){
+        ncco = [
+            {
+                action: 'talk',
+                text: 'Connecting you now, please wait.',
+            },
+            {
+                action: "conversation", 
+                name: custom_data.connect_to_conversation
+            }
+        ];
+    } else {
+        ncco = [{
+                action: 'talk',
+                text: 'Wrong request',
+        }]
+    }
+
+     
     logger.debug('Returning NCCO', ncco);
     return ncco;
 };

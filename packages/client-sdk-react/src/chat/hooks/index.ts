@@ -4,3 +4,4 @@ export * from './useChatMember';
 export * from './useSendMessage';
 export * from './useConversationActions';
 export * from './useCreateConversation';
+export * from './useJoinConversation';
