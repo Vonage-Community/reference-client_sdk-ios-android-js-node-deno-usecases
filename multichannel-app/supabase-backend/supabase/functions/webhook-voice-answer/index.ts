@@ -123,13 +123,6 @@ const handleServerCall = (
                 ]
             }
         ];
-    } else if(from) {
-
-        ncco = [{
-                action: 'talk',
-                text: 'Hello pstn user, where do you want to be connected',
-        }]
-
     } else {
         return [
             {
