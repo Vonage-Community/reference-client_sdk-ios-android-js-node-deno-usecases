@@ -27,7 +27,7 @@ export const mediaSchema = z.object({
     audio_settings: z.object({
         enabled: z.boolean(),
         muted: z.boolean(),
-        earmuted: z.boolean(),
+        earmuffed: z.boolean(),
     }),
     audio: z.boolean(),
 });

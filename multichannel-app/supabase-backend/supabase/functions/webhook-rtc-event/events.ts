@@ -7,17 +7,30 @@ import {
     reasonSchema
 } from './schemas.ts';
 
-export const RTCEventBase = z.object({
+
+const timestampSchema = z.string().datetime({ offset: true })
+
+export const RTCEventBaseNoConv = z.object({
     type: z.string(),
-    id: z.number(),
-    timestamp: z.string().datetime({ offset: true }),
+    timestamp: timestampSchema,
     application_id: z.string(),
+    from: z.string().optional(),
+    params: z.object({}).passthrough().optional(),
+    body: z.object({}).passthrough(),
+}).passthrough();
+
+
+export const RTCEventBase = RTCEventBaseNoConv.extend({
+    // type: z.string(),
+    // timestamp: timestampSchema,
+    // application_id: z.string(),
+    // from: z.string().optional(),
+    // params: z.object({}).passthrough().optional(),
+    // body: z.object({}).passthrough(),
+    id: z.number(),
     conversation_id: z.string().optional(),
     cid: z.string().optional(),
-    from: z.string().optional(),
-    body: z.object({}).passthrough(),
-    params: z.object({}).passthrough().optional(),
-    _embedded: z.object({
+     _embedded: z.object({
         from_user: z.object({
             id: z.string(),
             name: z.string(),
@@ -29,7 +42,8 @@ export const RTCEventBase = z.object({
             id: z.string(),
         }).passthrough().optional(),
     }).passthrough().optional(),
-}).passthrough();
+    
+});
 
 export const unsupportedEvent = RTCEventBase.extend({
     type: z.string().transform(() => 'unsupported').pipe(
@@ -153,15 +167,26 @@ export const messageEvent = RTCEventBase.extend({
     }),
 });
 
-export const conversationCreatedEvent = z.object({
+
+export const conversationCreatedEvent = RTCEventBaseNoConv.extend({
     type: z.literal('conversation:created'),
-    id: z.string().optional(),
     body: z.object({
         id: z.string(),
         name: z.string(),
-        timestamp: z.record(z.string().datetime({ offset: true })),
+        timestamp: z.record(z.string(), timestampSchema),
         state: z.string().optional(),
         display_name: z.string().optional(),
         image_url: z.string().optional(),
     }).passthrough(),
 });
+
+export const appKnocking = RTCEventBaseNoConv.extend({
+    type: z.literal('app:knocking'),
+    body: z.object({
+        user: z.object({
+            id: z.string()
+        }).optional(),
+        channel: channelSchema.optional()
+    }).passthrough(),
+});
+
