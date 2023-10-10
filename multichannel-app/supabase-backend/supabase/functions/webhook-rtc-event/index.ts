@@ -26,19 +26,14 @@ const logger = getWebhookLogger('rtc-event');
 logger.info('Loading Webhook Handler');
 
 serve(async (req) => {
-    logger.info(`${req.method} Request received`);
+    logger.info(`${req.method} Request received rtc-event`);
     // return new Response(req.method, {
     //         headers: { 'Content-Type': 'application/json' },
     //         status: 200,
     //     });
 
-    const data = await req.json().catch(err => {
-        return new Response(JSON.stringify(err)+ req.method, {
-            headers: { 'Content-Type': 'application/json' },
-            status: 500,
-        });
-    });
-    logger.debug('Request body', data);
+    const data = await req.json()
+    logger.debug('Request body ', data);
     try {
         const event = RTCEventBaseNoConv.parse(data);
         switch (event.type) {

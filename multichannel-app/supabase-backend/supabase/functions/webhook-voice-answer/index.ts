@@ -6,7 +6,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { z } from 'zod';
 import { AdminClient } from '../supabaseClient.ts';
 import { getWebhookLogger } from '../logger.ts';
-import { csClient } from '../utils.js';
+import { csClient } from '../utils.ts';
 
 const logger = getWebhookLogger('voice-answer');
 logger.info('Loading Webhook Handler');
@@ -251,3 +251,4 @@ serve(async (req) => {
             { status: 500 },
         );
     }
+});
