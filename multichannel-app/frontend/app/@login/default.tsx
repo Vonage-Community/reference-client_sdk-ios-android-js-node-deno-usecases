@@ -1,5 +1,5 @@
 import { Logo } from '../../components/logo';
-import { Login } from './Login.client';
+import { Login } from './Login';
 
 const LoginPage = () => {
     return (

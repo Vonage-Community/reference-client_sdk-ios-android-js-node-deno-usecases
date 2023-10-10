@@ -74,11 +74,11 @@ const loadEvent = (event: ConversationEvent, oldState: ChatState) =>
 const updateChatMemberState = (member: ChatMember, oldState: ChatState) => {
     const oldMember = oldState.members.get(member.userId);
     return match<[ChatState, ChatMember, ChatMember | undefined], ChatState>([oldState, member, oldMember])
-        .with([P._, { state: P.union('INVITED', 'JOINED') }, P._], ([state, member, _oldMember]) => {
+        .with([P._, { state: P.union('INVITED', 'JOINED', 'UNKNOWN') }, P._], ([state, member, _oldMember]) => {
             state.members.set(member.userId, member);
             return state;
         })
-        .with([P._, { state: 'LEFT' }, undefined], ([state, member, _oldMember]) => {
+        .with([P._, { state: 'LEFT' }, P._], ([state, member, _oldMember]) => {
             state.members.delete(member.userId);
             return state;
         })

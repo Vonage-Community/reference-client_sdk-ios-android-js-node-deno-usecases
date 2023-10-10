@@ -9,8 +9,6 @@ import { getUserProfile } from './utils';
 
 const md5 = (s: string) => createHash('md5').update(s).digest('hex');
 
-
-
 const getGravatar = (email: string) => {
     const hash = md5(email.trim().toLowerCase());
     return `https://www.gravatar.com/avatar/${hash}`;
@@ -40,7 +38,7 @@ export const UserProfileWidget = async ({className}:UserProfileWidgetProps) => {
             </div>
         </label>
         <ul tabIndex={0} className='w-full p-2 mt-4 shadow menu dropdown-content bg-base-200 rounded-xl'>
-            <UserSignoutBtn />
+                {/* <UserSignoutBtn /> */}
         </ul>
     </div>
     );
