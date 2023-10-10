@@ -18,14 +18,22 @@ import {
 const logger = getWebhookLogger('message-inbound');
 logger.info('Loading Webhook Handler');
 
-const messageAction = (data: InboundMessageBase) => [
-    {
-        action: 'message',
-        conversation_name: `${data.channel}:conversation:${data.from}`,
-        user: `${data.channel}:customer:${data.from}`,
-        geo: 'us-2',
-    },
-];
+const messageAction = (data: InboundMessageBase) => {
+
+
+    const convname =  data.text?.split(' ')[0];
+    const ncco = [
+        {
+            action: 'message',
+            conversation_name: `${convname}`,
+            user: `${data.from} (${data.channel})`,
+            geo: 'us-2',
+        },
+    ];
+    logger.info(`message ncco: `, ncco);
+
+    return ncco;
+}
 
 const getMessengerUser = async (messengerId: string) => {
     logger.debug(`Get Messenger User`);
@@ -153,7 +161,7 @@ serve(async (req) => {
         const body = await req.json();
         logger.debug('Request body', body);
         const data = inboundMessageSchema.parse(body);
-        await createCustomerUser(data);
+        // await createCustomerUser(data);
         switch (data.channel) {
             case 'sms':
             case 'viber_service':

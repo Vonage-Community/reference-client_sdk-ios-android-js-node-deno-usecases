@@ -16,7 +16,7 @@ export const onAppKnocking = async (
         logger.debug(`modify display name ${userid} into ${phoneNumber}` )
         try {
             await csClient(`/users/${userid}`, 'PATCH', {
-                display_name: phoneNumber        
+                display_name: `${phoneNumber} (${fromType})`        
             })
         }catch (err){
             logger.error('csClient error: '+ event.type, err);
