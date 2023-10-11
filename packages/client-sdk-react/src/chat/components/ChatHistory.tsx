@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { ComponentType, useEffect, useRef } from 'react';
 import { useChatHistory, useChatMember } from '../hooks';
 import { ChatMessageItem } from './ChatMessageItem';
-import { match } from 'ts-pattern';
-import { MemberEvent, isChatMessage, isMemberEvent } from '../ChatContainer';
-import { MemberJoinedEvent, MemberLeftEvent } from '@vonage/client-sdk';
+import { match, P } from 'ts-pattern';
+import { MemberEvent, isChatMessage, isCustomEvent, isMemberEvent } from '../ChatContainer';
+import { CustomConversationEvent, MemberJoinedEvent, MemberLeftEvent } from '@vonage/client-sdk';
 import { MemberInvitedEvent } from '@vonage/client-sdk';
 
 
@@ -43,7 +43,7 @@ const MemberJoinedEventItem = ({ event }: { event: MemberJoinedEvent }) => {
 };
 
 const MemberInvitedEventItem = ({ event }: { event: MemberInvitedEvent }) => {
-    const { member: inviter } = useChatMember(event.body.user.id);
+    const { member: inviter } = useChatMember(event.from.kind == 'embeddedInfo' ? event.from.user.id : undefined);
     const { member: invitee } = useChatMember(event.body.user.id);
 
     if (!inviter || !invitee) return null;
@@ -66,7 +66,9 @@ const MemberEventItem = ({ event }: { event: MemberEvent }) => match(event)
     .with({ kind: 'member:invited' }, (event) => <MemberInvitedEventItem event={event} />)
     .exhaustive();
 
-
+export type CustomEventComponentProps = {
+    event: CustomConversationEvent
+};
 
 export type ChatHistoryProps = {
     className?: string;
@@ -76,6 +78,8 @@ export type ChatHistoryProps = {
     sort?: 'asc' | 'desc';
 
     loadingClassName?: string;
+
+    CustomEvent?: ComponentType<CustomEventComponentProps>;
 };
 
 export const ChatHistory = (
@@ -85,6 +89,7 @@ export const ChatHistory = (
         filter = 'all',
         sort = 'asc',
         loadingClassName = 'vg-loading vg-loading-bars vg-loading-lg',
+        CustomEvent
     }: ChatHistoryProps) => {
     const { history, isLoading } = useChatHistory({ sort, filter });
     const chatHistoryRef = useRef<HTMLDivElement>(null);
@@ -100,8 +105,9 @@ export const ChatHistory = (
         <div className={className} ref={chatHistoryRef}>
             {isLoading && history.length === 0 ? <div className={loadingClassName} /> : null}
             {history.map(event => match(event)
-                .when(isChatMessage, message => <ChatMessageItem key={message.id} message={message} />)
-                .when(isMemberEvent, event => <MemberEventItem key={event.id} event={event} />)
+                .with({ kind: P.union('member:invited', 'member:joined', 'member:left') }, (event) => <MemberEventItem key={event.id} event={event} />)
+                .with({ kind: P.union('message:text', 'message:custom') }, (event) => <ChatMessageItem key={event.id} message={event} />)
+                .with({ kind: 'custom' }, (event) => CustomEvent ? <CustomEvent key={event.id} event={event} /> : null)
                 .otherwise(() => null)
             )}
         </div>

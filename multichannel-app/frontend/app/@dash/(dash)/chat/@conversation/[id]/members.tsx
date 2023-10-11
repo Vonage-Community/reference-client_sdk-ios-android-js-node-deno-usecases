@@ -20,7 +20,7 @@ const ChatMemberItem = ({ member }: { member: ChatMember }) => {
     );
 };
 
-const isVoiceMember = ({ name }: ChatMember) => !['sms', 'whatsapp'].includes(name.split(':')[1]);
+const isVoiceMember = ({ name }: ChatMember) => !['sms', 'messenger'].includes(name.split(':')[1]);
 
 export const ChatMembers = () => {
     const { state: { callId, members } } = useChat();

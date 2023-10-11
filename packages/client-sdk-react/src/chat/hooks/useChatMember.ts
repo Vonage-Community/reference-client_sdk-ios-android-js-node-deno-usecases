@@ -4,11 +4,12 @@ import { useChatMembers } from './useChatMembers';
 
 
 
-export const useChatMember = (userId: string) => {
+export const useChatMember = (userId?: string) => {
     const { members, isLoading } = useChatMembers();
 
     const member = useMemo(() => {
         if (!isLoading) return;
+        if (!userId) return;
         if (members.has(userId)) {
             return members.get(userId);
         }

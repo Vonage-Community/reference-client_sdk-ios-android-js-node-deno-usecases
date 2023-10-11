@@ -17,6 +17,7 @@ export const isChatMessage = (event: ConversationEvent): event is ChatMessage =>
 export type ChatMessage = MessageTextEvent | MessageCustomEvent;
 export const isMemberEvent = (event: ConversationEvent): event is MemberEvent => event.kind.startsWith('member:');
 export type MemberEvent = MemberJoinedEvent | MemberInvitedEvent | MemberLeftEvent;
+export const isCustomEvent = (event: ConversationEvent): event is MessageCustomEvent => event.kind.startsWith('message:custom');
 
 
 type ChatState = {
@@ -39,7 +40,7 @@ export type ChatAction =
 
 const loadEvent = (event: ConversationEvent, oldState: ChatState) =>
     match<[ChatState, ConversationEvent], ChatState>([oldState, event])
-        .with([P._, { kind: P.union('message:text', 'message:custom') }], ([state, event]) => {
+        .with([P._, { kind: P.union('message:text', 'message:custom', 'custom') }], ([state, event]) => {
             state.events.set(event.id, event);
             return state;
         })
