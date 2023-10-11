@@ -2,25 +2,17 @@ import { MessageEvent } from './events';
 import { csClient } from '../utils';
 import { getRTCLogger } from '../logger';
 import { match, P } from 'ts-pattern';
-
-// import {
-//     actionConnect,
-//     actionStop,
-//     sendBotTextMessage,
-//     sendFacebookActionMessage,
-//     sendSMSActionMessage,
-//     sendWhatsappActionMessage,
-// } from '../chatActions';
+import { kv } from '@vercel/kv';
 
 const logger = getRTCLogger('message');
 
 const isValidUrl = (url: string) => {
-      try { 
-      	return Boolean(new URL(url)); 
-      }
-      catch(e){ 
-      	return false; 
-      }
+    try { 
+        return Boolean(new URL(url)); 
+    }
+    catch(e){ 
+        return false; 
+    }
 };
 
 export const onMessage = async (event: MessageEvent) => {
@@ -28,7 +20,7 @@ export const onMessage = async (event: MessageEvent) => {
     logger.debug({ event });
 
     const conversationId = event.cid ?? event.conversation_id;
-    logger.info('conversationId: ' + conversationId);
+    
     match(event)
         .with({
             body: {
@@ -36,7 +28,7 @@ export const onMessage = async (event: MessageEvent) => {
                 text: P.when((text) => (text as string).startsWith('@tts')),
             }
         }, async (evt) => {
-            logger.info('tts event received');
+            logger.info('tts started');
             const tts = evt.body.text?.split(' ')?.splice(1)?.join(' ');
 
             if (tts && conversationId) {
@@ -64,11 +56,14 @@ export const onMessage = async (event: MessageEvent) => {
                 message_type: 'text',
                 text: P.when((text) => (text as string).startsWith('@tts-stop')),
             }
-        }, async (evt) => {
-            const ttsId = evt.body.text?.split(' ')?.[1];
+        }, async () => {
+            logger.info('tts stopped');
+            let ttsId;
 
-            if (ttsId && conversationId) {
-                try {
+            try {
+                ttsId = await kv.get<string>(`conversation:${conversationId}:tts`);
+
+                if (ttsId && conversationId) {
                     const reqBody = {
                         type: 'audio:say:stop',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
@@ -77,9 +72,9 @@ export const onMessage = async (event: MessageEvent) => {
                         },
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
-                } catch (err) {
-                    logger.error('tts stop error: ' + ttsId, err);
                 }
+            } catch (err) {
+                logger.error('tts stop error: ' + ttsId, err);
             }
         })
         .with({
@@ -88,6 +83,7 @@ export const onMessage = async (event: MessageEvent) => {
                 text: P.when((text) => (text as string).startsWith('@stream')),
             }
         }, async (evt) => {
+            logger.info('stream started');
             const streamUrl = evt.body.text?.split(' ')?.[1];
             
             if (streamUrl && conversationId) {
@@ -112,11 +108,14 @@ export const onMessage = async (event: MessageEvent) => {
                 message_type: 'text',
                 text: P.when((text) => (text as string).startsWith('@stream-stop')),
             }
-        }, async (evt) => {
-            const streamId = evt.body.text?.split(' ')?.[1];
-            
-            if (streamId && conversationId) {
-                try {
+        }, async () => {
+            logger.info('stream stopped');
+            let streamId;
+
+            try {
+                streamId = await kv.get<string>(`conversation:${conversationId}:stream`);
+
+                if (streamId && conversationId) {
                     const reqBody = {
                         type: 'audio:play:stop',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
@@ -125,9 +124,9 @@ export const onMessage = async (event: MessageEvent) => {
                         },
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
-                } catch (err) {
-                    logger.error('stream stop error: ' + streamId, err);
                 }
+            } catch (err) {
+                logger.error('stream stop error: ' + streamId, err);
             }
         })
         .with({
@@ -135,7 +134,9 @@ export const onMessage = async (event: MessageEvent) => {
                 message_type: 'text',
                 text: P.when((text) => (text as string).startsWith('@record')),
             }
-        }, async (evt) => {
+        }, async () => {
+            logger.info('recording started');
+
             if (conversationId) {
                 try {
                     const reqBody = {
@@ -153,11 +154,14 @@ export const onMessage = async (event: MessageEvent) => {
                 message_type: 'text',
                 text: P.when((text) => (text as string).startsWith('@record-stop')),
             }
-        }, async (evt) => {
-            const recordingId = evt.body.text?.split(' ')?.[1];
+        }, async () => {
+            logger.info('recording stopped');
+            let recordingId;
 
-            if (recordingId && conversationId) {
-                try {
+            try {
+                recordingId = await kv.get<string>(`conversation:${conversationId}:record`);
+
+                if (recordingId && conversationId) {
                     const reqBody = {
                         type: 'audio:record:stop',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
@@ -166,9 +170,9 @@ export const onMessage = async (event: MessageEvent) => {
                         }
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
-                } catch (err) {
-                    logger.error('recording stop error: ' + recordingId, err);
                 }
+            } catch (err) {
+                logger.error('recording stop error: ' + recordingId, err);
             }
         })
         .with({
@@ -176,7 +180,9 @@ export const onMessage = async (event: MessageEvent) => {
                 message_type: 'text',
                 text: P.when((text) => (text as string).startsWith('@transcribe')),
             }
-        }, async (evt) => {
+        }, async () => {
+            logger.info('transcription started');
+
             if (conversationId) {
                 try {
                     const reqBody = {
@@ -200,11 +206,14 @@ export const onMessage = async (event: MessageEvent) => {
                 message_type: 'text',
                 text: P.when((text) => (text as string).startsWith('@transcribe-stop')),
             }
-        }, async (evt) => {
-            const recordingId = evt.body.text?.split(' ')?.[1];
+        }, async () => {
+            logger.info('transcription stopped');
+            let recordingId;
 
-            if (recordingId && conversationId) {
-                try {
+            try {
+                recordingId = await kv.get<string>(`conversation:${conversationId}:transcribe`);
+
+                if (recordingId && conversationId) {
                     const reqBody = {
                         type: 'audio:record:stop',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
@@ -213,9 +222,9 @@ export const onMessage = async (event: MessageEvent) => {
                         }
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
-                } catch (err) {
-                    logger.error('transcription stop error: ' + recordingId, err);
                 }
+            } catch (err) {
+                logger.error('transcription stop error: ' + recordingId, err);
             }
         })
         .with({
@@ -224,10 +233,14 @@ export const onMessage = async (event: MessageEvent) => {
                 text: P.when((text) => (text as string).startsWith('@asr')),
             }
         }, async (evt) => {
-            const legId = evt.body.text?.split(' ')?.[1];
+            logger.info('asr started');
+            let legId;
 
-            if (legId && conversationId) {
-                try {
+            try {
+                const userName = evt.body.text?.split(' ')?.[1];
+                legId = await kv.get<string>(`user:${userName}:conversation:${conversationId}`);
+
+                if (legId && conversationId) {
                     const reqBody = {
                         language: 'en-US',
                         speech_context: ['a', 'b'],
@@ -237,9 +250,9 @@ export const onMessage = async (event: MessageEvent) => {
                         sensitivity: 90
                     };
                     await csClient(`/legs/${legId}/asr`, 'POST', reqBody);
-                } catch (err) {
-                    logger.error('asr error: ' + legId, err);
                 }
+            } catch (err) {
+                logger.error('asr error: ' + legId, err);
             }
         })
         .with({
@@ -248,14 +261,18 @@ export const onMessage = async (event: MessageEvent) => {
                 text: P.when((text) => (text as string).startsWith('@asr-stop')),
             }
         }, async (evt) => {
-            const legId = evt.body.text?.split(' ')?.[1];
+            logger.info('asr stopped');
+            let legId;
 
-            if (legId) {
-                try {
+            try {
+                const userName = evt.body.text?.split(' ')?.[1];
+                legId = await kv.get<string>(`user:${userName}:conversation:${conversationId}`);
+
+                if (legId) {
                     await csClient(`/legs/${legId}/asr`, 'DELETE');
-                } catch (err) {
-                    logger.error('asr stop error: ' + legId, err);
                 }
+            } catch (err) {
+                logger.error('asr stop error: ' + legId, err);
             }
         })
         .with({
@@ -264,6 +281,8 @@ export const onMessage = async (event: MessageEvent) => {
                 text: P.when((text) => (text as string).startsWith('@push')),
             }
         }, async (evt) => {
+            logger.info('push notification sent');
+
             const userIdOrName = evt.body.text?.split(' ')?.[1];
             const text = evt.body.text?.split(' ')?.[2];
 
@@ -290,58 +309,4 @@ export const onMessage = async (event: MessageEvent) => {
         .otherwise(() => {
             logger.info('No action taken');
         });
-
-    // // check if conversation is messanger
-    // // verify if the chat has an agent or not
-    // // if not send action message again
-    // const cid = event.cid || event.conversation_id || '';
-
-    // try {
-    //     const conversation = await csClient(`/conversations/${cid}`, 'GET');
-    //     const prefix = conversation.name.split(':')[0];
-    //     const sender = event._embedded?.from_user?.name || '';
-    //     logger.info('Checking if sender is a customer');
-    //     if (!isCustomer(sender)) return;
-    //     if (
-    //         event.body.text == 'STOP' &&
-    //         (prefix == 'sms' || prefix == 'viber_service')
-    //     ) {
-    //         const userId = event._embedded?.from_user?.id || '';
-    //         await actionStop(cid, userId);
-    //         return;
-    //     }
-    //     logger.debug('Checking if conversation has agents');
-    //     const hasAgents = await conversationHasAgents(cid);
-    //     if (hasAgents) return;
-    //     logger.debug('No agents in conversation');
-    //     switch (prefix) {
-    //         case 'messenger':
-    //             await sendFacebookActionMessage(cid);
-    //             break;
-    //         case 'whatsapp':
-    //             await sendWhatsappActionMessage(cid);
-    //             break;
-    //         case 'viber_service':
-    //         case 'sms':
-    //             logger.info(`Sending Message for channel: ${prefix}`);
-    //             if (event.body.text == 'CONNECT') {
-    //                 await actionConnect(cid, prefix);
-    //             } else {
-    //                 await sendSMSActionMessage(cid);
-    //             }
-    //             break;
-    //         case 'viber_service':
-    //             // change later for viber, this is for test
-    //             await sendBotTextMessage(
-    //                 cid,
-    //                 'Hi, welocme to Mehboob\'s Corner, how can we help you?',
-    //             );
-    //             break;
-    //         default:
-    //             logger.warning('Unsupported Channel');
-    //             break;
-    //     }
-    // } catch (error) {
-    //     logger.error('Error', error);
-    // }
 };
