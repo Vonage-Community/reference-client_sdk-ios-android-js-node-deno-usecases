@@ -10,7 +10,19 @@ import {
     messageEvent,
     RTCEventBaseNoConv,
     rtcHangupEvent,
-    appKnocking
+    appKnocking,
+    audioPlayEvent,
+    audioPlayStopEvent,
+    audioPlayDoneEvent,
+    audioSayEvent,
+    audioSayStopEvent,
+    audioSayDoneEvent,
+    audioRecordEvent,
+    audioRecordStopEvent,
+    audioRecordDoneEvent,
+    audioAsrDoneEvent,
+    audioAsrRecordDoneEvent,
+    audioTranscribeDoneEvent
 } from './events';
 import { onMemberMedia } from './onMemberMedia';
 import { onRtcHangup } from './onRtcHangup';
@@ -19,6 +31,18 @@ import { onConversationCreated } from './onConversationCreated';
 import { onMemberJoined } from './onMemberJoined';
 import { onMemberLeft } from './onMemberLeft';
 import { onAppKnocking } from './onAppKnocking';
+import { onAudioSay } from './onAudioSay';
+import { onAudioSayStop } from './onAudioSayStop';
+import { onAudioSayDone } from './onAudioSayDone';
+import { onAudioPlay } from './onAudioPlay';
+import { onAudioPlayStop } from './onAudioPlayStop';
+import { onAudioPlayDone } from './onAudioPlayDone';
+import { onAudioRecord } from './onAudioRecord';
+import { onAudioRecordStop } from './onAudioRecordStop';
+import { onAudioRecordDone } from './onAudioRecordDone';
+import { onAudioAsrDone } from './onAudioAsrDone';
+import { onAudioAsrRecordDone } from './onAudioAsrRecordDone';
+import { onAudioTranscribeDone } from './onAudioTranscribeDone';
 import { getWebhookLogger } from '../logger';
 
 const logger = getWebhookLogger('rtc-event');
@@ -56,6 +80,42 @@ export const POST = async (req: Request) => {
                 break;
             case 'app:knocking':
                 onAppKnocking(appKnocking.parse(event));
+                break;
+            case 'audio:say':
+                onAudioSay(audioSayEvent.parse(event), req);
+                break;
+            case 'audio:say:stop':
+                onAudioSayStop(audioSayStopEvent.parse(event), req);
+                break;
+            case 'audio:say:done':
+                onAudioSayDone(audioSayDoneEvent.parse(event), req);
+                break;
+            case 'audio:play':
+                onAudioPlay(audioPlayEvent.parse(event), req);
+                break;
+            case 'audio:play:stop':
+                onAudioPlayStop(audioPlayStopEvent.parse(event), req);
+                break;
+            case 'audio:play:done':
+                onAudioPlayDone(audioPlayDoneEvent.parse(event), req);
+                break;
+            case 'audio:record':
+                onAudioRecord(audioRecordEvent.parse(event), req);
+                break;
+            case 'audio:record:stop':
+                onAudioRecordStop(audioRecordStopEvent.parse(event), req);
+                break;
+            case 'audio:record:done':
+                onAudioRecordDone(audioRecordDoneEvent.parse(event), req);
+                break;
+            case 'audio:asr:done':
+                onAudioAsrDone(audioAsrDoneEvent.parse(event), req);
+                break;
+            case 'audio:asr:record:done':
+                onAudioAsrRecordDone(audioAsrRecordDoneEvent.parse(event), req);
+                break;
+            case 'audio:transcribe:done':
+                onAudioTranscribeDone(audioTranscribeDoneEvent.parse(event), req);
                 break;
             default:
                 logger.debug(
