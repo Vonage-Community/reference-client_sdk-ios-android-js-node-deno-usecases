@@ -4,7 +4,11 @@ import * as jose from 'jose';
 const applicationId = process.env.VONAGE_APPLICATION_ID;
 const privateKey = process.env.VONAGE_PRIVATE_KEY;
 
-const acl = {
+type ACL = {
+    paths: Record<string, object>
+}
+
+const acl:ACL = {
     'paths': {
         '/*/users/**': {},
         '/*/conversations/**': {},
@@ -23,6 +27,12 @@ export const revalidate = 0;
 
 
 export const getToken = async (sub?: string) => {
+
+    if(!sub){ // backend acl can also do calls and send messages
+        acl.paths['/*/calls/**'] = {};
+        acl.paths['/*/messages/**'] = {};
+
+    }
 
     const key = await jose.importPKCS8(privateKey!, '');
     const payload = {
