@@ -44,8 +44,36 @@ export const userSchema = z.object({
     }).passthrough(),
 });
 
-
 export const reasonSchema = z.object({
     text: z.string().optional()
+});
 
+export const transcriptionSchema = z.object({
+    language: z.string(),
+    sentiment_analysis: z.boolean().optional()
+});
+
+export const asrResultSchema = z.object({
+    word: z.string(),
+    confidence: z.number()
+});
+
+export const asrDoneSchema = z.object({
+    results: z.array(asrResultSchema),
+    error: z.string(),
+    asr_id: z.string(),
+    call_id: z.string(),
+    timeout_reason: z.string().optional()
+});
+
+export const asrRecordDoneSchema = z.object({
+    error: z.string(),
+    asr_id: z.string(),
+    call_id: z.string(),
+    destination_url: z.string(),
+    format: z.string(),
+    start_time: z.string(),
+    end_time: z.string(),
+    size: z.number(),
+    media_service_uuid: z.string()
 });
