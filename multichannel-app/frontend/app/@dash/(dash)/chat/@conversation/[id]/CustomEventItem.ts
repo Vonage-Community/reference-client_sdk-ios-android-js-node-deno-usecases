@@ -8,6 +8,7 @@ export const CustomEventItem = ({ event }: CustomEventComponentProps) => {
         .with(
             { eventType: 'custom:announcement' },
             (data) => {
+                console.log('Custom event received', data);
             }
         )
         .otherwise(() => null);

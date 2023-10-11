@@ -28,7 +28,7 @@ export const onMessage = async (event: MessageEvent) => {
     logger.debug({ event });
 
     const conversationId = event.cid ?? event.conversation_id;
-
+    logger.info('conversationId: ' + conversationId);
     match(event)
         .with({
             body: {
@@ -36,6 +36,7 @@ export const onMessage = async (event: MessageEvent) => {
                 text: P.when((text) => (text as string).startsWith('@tts')),
             }
         }, async (evt) => {
+            logger.info('tts event received');
             const tts = evt.body.text?.split(' ')?.splice(1)?.join(' ');
 
             if (tts && conversationId) {
@@ -285,6 +286,9 @@ export const onMessage = async (event: MessageEvent) => {
             }
         }, async (evt) => {
             // do something with images
+        })
+        .otherwise(() => {
+            logger.info('No action taken');
         });
 
     // // check if conversation is messanger
