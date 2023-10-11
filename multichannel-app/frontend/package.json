@@ -12,6 +12,7 @@
     "@supabase/auth-helpers-nextjs": "^0.6.1",
     "@supabase/supabase-js": "^2.21.0",
     "@tabler/icons-react": "^2.22.0",
+    "@vercel/kv": "^0.2.3",
     "@vonage/client-sdk": "*",
     "@vonage/client-sdk-react": "*",
     "@yaireo/relative-time": "^1.0.4",
@@ -21,7 +22,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "reapop": "^4.2.1",
-    "supabase-helpers": "*"
+    "supabase-helpers": "*",
+    "ts-pattern": "*"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.2",
@@ -33,6 +35,6 @@
     "postcss": "^8.4.23",
     "tailwindcss": "^3.3.2",
     "tsconfig": "*",
-    "typescript": "^4.5.3"
+    "typescript": "*"
   }
 }

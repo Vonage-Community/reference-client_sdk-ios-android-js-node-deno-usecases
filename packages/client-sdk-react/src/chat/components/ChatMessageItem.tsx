@@ -7,7 +7,8 @@ import RelativeTime from '@yaireo/relative-time';
 import { MessageTextEvent, MessageCustomEvent } from '@vonage/client-sdk';
 import { match } from 'ts-pattern';
 import { useVonageUser } from '../../VonageClientProvider';
-import { useChatMember } from '../hooks';
+import { useChatMember, useChatMembers } from '../hooks';
+import { IconDeviceMobile } from '@tabler/icons-react';
 const relativeTime = new RelativeTime();
 
 export type ChatImagePlaceholderProps = {
@@ -29,7 +30,7 @@ const ChatImagePlaceholder = (
 );
 
 export type ChatImageProps = {
-    imageUrl?: string;
+    avatarUrl?: string;
     name: string;
 
     className?: string;
@@ -41,7 +42,7 @@ export type ChatImageProps = {
 };
 const ChatImage = (
     {
-        imageUrl,
+        avatarUrl,
         name,
         className = 'vg-chat-image vg-avatar',
         imageClassName = 'vg-w-10 vg-mask vg-mask-squircle',
@@ -50,11 +51,12 @@ const ChatImage = (
         placeholderLabelClassName,
     }: ChatImageProps) => {
     return (
+        console.log('ChatImage', { avatarUrl, name, className, imageClassName, Placeholder, placeholderClassName, placeholderLabelClassName }),
         <div className={className}>
-            {!imageUrl ?
-                <Placeholder className={placeholderClassName} placeholderLabelClassName={placeholderLabelClassName} name={name} /> :
+                {!avatarUrl ?
+                    <IconDeviceMobile className={placeholderClassName} /> :
                 <div className={imageClassName} >
-                    <img src={imageUrl} alt={name} width={40} height={40} />
+                        <img src={avatarUrl} alt={name} width={40} height={40} />
                 </div>
             }
         </div >
@@ -262,7 +264,7 @@ export const ChatMessageItem = (
         },
     }: ChatMessageProps) => {
     const user = useVonageUser();
-    
+    const { members } = useChatMembers();
     const { memberName, displayName, avatarUrl, isLocal} = match(message.from)
     .with({kind: 'system'}, () => {
         return {
@@ -272,20 +274,23 @@ export const ChatMessageItem = (
             isLocal: false
         };
     })
-    .with({kind: 'embeddedInfo'}, (from) => {
+        .with({ kind: 'embeddedInfo' }, (from) => {
+            const m = members.get(from.memberId!);
         return {
-            memberName: from.user.name,
-            displayName: from.user.displayName ?? from.user.name,
-            avatarUrl: from.user.imageUrl ?? undefined,
-            isLocal: from.user.id == user!.id
+            memberName: m?.name ?? from.memberId!,
+            displayName: m?.displayName ?? m?.name ?? from.user.displayName ?? from.user.name,
+            avatarUrl: m?.avatarUrl ?? from.user.imageUrl ?? undefined,
+            isLocal: m?.userId === user?.id || from.user.id === user?.id
         };
     })
-    .exhaustive();
+        .exhaustive();
+
+    console.log('ChatMessageItem', { message, user, members, memberName, displayName, avatarUrl, isLocal });
 
 
     return (
         <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
-            <ImageComponent imageUrl={avatarUrl} name={displayName || memberName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />
+            <ImageComponent avatarUrl={avatarUrl} name={displayName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />
             <HeaderComponent name={displayName || memberName} className={headerClassNames.className} />
             <BubbleComponent message={message} className={bubbleClassNames.className} componentsClassNames={{ text: bubbleClassNames.textClassName, custom: bubbleClassNames.customClassName }} />
             <FooterComponent time={message.timestamp} className={footerClassNames.className} timeClassName={footerClassNames.timeClassName} />

@@ -29,11 +29,12 @@
     "daisyui": "^3.1.7",
     "react": "*",
     "react-dom": "*",
-    "tsconfig": "*"
+    "tsconfig": "*",
+    "typescript": "*"
   },
   "dependencies": {
     "@tabler/icons-react": "^2.22.0",
     "@yaireo/relative-time": "^1.0.4",
-    "ts-pattern": "^4.3.0"
+    "ts-pattern": "*"
   }
 }
