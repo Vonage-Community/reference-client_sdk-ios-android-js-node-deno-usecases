@@ -4,9 +4,11 @@ import {
     conversationSchema,
     mediaSchema,
     userSchema,
-    reasonSchema
+    reasonSchema,
+    transcriptionSchema,
+    asrDoneSchema,
+    asrRecordDoneSchema
 } from './schemas';
-
 
 const timestampSchema = z.string().datetime({ offset: true });
 
@@ -18,7 +20,6 @@ export const RTCEventBaseNoConv = z.object({
     params: z.object({}).passthrough().optional(),
     body: z.object({}).passthrough(),
 }).passthrough();
-
 
 export const RTCEventBase = RTCEventBaseNoConv.extend({
     // type: z.string(),
@@ -119,9 +120,6 @@ export const memberLeftEvent = RTCEventBase.extend({
     }).passthrough(),
 });
 
-
-
-
 export const rtcHangupEvent = RTCEventBase.extend({
     type: z.literal('rtc:hangup'),
     body: z.object({
@@ -167,7 +165,6 @@ export const messageEvent = RTCEventBase.extend({
     }),
 });
 
-
 export const conversationCreatedEvent = RTCEventBaseNoConv.extend({
     type: z.literal('conversation:created'),
     body: z.object({
@@ -190,3 +187,125 @@ export const appKnocking = RTCEventBaseNoConv.extend({
     }).passthrough(),
 });
 
+export const audioSayEvent = RTCEventBase.extend({
+    type: z.literal('audio:say'),
+    body: z.object({
+        level: z.number(),
+        loop: z.number(),
+        queue: z.boolean().optional(),
+        voice_name: z.string().optional(),
+        language: z.string().optional(),
+        style: z.number().optional(),
+        premium: z.boolean().optional(),
+        text: z.string(),
+        ssml: z.boolean().optional(),
+        say_id: z.string(),
+    }).passthrough(),
+});
+
+export const audioSayStopEvent = RTCEventBase.extend({
+    type: z.literal('audio:say:stop'),
+    body: z.object({
+        say_id: z.string()
+    }).passthrough(),
+});
+
+export const audioSayDoneEvent = RTCEventBase.extend({
+    type: z.literal('audio:say:done'),
+    body: z.object({
+        say_id: z.string(),
+        error: z.string().optional(),
+        channel: channelSchema.optional()
+    }).passthrough(),
+});
+
+export const audioPlayEvent = RTCEventBase.extend({
+    type: z.literal('audio:play'),
+    body: z.object({
+        queue: z.boolean().optional(),
+        level: z.number(),
+        loop: z.number(),
+        stream_url: z.array(z.string()),
+        play_id: z.string()
+    }).passthrough(),
+});
+
+export const audioPlayStopEvent = RTCEventBase.extend({
+    type: z.literal('audio:play:stop'),
+    body: z.object({
+        play_id: z.string()
+    }).passthrough(),
+});
+
+export const audioPlayDoneEvent = RTCEventBase.extend({
+    type: z.literal('audio:play:done'),
+    body: z.object({
+        play_id: z.string(),
+        error: z.string().optional(),
+        channel: channelSchema.optional()
+    }).passthrough(),
+});
+
+export const audioRecordEvent = RTCEventBase.extend({
+    type: z.literal('audio:record'),
+    body: z.object({
+        validity: z.number().optional(),
+        streamed: z.boolean().optional(),
+        format: z.string().optional(),
+        beep_start: z.boolean().optional(),
+        beep_stop: z.boolean().optional(),
+        detect_speech: z.boolean().optional(),
+        split: z.boolean().optional(),
+        multitrack: z.boolean().optional(),
+        channels: z.number().optional(),
+        transcription: transcriptionSchema.optional(),
+        recording_id: z.string()
+    }).passthrough(),
+});
+
+export const audioRecordStopEvent = RTCEventBase.extend({
+    type: z.literal('audio:record:stop'),
+    body: z.object({
+        record_id: z.string()
+    }).passthrough(),
+});
+
+export const audioRecordDoneEvent = RTCEventBase.extend({
+    type: z.literal('audio:record:done'),
+    body: z.object({
+        event_id: z.number().optional(),
+        recording_id: z.string(),
+        destination_url: z.string(),
+        format: z.string(),
+        start_time: z.string(),
+        end_time: z.string(),
+        size: z.number(),
+        channel: channelSchema.optional()
+    }).passthrough(),
+});
+
+export const audioAsrDoneEvent = RTCEventBase.extend({
+    type: z.literal('audio:asr:done'),
+    body: z.object({
+        channel: channelSchema.optional(),
+        asr: asrDoneSchema
+    }).passthrough(),
+});
+
+export const audioAsrRecordDoneEvent = RTCEventBase.extend({
+    type: z.literal('audio:asr:record:done'),
+    body: z.object({
+        channel: channelSchema.optional(),
+        asr: asrRecordDoneSchema
+    }).passthrough(),
+});
+
+export const audioTranscribeDoneEvent = RTCEventBase.extend({
+    type: z.literal('audio:transcribe:done'),
+    body: z.object({
+        request_id: z.string(),
+        recording_id: z.string(),
+        transcription_url: z.string().optional(),
+        error: z.string().optional()
+    }).passthrough(),
+});

@@ -70,7 +70,7 @@ export const deleteUserData = async (cid: string, userId: string) => {
         logger.debug('Deleting User');
         await csClient(`/users/${userId}`, 'DELETE');
     } catch (error) {
-        logger.debug('Error deleteing user data', error);
+        logger.debug('Error deleting user data', error);
     }
 };
 
