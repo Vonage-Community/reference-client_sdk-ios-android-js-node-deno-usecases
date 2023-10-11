@@ -37,48 +37,6 @@ export const csClient = async <T = any>(
     if (!res.body) return res as any;
     return await res.json();
 };
-<<<<<<< HEAD
-
-export const addUserToConversation = async (cid: string, userName: string) => {
-    logger.debug(`Adding user ${userName} to conversation ${cid}`);
-    logger.debug(`Getting list of members in conversation ${cid}`);
-    const memberList = await csClient(`/conversations/${cid}/members`, 'GET');
-    const mids = (memberList._embedded.members as any[]).filter((member) =>
-        member._embedded.user.name === userName && member.state === 'JOINED'
-    ).map((member) => member.id);
-    if (mids.length > 0) {
-        logger.debug(`User ${userName} already in conversation ${cid}`);
-        return mids[0];
-    }
-
-    logger.debug(`User ${userName} not in conversation ${cid}, adding`);
-
-    return (await csClient(`/conversations/${cid}/members`, 'POST', {
-        user: {
-            name: userName,
-        },
-        state: 'JOINED',
-        channel: {
-            type: 'app',
-            preanswer: false,
-        },
-    })).id;
-};
-
-export const deleteUserData = async (cid: string, userId: string) => {
-    try {
-        logger.debug('Deleting Conversation');
-        await csClient(`/conversations/${cid}`, 'DELETE');
-        logger.debug('Deleting User');
-        await csClient(`/users/${userId}`, 'DELETE');
-    } catch (error) {
-        logger.debug('Error deleting user data', error);
-    }
-};
-
-
-=======
->>>>>>> main
 export type Channel = 'whatsapp' | 'messenger' | 'sms' | 'viber_service';
 
 export type AgentMemberState = 'JOINED' | 'LEFT';

@@ -1,5 +1,4 @@
-import { z } from 'zod';
-import { messageEvent } from './events';
+import { MessageEvent } from './events';
 import { csClient } from '../utils';
 import { getRTCLogger } from '../logger';
 import { match, P } from 'ts-pattern';
@@ -24,7 +23,7 @@ const isValidUrl = (url: string) => {
       }
 };
 
-export const onMessage = async (event: z.infer<typeof messageEvent>) => {
+export const onMessage = async (event: MessageEvent) => {
     logger.info('Event received');
     logger.debug({ event });
 
@@ -34,10 +33,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@tts')),
+                text: P.when((text) => (text as string).startsWith('@tts')),
             }
-        }, async () => {
-            const tts = event.body.text?.split(' ')?.splice(1)?.join(' ');
+        }, async (evt) => {
+            const tts = evt.body.text?.split(' ')?.splice(1)?.join(' ');
 
             if (tts && conversationId) {
                 try {
@@ -62,10 +61,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@tts-stop')),
+                text: P.when((text) => (text as string).startsWith('@tts-stop')),
             }
-        }, async () => {
-            const ttsId = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const ttsId = evt.body.text?.split(' ')?.[1];
 
             if (ttsId && conversationId) {
                 try {
@@ -85,10 +84,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@stream')),
+                text: P.when((text) => (text as string).startsWith('@stream')),
             }
-        }, async () => {
-            const streamUrl = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const streamUrl = evt.body.text?.split(' ')?.[1];
             
             if (streamUrl && conversationId) {
                 try {
@@ -110,10 +109,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@stream-stop')),
+                text: P.when((text) => (text as string).startsWith('@stream-stop')),
             }
-        }, async () => {
-            const streamId = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const streamId = evt.body.text?.split(' ')?.[1];
             
             if (streamId && conversationId) {
                 try {
@@ -133,9 +132,9 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@record')),
+                text: P.when((text) => (text as string).startsWith('@record')),
             }
-        }, async () => {
+        }, async (evt) => {
             if (conversationId) {
                 try {
                     const reqBody = {
@@ -151,10 +150,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@record-stop')),
+                text: P.when((text) => (text as string).startsWith('@record-stop')),
             }
-        }, async () => {
-            const recordingId = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const recordingId = evt.body.text?.split(' ')?.[1];
 
             if (recordingId && conversationId) {
                 try {
@@ -174,9 +173,9 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text: string) => text.startsWith('@transcribe')),
+                text: P.when((text) => (text as string).startsWith('@transcribe')),
             }
-        }, async () => {
+        }, async (evt) => {
             if (conversationId) {
                 try {
                     const reqBody = {
@@ -198,10 +197,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text: string) => text.startsWith('@transcribe-stop')),
+                text: P.when((text) => (text as string).startsWith('@transcribe-stop')),
             }
-        }, async () => {
-            const recordingId = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const recordingId = evt.body.text?.split(' ')?.[1];
 
             if (recordingId && conversationId) {
                 try {
@@ -221,10 +220,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@asr')),
+                text: P.when((text) => (text as string).startsWith('@asr')),
             }
-        }, async () => {
-            const legId = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const legId = evt.body.text?.split(' ')?.[1];
 
             if (legId && conversationId) {
                 try {
@@ -245,10 +244,10 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@asr-stop')),
+                text: P.when((text) => (text as string).startsWith('@asr-stop')),
             }
-        }, async () => {
-            const legId = event.body.text?.split(' ')?.[1];
+        }, async (evt) => {
+            const legId = evt.body.text?.split(' ')?.[1];
 
             if (legId) {
                 try {
@@ -261,11 +260,11 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => text.startsWith('@push')),
+                text: P.when((text) => (text as string).startsWith('@push')),
             }
-        }, async () => {
-            const userIdOrName = event.body.text?.split(' ')?.[1];
-            const text = event.body.text?.split(' ')?.[2];
+        }, async (evt) => {
+            const userIdOrName = evt.body.text?.split(' ')?.[1];
+            const text = evt.body.text?.split(' ')?.[2];
 
             if (userIdOrName && text) {
                 try {
@@ -282,9 +281,9 @@ export const onMessage = async (event: z.infer<typeof messageEvent>) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => isValidUrl(text)),
+                text: P.when((text) => isValidUrl((text as string))),
             }
-        }, async () => {
+        }, async (evt) => {
             // do something with images
         });
 
