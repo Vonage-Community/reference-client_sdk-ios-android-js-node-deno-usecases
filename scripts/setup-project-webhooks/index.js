@@ -6,6 +6,8 @@ import { hideBin } from 'yargs/helpers';
 import { TunnelTypes, getTunnelUrl } from 'local-portal';
 import { setupFacebook } from './facebookSetup.js';
 import { createBot } from './botSetup.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 
 const VONAGE_API_KEY = process.env.VONAGE_API_KEY;
@@ -152,6 +154,33 @@ const argv = yargs(hideBin(process.argv))
         argv.rtcEventHttpMethod = argv.rtcEventWebhookHttpMethod || argv.webhookHttpMethod;
         argv.facebookEventUrl = new URL(`${argv.webhookPath}${argv.facebookWebhookPath}`, argv.endpoint).href;
 
+        return argv;
+    })
+    .middleware(async (argv) => {
+        if (!argv.tunnel) return argv; // don't save the endpoint if we're not using a tunnel
+        // save the endpoint to the .env.local file
+        // if the file doesn't exist, create it
+        const envLocalPath = path.join(process.cwd(), '..', '..', '.env.local');
+        const envLocalExists = await fs.access(envLocalPath).then(() => true).catch(() => false);
+        if (!envLocalExists) {
+            await fs.writeFile(envLocalPath, '');
+        }
+        const envLocal = await fs.readFile(envLocalPath, 'utf-8');
+        const envLocalLines = envLocal.split('\n');
+        const envLocalVars = envLocalLines.reduce((acc, line) => {
+            const [key, value] = line.split('=');
+            acc.set(key, value);
+            return acc;
+        }, new Map());
+
+        envLocalVars.set('ENDPOINT', argv.endpoint);
+
+        const envLocalUpdated = [...envLocalVars.entries()].reduce((acc, [key, value]) => {
+            if (!value && !key) return acc;
+            return `${acc}${key}=${value}\n`;
+        }, []);
+
+        await fs.writeFile(envLocalPath, envLocalUpdated);
         return argv;
     })
     .help()

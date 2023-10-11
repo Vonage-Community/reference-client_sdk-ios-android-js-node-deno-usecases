@@ -2,47 +2,51 @@
 
 import { cookies } from 'next/headers';
 import { getToken } from '../api/token';
-import { csClient } from '../api/utils';
+import { csClient, getOrCreateUser } from '../api/utils';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 
-const loginSchema = z.object({
-    email: z.string().email('Must be a email').endsWith('@vonage.com', 'Invalid email'),
-});
+import { match, P } from 'ts-pattern';
+import { type LoginState, loginSchema } from './types';
 
 
-const getOrCreateUser = (email: string) => {
-    return csClient(`/users/${email}`, 'GET')
-        .catch(e => {
-            if (e instanceof Response && e.status == 404) {
-                console.error(e);
-                return csClient('/users', 'POST', {
-                    name: email,
-                    display_name: email.split('@')[0]
-                });
-            }
-        });
-};
-export const handleLogin = async (_: any, formData: FormData) => {
-    console.log('handleLogin', formData);
-    const { email } = loginSchema.parse({
-        email: formData.get('email')
-    });
-
-    // check if user exists in CS
+export const handleLogin = async (_: LoginState, formData: FormData) => {
     try {
-        await getOrCreateUser(email);
+        const { email } = loginSchema.parse({
+            email: formData.get('email')
+        });
+        // check if user exists in CS
+        const { id, display_name, name } = await getOrCreateUser(`${email}:app`);
+        const expirationSeconds = 3600; // 1 hour
+        const token = await getToken(name);
+        cookies().set('vonage.token', token, {
+            expires: new Date(Date.now() + expirationSeconds * 1000),
+        });
+        cookies().set('vonage.user.id', id, {
+            expires: new Date(Date.now() + expirationSeconds * 1000),
+        });
+        cookies().set('vonage.user.name', display_name || email.split('@')[0]), {
+            expires: new Date(Date.now() + expirationSeconds * 1000),
+        };
+        redirect('/');
     } catch (e) {
-        if (e instanceof Error) {
-            console.error(e.message);
-            return { error: e.message };
-        }
-        if (e instanceof Response) {
-            console.error(e);
-            return { error: 'CS error', status: e.status, statusText: e.statusText, body: JSON.stringify(e) };
-        }
+        return match(e)
+            .with(P.instanceOf(Error), e => {
+                console.error(e.message);
+                return { error: e.message };
+            })
+            .with(P.instanceOf(z.ZodError), e => {
+                console.error(e);
+                return { error: e.message, body: e.issues };
+            })
+            .with(P.instanceOf(Response), e => {
+                console.error(e);
+                return { error: 'CS error', status: e.status, statusText: e.statusText, body: JSON.stringify(e) };
+            })
+            .otherwise(() => {
+                console.error(e);
+                return { error: 'Unknown error' };
+            });
     }
-    const token = await getToken(email);
-    cookies().set('vonageToken', token);
-    redirect(`/?token=${token}`);
+
 };
