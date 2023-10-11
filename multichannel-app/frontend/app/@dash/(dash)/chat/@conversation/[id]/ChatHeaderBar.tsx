@@ -2,7 +2,7 @@
 import { useChat, useChatActions } from '@vonage/client-sdk-react';
 import { IconArrowAutofitLeft, IconArrowElbowLeft, IconChevronLeft, IconChevronRight, IconMenu2 } from '@tabler/icons-react';
 import Link from 'next/link';
-
+const VonageNumber = process.env.NEXT_PUBLIC_VONAGE_LVN;
 
 export const ChatHeaderBar = () => {
     const { state: { name, displayName, id } } = useChat();
@@ -13,7 +13,10 @@ export const ChatHeaderBar = () => {
                 <label htmlFor='chat-list' className='btn drawer-button lg:hidden'>
                     <IconChevronRight aria-label='Open Chat List' />
                 </label>
-                <Link href={`/chat/${id}`} className='btn btn-ghost text-lg font-bold'>{displayName || name}</Link>
+                <div className='inline-flex items-start gap-2 flex-col'>
+                    <Link href={`/chat/${id}`} className='btn btn-ghost text-lg font-bold'>{displayName || name}</Link>
+                    <a href={`tel:${VonageNumber}`} className='badge badge-outline'>Call in with {VonageNumber} <span className='ml-2'>Room Code:{name}</span></a>
+                </div>
             </div>
 
             <div className='flex-none'>
@@ -26,11 +29,6 @@ export const ChatHeaderBar = () => {
                             <Link href={`/chat/${id}/info`}>
                                 Conversation Info
                             </Link>
-                        </li>
-                        <li>
-                            <a>
-                                Invite User
-                            </a>
                         </li>
                         <li><a onClick={leaveConversation} >Leave Conversation</a></li>
                     </ul>

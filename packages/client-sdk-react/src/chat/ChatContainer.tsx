@@ -251,7 +251,7 @@ export const ChatContainer = (props: ChatContainerProps) => {
                 return;
             }
 
-            return {
+            const chatmember = {
                 userId: user.id,
                 name: user.name,
                 avatarUrl: user.imageUrl || undefined,
@@ -259,11 +259,18 @@ export const ChatContainer = (props: ChatContainerProps) => {
                 channel: member.channel?.type.name || undefined,
                 state: member.state,
             };
+            console.log('chatmember', chatmember);
+            return chatmember;
         };
 
         const fetchMembers = async (cursor?: string) => {
             const { members, nextCursor } = await vonageClient.getConversationMembers(state.id, undefined, undefined, cursor);
-            const chatMembers = await Promise.all(members.filter(m => m.user != null).map((m) => getChatMember(m as Member)));
+            const chatMembers = await Promise.all(
+                members
+                    .filter(m => m.user != null)
+                    .filter(m => m.state === 'JOINED' || m.state === 'INVITED')
+                    .map((m) => getChatMember(m as Member))
+            );
             loadMembers(chatMembers.filter(Boolean) as ChatMember[]);
             if (nextCursor) fetchMembers(nextCursor);
         };

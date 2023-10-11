@@ -2,13 +2,8 @@
 import { experimental_useFormState as useFormState } from 'react-dom';
 import { experimental_useFormStatus as useFormStatus } from 'react-dom';
 import { handleLogin } from './loginActions';
-export const defaultLoginState = {
-    error: undefined,
-    body: undefined,
-    status: undefined,
-    statusText: undefined,
-    email: '',
-};
+import { defaultLoginState } from './types';
+
 
 export const Login = () => {
     const [state, formAction] = useFormState(handleLogin, defaultLoginState);

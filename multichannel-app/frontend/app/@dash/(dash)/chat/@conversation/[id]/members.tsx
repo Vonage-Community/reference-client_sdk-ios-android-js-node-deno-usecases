@@ -7,23 +7,26 @@ const ChatMemberItem = ({ member }: { member: ChatMember }) => {
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
     return (
         <div className="flex items-center justify-between px-2 py-1 border-accent-focus border-2 max-w-xs rounded-box indicator ">
-            <span className='indicator-item badge badge-accent'>{member.channel || 'APP'}</span>
+            <span className='indicator-item badge badge-accent'>{member.channel || member.name.split(':')[1]}</span>
             <div className="avatar placeholder ">
                 <div className="bg-neutral-focus text-neutral-content mask mask-squircle w-16">
                     <span className="text-xl" aria-label={name}>{initials}</span>
                 </div>
             </div>
             <div className="flex-1 ml-4">
-                <div className="text-sm font-semibold">{name}</div>
+                <div className="text-sm font-semibold text-neutral-content">{name}</div>
             </div>
         </div>
     );
 };
 
+const isVoiceMember = ({ name }: ChatMember) => !['sms', 'whatsapp'].includes(name.split(':')[1]);
 
 export const ChatMembers = () => {
     const { state: { callId, members } } = useChat();
-    const membersArray = Array.from(members.values());
+    const membersArray = Array
+        .from(members.values())
+        .filter(isVoiceMember);
 
     if (!callId) return null;
 

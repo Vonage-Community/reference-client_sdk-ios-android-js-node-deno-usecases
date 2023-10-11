@@ -30,8 +30,8 @@ export const ChatCreateConversation = ({
 
     return (
         <form className={className} onSubmit={onSubmit}>
-            <InputName className={inputNameClassName} value={name} onChange={(e) => setName(e.target.value)} />
-            <InputDisplayName className={inputDisplayNameClassName} value={displayName||''} onChange={(e) => setDisplayName(e.target.value)} />
+            <InputName className={inputNameClassName} value={name} onChange={(e) => setName(e.target.value)} placeholder='Conversation Name' />
+            <InputDisplayName className={inputDisplayNameClassName} value={displayName || ''} onChange={(e) => setDisplayName(e.target.value)} placeholder='Display Name' />
             <Button className={buttonClassName} type='submit' />
         </form>
     );

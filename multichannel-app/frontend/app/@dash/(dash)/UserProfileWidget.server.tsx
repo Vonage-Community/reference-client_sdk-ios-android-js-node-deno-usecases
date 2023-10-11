@@ -1,11 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { createServerComponentSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { headers, cookies } from 'next/headers';
-import { Database } from 'supabase-helpers';
+import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
-import Link from 'next/link';
-import { UserSignoutBtn } from './UserSignoutBtn';
-import { getUserProfile } from './utils';
+import { redirect } from 'next/navigation';
 
 const md5 = (s: string) => createHash('md5').update(s).digest('hex');
 
@@ -18,10 +14,19 @@ type UserProfileWidgetProps = {
     className?: string;
 };
 
-export const UserProfileWidget = async ({className}:UserProfileWidgetProps) => {
-    
-    const user = await getUserProfile();
-    const avatarUrl = (user.avatar_url === null || user.avatar_url === '') ? getGravatar(user.email) : user.avatar_url;
+export const UserProfileWidget = ({ className }: UserProfileWidgetProps) => {
+
+    const userName = cookies().get('vonage.user.name')?.value as string;
+    const avatarUrl = getGravatar(`${userName}@vonage.com`);
+
+    const logout = async () => {
+        'use server';
+        cookies().delete('vonage.token');
+        cookies().delete('vonage.user.id');
+        cookies().delete('vonage.user.name');
+        redirect('/');
+    };
+
 
     return (
     <div className={`dropdown dropdown-end lg:dropdown-right ${className}`}>
@@ -33,12 +38,17 @@ export const UserProfileWidget = async ({className}:UserProfileWidgetProps) => {
                 </div>
             </div>
             <div className='flex-col justify-center hidden ml-2 md:flex'>
-                <h2 className='text-base font-bold'>{user.username}</h2>
-                <h3 className='text-sm text-gray-500'>{user.email}</h3>
+                    <h2 className='text-base font-bold'>{userName}</h2>
             </div>
         </label>
-        <ul tabIndex={0} className='w-full p-2 mt-4 shadow menu dropdown-content bg-base-200 rounded-xl'>
-                {/* <UserSignoutBtn /> */}
+            <ul tabIndex={0} className='w-full p-2 mt-4 shadow menu dropdown-content bg-base-200 rounded-xl'>
+                <li>
+                    <form action={logout}>
+                        <button type='submit'>
+                            Logout
+                        </button>
+                    </form>
+                </li>
         </ul>
     </div>
     );

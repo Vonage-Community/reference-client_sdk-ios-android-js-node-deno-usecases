@@ -139,33 +139,108 @@ export const rtcHangupEvent = RTCEventBase.extend({
         quality: z.record(z.number()),
     }),
 });
+const messenger = z.object({
+    category: z.string(),
+    tag: z.string(),
+});
+
+const viber_service = z.object({
+    type: z.string(),
+    tag: z.string(),
+    ttl: z.number(),
+});
+
+const textMessageBody = z.object({
+    message_type: z.literal('text'),
+    text: z.string(),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const imageMessageBody = z.object({
+    message_type: z.literal('image'),
+    image: z.object({
+        url: z.string(),
+        caption: z.string().optional(),
+    }),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const videoMessageBody = z.object({
+    message_type: z.literal('video'),
+    video: z.object({
+        url: z.string(),
+        caption: z.string().optional(),
+    }),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const audioMessageBody = z.object({
+    message_type: z.literal('audio'),
+    audio: z.object({
+        url: z.string(),
+        caption: z.string().optional(),
+    }),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const fileMessageBody = z.object({
+    message_type: z.literal('file'),
+    file: z.object({
+        url: z.string(),
+        caption: z.string().optional(),
+    }),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const vcardMessageBody = z.object({
+    message_type: z.literal('vcard'),
+    vcard: z.object({
+        url: z.string(),
+    }),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const locationMessageBody = z.object({
+    message_type: z.literal('location'),
+    location: z.object({
+    }).passthrough(),
+    messenger: messenger.optional(),
+    viber_service: viber_service.optional(),
+});
+
+const templateMessageBody = z.object({
+    message_type: z.literal('template'),
+}).passthrough();
+
+const customMessageBody = z.object({
+    message_type: z.literal('custom'),
+}).passthrough();
+
+const messageBody = z.discriminatedUnion('message_type', [
+    textMessageBody,
+    imageMessageBody,
+    videoMessageBody,
+    audioMessageBody,
+    fileMessageBody,
+    vcardMessageBody,
+    locationMessageBody,
+    templateMessageBody,
+    customMessageBody,
+]);
 
 export const messageEvent = RTCEventBase.extend({
     type: z.literal('message'),
-    body: z.object({
-        message_type: z.enum([
-            'text',
-            'image',
-            'video',
-            'audio',
-            'file',
-            'vcard',
-            'location',
-            'template',
-            'custom',
-        ]),
-        text: z.string().optional(),
-        messenger: z.object({
-            category: z.string(),
-            tag: z.string(),
-        }).optional(),
-        viber_service: z.object({
-            type: z.string(),
-            tag: z.string(),
-            ttl: z.number(),
-        }).optional(),
-    }),
+    to: z.string().optional(),
+    from: z.string().optional(),
+    body: messageBody,
 });
+export type MessageEvent = z.infer<typeof messageEvent>;
 
 
 export const conversationCreatedEvent = RTCEventBaseNoConv.extend({

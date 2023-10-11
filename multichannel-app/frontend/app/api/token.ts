@@ -25,8 +25,13 @@ const acl:ACL = {
 
 export const revalidate = 0;
 
-
-export const getToken = async (sub?: string) => {
+/**
+ * Generate a Vonage JWT token
+ * @param sub - user name
+ * @param exp - expiration time in seconds
+ * @returns 
+ */
+export const getToken = async (sub?: string, exp: number = 3600) => {
 
     if(!sub){ // backend acl can also do calls and send messages
         acl.paths['/*/calls/**'] = {};
@@ -44,7 +49,7 @@ export const getToken = async (sub?: string) => {
     const token = await new jose.SignJWT(payload)
         .setProtectedHeader({ alg: 'RS256' })
         .setIssuedAt()
-        .setExpirationTime(Math.floor(Date.now() / 1000) + 3600) // 1 hour
+        .setExpirationTime(Math.floor(Date.now() / 1000) + exp) // 1 hour
         .setJti(nanoid())
         .sign(key);
 
