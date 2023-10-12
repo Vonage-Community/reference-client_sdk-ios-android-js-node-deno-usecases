@@ -7,7 +7,7 @@ export const TunnelTypes = {
     localtunnel: 'localtunnel',
 };
 
-export const getTunnelUrl = async (ports, type = TunnelTypes.ngrok) => {
+export const getTunnelUrl = async (ports, type = TunnelTypes.localtunnel) => {
     console.log(`Starting ${type} tunnel on port ${ports}...`);
     switch (type) {
         case TunnelTypes.ngrok:
@@ -26,6 +26,7 @@ export const getTunnelUrl = async (ports, type = TunnelTypes.ngrok) => {
                     console.info('Closing ngrok...');
                     await ngrok.disconnect(tunnelUrl);
                     console.info('ngrok status: disconnected');
+                    await fs.writeFileSync('.env.local', '');
                     process.exit();
                 });
 
@@ -35,20 +36,28 @@ export const getTunnelUrl = async (ports, type = TunnelTypes.ngrok) => {
             return tunnelsUrls;
 
         case TunnelTypes.localtunnel:
-            const tunnel = await localtunnel({ port });
-            console.info('localtunnel status: connected');
+            const localTunnelsPromises = ports.map(async (port) => {
+                const tunnel = await localtunnel({ port });
+                console.info('localtunnel status: connected');
 
-            process.on('SIGINT', async () => {
-                console.info('Closing localtunnel...');
-                tunnel.close();
-                console.info('localtunnel status: disconnected');
-                process.exit();
-            });
+                process.on('SIGINT', async () => {
+                    console.info('Closing localtunnel...');
+                    tunnel.close();
+                    console.info('localtunnel status: disconnected');
+                    await fs.writeFileSync('.env.local', '');
+                    process.exit();
+                });
 
-            tunnel.on('close', () => {
-                console.info('localtunnel status: closed');
+                tunnel.on('close', () => {
+                    console.info('localtunnel status: closed');
+                    
+
+                });
+                return tunnel.url;
             });
-            return tunnel.url;
+            const localTunnelsUrls = Promise.all(localTunnelsPromises);
+            return localTunnelsUrls;
+            
         default:
             throw new Error(`Unknown tunnel type: ${type}`);
     }
