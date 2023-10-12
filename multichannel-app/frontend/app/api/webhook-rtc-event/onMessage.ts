@@ -92,7 +92,7 @@ export const onMessage = async (event: MessageEvent) => {
                         type: 'audio:play',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
                         body: {
-                            stream_url: streamUrl,
+                            stream_url: [streamUrl],
                             level: 1,
                             loop: 1
                         },
@@ -141,7 +141,8 @@ export const onMessage = async (event: MessageEvent) => {
                 try {
                     const reqBody = {
                         type: 'audio:record',
-                        ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id })
+                        ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+                        body: {}
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
                 } catch (err) {
