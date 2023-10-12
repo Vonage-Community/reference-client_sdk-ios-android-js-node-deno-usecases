@@ -8,10 +8,10 @@ const logger = getRTCLogger('message');
 
 const isValidUrl = (url: string) => {
     try {
-        return Boolean(new URL(url));
+        return Boolean(new URL(url)); 
     }
     catch (e) {
-        return false;
+        return false; 
     }
 };
 
@@ -53,6 +53,32 @@ export const onMessage = async (event: MessageEvent) => {
         .with({
             body: {
                 message_type: 'text',
+                text: P.when(isCommand('@tts-stop')),
+            }
+        }, async () => {
+            logger.info('tts stopped');
+            let ttsId;
+
+            try {
+                ttsId = await kv.get<string>(`conversation:${conversationId}:tts`);
+
+                if (ttsId && conversationId) {
+                    const reqBody = {
+                        type: 'audio:say:stop',
+                        ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+                        body: {
+                            say_id: ttsId
+                        },
+                    };
+                    await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
+                }
+            } catch (err) {
+                logger.error('tts stop error: ' + ttsId, err);
+            }
+        })
+        .with({
+            body: {
+                message_type: 'text',
                 text: P.when(isCommand('@tts')),
             }
         }, async (evt) => {
@@ -79,30 +105,31 @@ export const onMessage = async (event: MessageEvent) => {
                 }
             }
         })
+
         .with({
             body: {
                 message_type: 'text',
-                text: P.when(isCommand('@tts-stop')),
+                text: P.when(isCommand('@stream-stop')),
             }
         }, async () => {
-            logger.info('tts stopped');
-            let ttsId;
+            logger.info('stream stopped');
+            let streamId;
 
             try {
-                ttsId = await kv.get<string>(`conversation:${conversationId}:tts`);
+                streamId = await kv.get<string>(`conversation:${conversationId}:stream`);
 
-                if (ttsId && conversationId) {
+                if (streamId && conversationId) {
                     const reqBody = {
-                        type: 'audio:say:stop',
+                        type: 'audio:play:stop',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
                         body: {
-                            say_id: ttsId
+                            play_id: streamId,
                         },
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
                 }
             } catch (err) {
-                logger.error('tts stop error: ' + ttsId, err);
+                logger.error('stream stop error: ' + streamId, err);
             }
         })
         .with({
@@ -134,27 +161,27 @@ export const onMessage = async (event: MessageEvent) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when(isCommand('@stream-stop')),
+                text: P.when(isCommand('@record-stop')),
             }
         }, async () => {
-            logger.info('stream stopped');
-            let streamId;
+            logger.info('recording stopped');
+            let recordingId;
 
             try {
-                streamId = await kv.get<string>(`conversation:${conversationId}:stream`);
+                recordingId = await kv.get<string>(`conversation:${conversationId}:record`);
 
-                if (streamId && conversationId) {
+                if (recordingId && conversationId) {
                     const reqBody = {
-                        type: 'audio:play:stop',
+                        type: 'audio:record:stop',
                         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
                         body: {
-                            play_id: streamId,
-                        },
+                            record_id: recordingId
+                        }
                     };
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
                 }
             } catch (err) {
-                logger.error('stream stop error: ' + streamId, err);
+                logger.error('recording stop error: ' + recordingId, err);
             }
         })
         .with({
@@ -186,14 +213,14 @@ export const onMessage = async (event: MessageEvent) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when(isCommand('@record-stop')),
+                text: P.when(isCommand('@transcribe-stop')),
             }
         }, async () => {
-            logger.info('recording stopped');
+            logger.info('transcription stopped');
             let recordingId;
 
             try {
-                recordingId = await kv.get<string>(`conversation:${conversationId}:record`);
+                recordingId = await kv.get<string>(`conversation:${conversationId}:transcribe`);
 
                 if (recordingId && conversationId) {
                     const reqBody = {
@@ -206,7 +233,32 @@ export const onMessage = async (event: MessageEvent) => {
                     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
                 }
             } catch (err) {
-                logger.error('recording stop error: ' + recordingId, err);
+                logger.error('transcription stop error: ' + recordingId, err);
+            }
+        }).with({
+            body: {
+                message_type: 'text',
+                text: P.when(isCommand('@transcribe-stop')),
+            }
+        }, async () => {
+            logger.info('transcription stopped');
+            let recordingId;
+
+            try {
+                recordingId = await kv.get<string>(`conversation:${conversationId}:transcribe`);
+
+                if (recordingId && conversationId) {
+                    const reqBody = {
+                        type: 'audio:record:stop',
+                        ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+                        body: {
+                            record_id: recordingId
+                        }
+                    };
+                    await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
+                }
+            } catch (err) {
+                logger.error('transcription stop error: ' + recordingId, err);
             }
         })
         .with({
@@ -263,27 +315,21 @@ export const onMessage = async (event: MessageEvent) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when(isCommand('@transcribe-stop')),
+                text: P.when(isCommand('@asr-stop')),
             }
-        }, async () => {
-            logger.info('transcription stopped');
-            let recordingId;
+        }, async (evt) => {
+            logger.info('asr stopped');
+            let legId;
 
             try {
-                recordingId = await kv.get<string>(`conversation:${conversationId}:transcribe`);
+                const userName = evt.body.text?.split(' ')?.[1];
+                legId = await kv.get<string>(`user:${userName}:conversation:${conversationId}`);
 
-                if (recordingId && conversationId) {
-                    const reqBody = {
-                        type: 'audio:record:stop',
-                        ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
-                        body: {
-                            record_id: recordingId
-                        }
-                    };
-                    await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
+                if (legId) {
+                    await csClient(`/legs/${legId}/asr`, 'DELETE');
                 }
             } catch (err) {
-                logger.error('transcription stop error: ' + recordingId, err);
+                logger.error('asr stop error: ' + legId, err);
             }
         })
         .with({
@@ -312,26 +358,6 @@ export const onMessage = async (event: MessageEvent) => {
                 }
             } catch (err) {
                 logger.error('asr error: ' + legId, err);
-            }
-        })
-        .with({
-            body: {
-                message_type: 'text',
-                text: P.when(isCommand('@asr-stop')),
-            }
-        }, async (evt) => {
-            logger.info('asr stopped');
-            let legId;
-
-            try {
-                const userName = evt.body.text?.split(' ')?.[1];
-                legId = await kv.get<string>(`user:${userName}:conversation:${conversationId}`);
-
-                if (legId) {
-                    await csClient(`/legs/${legId}/asr`, 'DELETE');
-                }
-            } catch (err) {
-                logger.error('asr stop error: ' + legId, err);
             }
         })
         .with({
