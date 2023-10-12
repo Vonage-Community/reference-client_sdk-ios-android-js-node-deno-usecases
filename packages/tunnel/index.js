@@ -7,7 +7,7 @@ export const TunnelTypes = {
     localtunnel: 'localtunnel',
 };
 
-export const getTunnelUrl = async (ports, type = TunnelTypes.localtunnel) => {
+export const getTunnelUrl = async (ports, type = TunnelTypes.ngrok) => {
     console.log(`Starting ${type} tunnel on port ${ports}...`);
     switch (type) {
         case TunnelTypes.ngrok:

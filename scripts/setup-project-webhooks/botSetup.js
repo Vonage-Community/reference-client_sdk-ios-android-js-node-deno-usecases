@@ -13,7 +13,7 @@ export const createBot = async () => {
         'Authorization': `Bearer ${jwtToken}`,
         'Accept': 'application/json'
     };
-    const userRes = await fetch(`${VONAGE_ENDPOINT}/users/${BOT_NAME}`, {
+    const userRes = await fetch(`${VONAGE_ENDPOINT}/v1/users/${BOT_NAME}`, {
         method: 'GET',
         headers: csHeaders,
     });
@@ -24,7 +24,7 @@ export const createBot = async () => {
     }
 
     if (userRes.status == 404) {
-        const createUserRes = await fetch(`${VONAGE_ENDPOINT}/users`, {
+        const createUserRes = await fetch(`${VONAGE_ENDPOINT}/v1/users`, {
             method: 'POST',
             headers: csHeaders,
             body: JSON.stringify({

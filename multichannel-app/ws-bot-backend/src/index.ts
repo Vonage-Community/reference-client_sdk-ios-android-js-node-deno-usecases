@@ -15,7 +15,7 @@ import OpenAI from 'openai';
 
 
 const app = ExpressWS(express()).app;
-const port = 3001;
+const port = process.env.WS_BOT_PORT;
 
 const speechToTextClient = new speech.SpeechClient();
 const ttsClient = new textToSpeech.TextToSpeechClient();
@@ -91,8 +91,8 @@ app.ws('/transcribe', async (ws, req) => {
 
 // ASSISTANT
 app.ws('/assistant', async (ws, req) => {
-    const {webhook_url, webhook_method} = req.query;
-    console.log('received ws connection transcribe', {webhook_method, webhook_url});
+    const {webhook_url, webhook_method, webhook_param_name, webhook_param_value} = req.query;
+    console.log('received ws connection transcribe', {webhook_method, webhook_url, webhook_param_name, webhook_param_value});
 
     const gRecognizeStream = speechToTextClient
         .streamingRecognize({
@@ -110,25 +110,33 @@ app.ws('/assistant', async (ws, req) => {
             const prompt = data.results[0].alternatives[0].transcript;
             console.log('TRANSCRIBE> ',prompt);
             if (webhook_url){
-                http_callback(webhook_url.toString(), webhook_method?.toString(), {
+                http_callback(webhook_url.toString(), webhook_method?.toString(),  {
                     type: 'transcript',
                     data
-                });     
+                }, webhook_param_name?.toString(), webhook_param_value?.toString());     
             }
 
-            const completion = await openai.completions.create({
-               model: 'text-davinci-003',
-                prompt,
-                max_tokens: 150,
+            const completion = await openai.chat.completions.create({
+                model: 'gpt-3.5-turbo', 
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You\'re an unhelpful assistant'
+                    },
+                    {
+                        role: 'user', 
+                        content: prompt
+                    }
+                ]
             });
-            const completition_text = completion.choices[0].text;
+            const completition_text = completion.choices[0].message.content;
             // const completition_text = completion.data.choices[0].text;
 
             if (webhook_url){
                 http_callback(webhook_url.toString(), webhook_method?.toString(), {
                     type: 'assistant_response',
                     data:completion
-                });     
+                }, webhook_param_name?.toString(), webhook_param_value?.toString());     
             }
             console.log(`completition_text ${completition_text}`)
             const [ttsResponse] = await ttsClient.synthesizeSpeech({
@@ -190,11 +198,16 @@ app.ws('/assistant', async (ws, req) => {
 
 
 
-async function http_callback(webhook_url:string,webhook_method:string ='GET', data:any ) {
+async function http_callback(webhook_url:string,webhook_method:string ='GET', data:any, webhook_param_name?: string, webhook_param_value?: string) {
     let webhook_request:any = {
         url: webhook_url,
         method: webhook_method,
     };
+
+    if (webhook_param_name) {
+        data[webhook_param_name] = webhook_param_value;
+    }
+
     if (webhook_method === 'POST'){
         webhook_request.data = data; 
     }else if (webhook_method === 'GET'){
