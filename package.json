@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "dotenv -- turbo run dev",
+    "dev": "dotenv -c -- turbo run dev",
     "dev:contact-center": "dotenv -c -- turbo run dev --filter='./contact-center/*' --filter=setup-project-webhooks",
     "dev:multichannel-app": "dotenv -c -- turbo run dev --filter='./multichannel-app/*' --filter=setup-project-webhooks",
     "db:start": "turbo run db:start",
@@ -10,7 +10,8 @@
     "db:reset": "turbo run db:reset",
     "lint": "turbo run lint",
     "deploy": "turbo run deploy",
-    "list": "nr"
+    "list": "nr",
+    "tunnel": "dotenv -- node packages/tunnel/index.js"
   },
   "devDependencies": {
     "@antfu/ni": "^0.21.8",

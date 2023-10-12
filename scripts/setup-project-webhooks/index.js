@@ -156,33 +156,33 @@ const argv = yargs(hideBin(process.argv))
 
         return argv;
     })
-    .middleware(async (argv) => {
-        if (!argv.tunnel) return argv; // don't save the endpoint if we're not using a tunnel
-        // save the endpoint to the .env.local file
-        // if the file doesn't exist, create it
-        const envLocalPath = path.join(process.cwd(), '..', '..', '.env.local');
-        const envLocalExists = await fs.access(envLocalPath).then(() => true).catch(() => false);
-        if (!envLocalExists) {
-            await fs.writeFile(envLocalPath, '');
-        }
-        const envLocal = await fs.readFile(envLocalPath, 'utf-8');
-        const envLocalLines = envLocal.split('\n');
-        const envLocalVars = envLocalLines.reduce((acc, line) => {
-            const [key, value] = line.split('=');
-            acc.set(key, value);
-            return acc;
-        }, new Map());
+    // .middleware(async (argv) => {
+    //     if (!argv.tunnel) return argv; // don't save the endpoint if we're not using a tunnel
+    //     // save the endpoint to the .env.local file
+    //     // if the file doesn't exist, create it
+    //     const envLocalPath = path.join(process.cwd(), '..', '..', '.env.local');
+    //     const envLocalExists = await fs.access(envLocalPath).then(() => true).catch(() => false);
+    //     if (!envLocalExists) {
+    //         await fs.writeFile(envLocalPath, '');
+    //     }
+    //     const envLocal = await fs.readFile(envLocalPath, 'utf-8');
+    //     const envLocalLines = envLocal.split('\n');
+    //     const envLocalVars = envLocalLines.reduce((acc, line) => {
+    //         const [key, value] = line.split('=');
+    //         acc.set(key, value);
+    //         return acc;
+    //     }, new Map());
 
-        envLocalVars.set('ENDPOINT', argv.endpoint);
+    //     envLocalVars.set('ENDPOINT', argv.endpoint);
 
-        const envLocalUpdated = [...envLocalVars.entries()].reduce((acc, [key, value]) => {
-            if (!value && !key) return acc;
-            return `${acc}${key}=${value}\n`;
-        }, []);
+    //     const envLocalUpdated = [...envLocalVars.entries()].reduce((acc, [key, value]) => {
+    //         if (!value && !key) return acc;
+    //         return `${acc}${key}=${value}\n`;
+    //     }, []);
 
-        await fs.writeFile(envLocalPath, envLocalUpdated);
-        return argv;
-    })
+    //     await fs.writeFile(envLocalPath, envLocalUpdated);
+    //     return argv;
+    // })
     .help()
     .alias('help', 'h')
     .argv;

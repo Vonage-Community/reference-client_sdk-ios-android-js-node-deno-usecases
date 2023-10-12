@@ -26,7 +26,7 @@ async function getActiveMembers(convid: string){
 export const GET = async (req: Request) => {
     try{
         const logger = getRTCLogger('ws-bot');
-        const wsBotUrl = urlWss(process.env.WS_BOT_URL as string)
+        const wsBotUrl = urlWss(process.env.WS_BOT_URL as string);
         const conversationName = new URL(req?.url)?.searchParams?.get('c');
         // console.log(`req`, conversation);
         // const convRes = await csClient(`/conversations?name=${conversationName}`);
@@ -36,9 +36,9 @@ export const GET = async (req: Request) => {
         const startCallRes = await csClient('/calls', 'POST', {
              'random_from_number': true,
              'to': [
-                    {
+                    {   
                         'type': 'websocket',
-                        'uri': `${wsBotUrl}/echo`,
+                        'uri': `${wsBotUrl}/assistant`,
                         'content-type': 'audio/l16;rate=16000',
                         'headers': {
                             'app': 'audiosocket'
@@ -46,10 +46,6 @@ export const GET = async (req: Request) => {
                     }
             ], 
             'ncco': [
-                // {
-                //     'action': 'talk',
-                //     'text': 'Echo bot enabled'
-                // },
                 {
                     'action': 'conversation',
                     'name': conversationName
@@ -57,51 +53,10 @@ export const GET = async (req: Request) => {
             ]
         });
 
-        // try {
-        //     await csClient('/users', 'POST', {
-        //         name: userBotName,
-        //         display_name: 'bot echo (ws)'
-        //     });
-        // }catch(err){
-        //     logger.warning('user create error', { err});
-        // }
-
-        // const membRes = await csClient(`/conversations/${convid}/members`, 'POST', {
-        //     user: {
-        //         name: userBotName
-        //     },
-        //     state: 'invited',
-        //     channel: {
-        //         type: 'websocket',
-        //         to: {
-        //             type: 'websocket',
-        //             uri: `${wsBotUrl}/echo`,
-        //             'content-type': 'audio/l16;rate=8000',
-        //         }
-        //     }
-        // }).catch(e=>e);
-
-        
-        // const membListRes = await getActiveMembers(convid).catch(e => e);
-        // logger.info(`£££££££££££££££££££££ adofiaoisudfoaisudf `);
-
-        // for(let m of membListRes?._embedded?.members){
-        //     if(m._embedded.user.name === 'ws-bot-echo'){
-        //         logger.info('--- memmber s-bot-echo', m)
-        //         const delRes = await csClient(`/conversations/${convid}/members/${m.id}`, 'PATCH', {state:'LEFT'});
-        //         logger.info(delRes);
-        //     } 
-        // }
-
-        // const membRes = await csClient(`/conversations/${convid}/members/MEM-de2cbc78-4cc6-4901-8b8b-cf3cbf4de51a`);
-
+       
         return new Response(JSON.stringify({
-            // conversation: convid,
             ws_bot_url: wsBotUrl,
             startCallRes
-            // membRes:{},
-            // membListRes
-            // res
             
         }), {
             headers: { 'Content-Type': 'application/json' },

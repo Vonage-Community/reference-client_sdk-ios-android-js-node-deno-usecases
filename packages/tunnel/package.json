@@ -1,0 +1,12 @@
+{
+    "name": "tunnel",
+    "version": "0.0.0",
+    "main": "./index.js",
+    "types": "./index.js",
+    "private": true,
+    "type": "module",
+    "dependencies": {
+        "ngrok": "5.0.0-beta.2",
+        "localtunnel": "^2.0.2"
+    }
+  }
