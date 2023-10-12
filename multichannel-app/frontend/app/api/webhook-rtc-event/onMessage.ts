@@ -284,7 +284,7 @@ export const onMessage = async (event: MessageEvent) => {
             logger.info('push notification sent');
 
             const userIdOrName = evt.body.text?.split(' ')?.[1];
-            const text = evt.body.text?.split(' ')?.[2];
+            const text = evt.body.text?.split(' ')?.splice(2)?.join(' ');
 
             if (userIdOrName && text) {
                 try {
