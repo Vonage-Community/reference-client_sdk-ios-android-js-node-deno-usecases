@@ -30,7 +30,9 @@ app.use(express.json());
 
 app.get('/ping', async (req, res) => {
     return res.status(200).json({
-        status: 'ok'
+        status: 'ok',
+        url: process.env.WS_BOT_URL,
+        url_endpont: process.env.ENDPOINT
     });
 });
 
