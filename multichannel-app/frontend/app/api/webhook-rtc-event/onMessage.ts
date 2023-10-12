@@ -1,8 +1,9 @@
 import { MessageEvent } from './events';
-import { csClient } from '../utils';
+import { csClient, getConversationName, sendMessage,startWithOrExact } from '../utils';
 import { getRTCLogger } from '../logger';
 import { match, P } from 'ts-pattern';
 import { kv } from '@vercel/kv';
+import { toogleAssistantBot } from '../ws-bot/assistant_bot';
 
 const logger = getRTCLogger('message');
 
@@ -382,6 +383,26 @@ export const onMessage = async (event: MessageEvent) => {
                     logger.error('push notification error: ' + userIdOrName, err);
                 }
             }
+        })
+        .with({
+            body: {
+                message_type: 'text',
+                text: P.when((text) => startWithOrExact(text as string, '@assistant'))
+            }
+        }, async (evt) => {
+            const convid = event.conversation_id as string;
+            const convName = await getConversationName(convid);
+
+            const toogleRes = await toogleAssistantBot(convName);
+            const messageString = toogleRes.enabled ? 'assistant bot enabled, make your questions' : 'assistant bot disabled';
+
+            await sendMessage(convid, {
+                type: 'message', 
+                body: {
+                    message_type: 'text', 
+                    text: messageString
+                }
+            });
         })
         .with({
             body: {

@@ -1,5 +1,6 @@
 import { getUtilsLogger } from './logger';
 import { getToken } from './token';
+import { kv } from '@vercel/kv';
 import { z, type AnyZodObject } from 'zod';
 
 const logger = getUtilsLogger('vonage');
@@ -72,3 +73,24 @@ export const getOrCreateUser = (email: string, userOptions: object = {}): Promis
         }) as Promise<z.infer<typeof userSchema>>;
 };
 
+
+export const sendMessage = (cid: string, message: {type: string, body: object}) => {
+    return csClient(`/conversations/${cid}/events`, 'POST', message);
+};
+
+export const getConversationName =  async (cid: string) : Promise<string> => {
+    const convKey = `convname:${cid}`;
+    const name = await kv.get(convKey) as string;
+    if(!name){
+        const convRes = await csClient(`/conversations/${cid}`, 'GET');
+        const name = convRes.name as string;
+        await kv.set(convKey, name);
+        return name;
+    }else {
+        return name;
+    }
+};
+
+export const startWithOrExact = (str: string, matchString: string) => {
+    return str.startsWith(matchString+' ') || str === matchString;
+}
