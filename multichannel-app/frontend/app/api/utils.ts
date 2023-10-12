@@ -91,6 +91,19 @@ export const getConversationName =  async (cid: string) : Promise<string> => {
     }
 };
 
+export const getConversationIdByName =  async (name: string) : Promise<string> => {
+    const convKey = `convid:${name}`;
+    const id = await kv.get(convKey) as string;
+    if(!id){
+        const convRes = await csClient(`/conversations?name=${name}`, 'GET');
+        const id = convRes._embedded.conversations[0].id as string;
+        await kv.set(convKey, id);
+        return id;
+    }else {
+        return id;
+    }
+};
+
 export const startWithOrExact = (str: string, matchString: string) => {
     return str.startsWith(matchString+' ') || str === matchString;
 }
