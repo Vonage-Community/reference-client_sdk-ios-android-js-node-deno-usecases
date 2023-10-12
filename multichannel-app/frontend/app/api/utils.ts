@@ -1,23 +1,24 @@
 import { getUtilsLogger } from './logger';
 import { getToken } from './token';
-import { z } from 'zod';
+import { z, type AnyZodObject } from 'zod';
 
 const logger = getUtilsLogger('vonage');
 
 const adminToken = () => getToken();
 
-const VONAGE_ENDPOINT = process.env.VONAGE_ENDPOINT || 'https://api-us-3.vonage.com/v1';
+const VONAGE_ENDPOINT = process.env.VONAGE_ENDPOINT || 'https://api-us-3.vonage.com';
 const csClientLogger = getUtilsLogger('csClient');
 
 export const csClient = async <T = any>(
     path: string,
     method = 'GET',
     body?: object,
+    version = 'v1',
     token?: string,
     headers?: Record<string, string>,
 ): Promise<T> => {
-    csClientLogger.debug(`${method} ${VONAGE_ENDPOINT}/${path}`);
-    const res = await fetch(`${VONAGE_ENDPOINT}${path}`, {
+    csClientLogger.debug(`${method} ${VONAGE_ENDPOINT}${path}`);
+    const res = await fetch(`${VONAGE_ENDPOINT}/${version}${path}`, {
         method,
         headers: {
             ...headers,
@@ -37,6 +38,13 @@ export const csClient = async <T = any>(
     if (!res.body) return res as any;
     return await res.json();
 };
+
+export const typeCsClient =
+    <T extends AnyZodObject>(schema: T) =>
+        async (path: string, method = 'GET', body?: object, version = 'v1', token?: string, headers?: Record<string, string>,) =>
+            schema.safeParseAsync(await csClient(path, method, body, version, token, headers));
+
+
 export type Channel = 'whatsapp' | 'messenger' | 'sms' | 'viber_service';
 
 export type AgentMemberState = 'JOINED' | 'LEFT';
@@ -64,8 +72,3 @@ export const getOrCreateUser = (email: string, userOptions: object = {}): Promis
         }) as Promise<z.infer<typeof userSchema>>;
 };
 
-
-
-export const sendMessage = (cid: string, message: MessageEvent) => {
-    return csClient(`/conversations/${cid}/events`, 'POST', message);
-};
