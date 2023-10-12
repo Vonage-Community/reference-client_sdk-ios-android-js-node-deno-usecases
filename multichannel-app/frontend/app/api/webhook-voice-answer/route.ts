@@ -74,7 +74,7 @@ const handleServerCall = (
         return [
             {
                 action: 'talk',
-                text: 'Hello inapp user, connecting you now, please wait.',
+                text: 'Hello inapp user, connecting you now',
             },
             {
                 action: 'conversation',
@@ -126,15 +126,18 @@ const handleInboundCall = async (
         const ncco = [
             {
                 action: 'talk',
-                text: 'Tell us when to you want to be connected',
+                text: 'Insert the conversation code followd by #',
                 'bargeIn': true
             },
             {
                 'action': 'input',
                 'type': ['dtmf'],
                 'dtmf': {
-                    'maxDigits': 1
+                    'maxDigits': 8,
+                    'submitOnHash': true,
+                    'timeOut': 10
                 }
+                
             }
         ];
 
