@@ -43,7 +43,7 @@ export async function toogleAssistantBot(convName:string) : Promise<{
              'to': [
                     {   
                         'type': 'websocket',
-                        'uri': `${wsBotUrl}/assistant`,
+                        'uri': `${wsBotUrl}/assistant?webhook_method=POST&webhook_url=${process.env.ENDPOINT}/api/ws-bot/assistant-events&webhook_param_name=conversation&webhook_param_value=${convName}`,
                         'content-type': 'audio/l16;rate=16000',
                         'headers': {
                             'app': 'audiosocket'
