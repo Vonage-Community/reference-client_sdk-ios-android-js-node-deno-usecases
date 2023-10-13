@@ -40,7 +40,7 @@ export type ChatImageProps = {
     placeholderClassName?: string;
     placeholderLabelClassName?: string;
 };
-const ChatImage = (
+export const ChatImage = (
     {
         avatarUrl,
         name,
@@ -67,7 +67,7 @@ export type ChatHeaderProps = {
     className?: string;
 };
 
-const ChatHeader = (
+export const ChatHeader = (
     {
         name,
         className = 'vg-chat-header',
@@ -85,7 +85,7 @@ export type ChatFooterProps = {
     timeClassName?: string;
 };
 
-const ChatFooter = (
+export const ChatFooter = (
     {
         time,
         className = 'vg-chat-footer',
@@ -101,12 +101,59 @@ const ChatFooter = (
     );
 };
 
+const supportedImageTypes = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'svg+xml'
+] as const;
+
+const getUrl = (text: string) => {
+    const regex = new RegExp('(https?:\/\/.*)', 'gi');
+    const match = text.match(regex);
+    return match?.[0];
+};
+const getImageUrl = (text: string): string | undefined => {
+    const regex = new RegExp(`(https?:\/\/.*\.(${supportedImageTypes.join('|')}))`, 'gi');
+    const match = text.match(regex);
+    return match?.[0];
+};
+
 export type TextBubbleProps = {
     body: MessageTextEvent['body'];
     className?: string;
 }
 type TextBubbleComponent = ComponentType<TextBubbleProps>;
-const TextBubble = ({ body: { text } }: TextBubbleProps) => <>{text}</>;
+const TextBubble = ({ body: { text } }: TextBubbleProps) => {
+    const imagesUrls: string[] = [];
+    const elements = text.split(' ').map(word => {
+        const imageUrl = getImageUrl(word);
+        if (imageUrl) {
+            imagesUrls.push(word);
+        }
+        const url = getUrl(word);
+        if (url || imageUrl) return <a className='vg-text-accent hover:vg-text-accent-focus vg-border-b-2 vg-underline vg-underline-offset-2' href={word} key={`${word}:link`} target='_blank' rel='noopener noreferrer'>{word}</a>;
+        return <span key={`${word}:text`}>{`${word} `}</span>;
+    });
+
+    return (<>
+        <div>
+            {elements}
+
+        </div>
+
+        {imagesUrls.length > 0 ? <div className=' vg-border-secondary vg-border-l-4 vg-pl-2 vg-carousel vg-mt-3'>
+            {imagesUrls.map(imageUrl => <>
+                <div className='vg-carousel-item'>
+                    <img src={imageUrl} alt={imageUrl} className='  vg-max-h-80 vg-object-contain' />
+                </div>
+            </>)}
+        </div> : null}
+    </>);
+};
+
 
 type ImageBubbleProps = {
     body: MessageImageEvent['body'];
@@ -277,28 +324,24 @@ export const ChatMessageItem = (
     const user = useVonageUser();
     const { members } = useChatMembers();
     const { memberName, displayName, avatarUrl, isLocal} = match(message.from)
-    .with({kind: 'system'}, () => {
-        return {
-            memberName: 'system',
-            displayName: 'system',
-            avatarUrl: undefined,
-            isLocal: false
-        };
-    })
+        .with({ kind: 'system' }, () => {
+            return {
+                memberName: 'system',
+                displayName: 'system',
+                avatarUrl: undefined,
+                isLocal: false
+            };
+        })
         .with({ kind: 'embeddedInfo' }, (from) => {
             const m = members.get(from.memberId!);
-        return {
-            memberName: m?.name ?? from.memberId!,
-            displayName: m?.displayName ?? m?.name ?? from.user.displayName ?? from.user.name,
-            avatarUrl: m?.avatarUrl ?? from.user.imageUrl ?? undefined,
-            isLocal: m?.userId === user?.id || from.user.id === user?.id
-        };
-    })
+            return {
+                memberName: m?.name ?? from.memberId!,
+                displayName: m?.displayName ?? m?.name ?? from.user.displayName ?? from.user.name,
+                avatarUrl: m?.avatarUrl ?? from.user.imageUrl ?? undefined,
+                isLocal: m?.userId === user?.id || from.user.id === user?.id
+            };
+        })
         .exhaustive();
-
-    console.log('ChatMessageItem', { type: message.kind, message, user, members, memberName, displayName, avatarUrl, isLocal });
-
-
     return (
         <div className={`${className} ${isLocal ? localClassName : remoteClassName}`}>
             <ImageComponent avatarUrl={avatarUrl} name={displayName} className={imageClassNames.className} imageClassName={imageClassNames.imageClassName} placeholderClassName={imageClassNames.placeholderClassName} placeholderLabelClassName={imageClassNames.placeholderLabelClassName} />

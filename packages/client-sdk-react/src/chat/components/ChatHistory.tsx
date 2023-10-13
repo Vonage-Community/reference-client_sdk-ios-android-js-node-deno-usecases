@@ -100,16 +100,18 @@ export const ChatHistory = (
         scrollToEnd = false,
         filter = 'all',
         sort = 'asc',
+        componentMap,
         loadingClassName = 'vg-loading vg-loading-bars vg-loading-lg',
-        componentMap = {
-            ChatMessageComponent: ChatMessageItem,
-            MemberEventComponent: MemberEventItem,
-            CustomEventComponent: undefined
-        }
     }: ChatHistoryProps) => {
     const { history, isLoading } = useChatHistory({ sort, filter });
     const chatHistoryRef = useRef<HTMLDivElement>(null);
-    const { ChatMessageComponent, MemberEventComponent, CustomEventComponent } = componentMap;
+    const { ChatMessageComponent, MemberEventComponent, CustomEventComponent } = {
+        ChatMessageComponent: ChatMessageItem,
+        MemberEventComponent: MemberEventItem,
+        ...componentMap,
+    };
+
+    console.log('ChatHistory', history, ChatMessageComponent, MemberEventComponent, CustomEventComponent);
 
     useEffect(() => {
         if (!chatHistoryRef.current) return;

@@ -315,31 +315,38 @@ export const onMessage = async (event: MessageEvent) => {
                 }
             }
         })
-        // .with({
-        //     body: {
-        //         message_type: 'text',
-        //         text: P.when(isCommand('@invite')),
-        //     }
-        // }, async (evt) => {
-        //     const [_, type, value] = evt.body.text.toLowerCase().split(' ') ?? [];
-        //     if (type != 'app' && type != 'phone') return;
-        //     if (!value) return;
+        .with({
+            body: {
+                message_type: 'text',
+                text: P.when(isCommand('@invite')),
+            }
+        }, async (evt) => {
+            const [_, type, value] = evt.body.text.toLowerCase().split(' ') ?? [];
+            if (type != 'app' && type != 'phone') return;
+            if (!value) return;
 
-        //     const { name } = await csClient(`/conversations/${conversationId}`);
+            const { name } = await csClient(`/conversations/${conversationId}`);
 
-        //     const to = match([type, value])
-        //         .with(['app', P.not(undefined)], ([type, value]) => ({
-        //             type: 'app',
-        //             user: value
-        //         }))
-        //         .with(['phone', P.not(undefined)], ([type, value]) => ({
-        //             type: 'phone',
-        //             number: value
-        //         }))
-        //         .otherwise(() => undefined);
-        //     await csClient('/calls', 'POST', {
-        //     }, 'v2');
-        // })
+            const to = match([type, value])
+                .with(['app', P.not(undefined)], ([type, value]) => ({
+                    type: 'app',
+                    user: value
+                }))
+                .with(['phone', P.not(undefined)], ([type, value]) => ({
+                    type: 'phone',
+                    number: value
+                }))
+                .otherwise(() => undefined);
+            await csClient('/calls', 'POST', {
+                to: [to],
+                ncco: [
+                    {
+                        action: 'conversation',
+                        name: name
+                    }
+                ]
+            }, 'v2');
+        })
         .with({
             body: {
                 message_type: 'text',
@@ -395,7 +402,7 @@ export const onMessage = async (event: MessageEvent) => {
             }
         }, async (evt) => {
             logger.info('push notification sent');
-
+            if (!conversationId) return;
             const userIdOrName = evt.body.text?.split(' ')?.[1];
             const text = evt.body.text?.split(' ')?.splice(2)?.join(' ');
 
@@ -406,9 +413,29 @@ export const onMessage = async (event: MessageEvent) => {
                         body: text
                     };
                     await csClient(`/users/${userIdOrName}/notifications`, 'POST', reqBody);
+                    await csClient(`/conversations/${conversationId}/members`, 'POST', {
+                        state: 'joined',
+                        user: {
+                            name: userIdOrName
+                        },
+                        channel: {
+                            type: 'app'
+                        }
+                    });
+
+                    sendMessage(conversationId, {
+                        type: 'message',
+                        body: {
+                            message_type: 'text',
+                            text: `push notification sent to ${userIdOrName} with text: ${text}`
+                        }
+                    });
+
                 } catch (err) {
                     logger.error('push notification error: ' + userIdOrName, err);
                 }
+
+
             }
         })
         .with({
@@ -431,45 +458,45 @@ export const onMessage = async (event: MessageEvent) => {
                 }
             });
         })
-        .with({
-            body: {
-                message_type: 'text',
-                text: P.when((text) => getImageUrl(text as string)),
-            }
-        }, async ({ body: { text } }) => {
-            // do something with images
-            logger.info('image received');
-            const imageUrl = getImageUrl(text);
+        // .with({
+        //     body: {
+        //         message_type: 'text',
+        //         text: P.when((text) => getImageUrl(text as string)),
+        //     }
+        // }, async ({ body: { text } }) => {
+        //     // do something with images
+        //     logger.info('image received');
+        //     const imageUrl = getImageUrl(text);
 
-            const reqBody = {
-                type: 'message',
-                ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
-                body: {
-                    message_type: 'image',
-                    image: { url: imageUrl }
-                }
-            };
-            await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
-        })
-        .with({
-            body: {
-                message_type: 'text',
-                text: P.when((text) => getUrl(text as string)),
-            }
-        }, async ({ body: { text } }) => {
-            // do something with urls
-            logger.info('url received');
-            const url = getUrl(text);
+        //     const reqBody = {
+        //         type: 'message',
+        //         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+        //         body: {
+        //             message_type: 'image',
+        //             image: { url: imageUrl }
+        //         }
+        //     };
+        //     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
+        // })
+        // .with({
+        //     body: {
+        //         message_type: 'text',
+        //         text: P.when((text) => getUrl(text as string)),
+        //     }
+        // }, async ({ body: { text } }) => {
+        //     // do something with urls
+        //     logger.info('url received');
+        //     const url = getUrl(text);
 
-            const reqBody = {
-                type: 'custom:link',
-                ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
-                body: {
-                    url: url
-                }
-            };
-            await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
-        })
+        //     const reqBody = {
+        //         type: 'custom:link',
+        //         ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+        //         body: {
+        //             url: url
+        //         }
+        //     };
+        //     await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
+        // })
         .otherwise((data) => {
             logger.info('No action taken', data);
         });

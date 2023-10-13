@@ -10,8 +10,9 @@ export const useChatHistory = ({ sort = 'asc', filter = 'all' }: UseChatHistoryO
     const { state, isLoading } = useChat();
     const history = [...state.events.values()]
         .filter((event) => (
-            (filter == 'messages' || filter == 'all' && isChatMessage(event)) ||
-            (filter == 'members' || filter == 'all' && isMemberEvent(event))
+            (filter == 'messages' && isChatMessage(event)) ||
+            (filter == 'members' && isMemberEvent(event)) ||
+            filter == 'all'
         ))
         .sort((a, b) => sort == 'asc' ? a.id - b.id : b.id - a.id);
     return { history, isLoading };

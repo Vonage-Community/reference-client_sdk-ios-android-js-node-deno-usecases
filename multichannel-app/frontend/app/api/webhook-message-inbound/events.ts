@@ -29,9 +29,7 @@ export const inboundMessageBaseSchema = z.object({
 
 export type InboundMessageBase = z.infer<typeof inboundMessageBaseSchema>;
 
-export const inboundFacebookMessageSchema = inboundMessageBaseSchema.required({
-    text: true,
-}).extend({
+export const inboundFacebookMessageSchema = inboundMessageBaseSchema.extend({
     channel: z.literal('messenger'),
 });
 

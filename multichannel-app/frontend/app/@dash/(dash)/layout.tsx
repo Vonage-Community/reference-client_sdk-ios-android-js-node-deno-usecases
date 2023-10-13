@@ -12,6 +12,7 @@ import { Database } from 'supabase-helpers';
 import { Logo } from '../../../components/logo';
 import { NavLink } from './navLink';
 import { getToken } from '../../api/token';
+import React from 'react';
 
 
 

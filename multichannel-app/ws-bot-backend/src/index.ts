@@ -126,7 +126,7 @@ app.ws('/assistant', async (ws, req) => {
             });
             console.log('messages', messages);
             const completion = await openai.chat.completions.create({
-                model: 'gpt-3.5-turbo', 
+                model: 'gpt-4',
                 messages: messages,
             });
 
