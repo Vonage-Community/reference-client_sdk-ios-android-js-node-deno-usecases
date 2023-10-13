@@ -4,7 +4,7 @@
 import { ComponentType, useEffect } from 'react';
 import { ChatMessage } from '../ChatContainer';
 import RelativeTime from '@yaireo/relative-time';
-import { MessageTextEvent, MessageCustomEvent } from '@vonage/client-sdk';
+import { MessageTextEvent, MessageCustomEvent, MessageImageEvent } from '@vonage/client-sdk';
 import { match } from 'ts-pattern';
 import { useVonageUser } from '../../VonageClientProvider';
 import { useChatMember, useChatMembers } from '../hooks';
@@ -51,7 +51,6 @@ const ChatImage = (
         placeholderLabelClassName,
     }: ChatImageProps) => {
     return (
-        console.log('ChatImage', { avatarUrl, name, className, imageClassName, Placeholder, placeholderClassName, placeholderLabelClassName }),
         <div className={className}>
                 {!avatarUrl ?
                     <IconDeviceMobile className={placeholderClassName} /> :
@@ -109,6 +108,13 @@ export type TextBubbleProps = {
 type TextBubbleComponent = ComponentType<TextBubbleProps>;
 const TextBubble = ({ body: { text } }: TextBubbleProps) => <>{text}</>;
 
+type ImageBubbleProps = {
+    body: MessageImageEvent['body'];
+    className?: string;
+}
+type ImageBubbleComponent = ComponentType<ImageBubbleProps>;
+const ImageBubble = ({ body: { imageUrl, } }: ImageBubbleProps) => <img src={imageUrl} alt='chat image' />;
+
 export type CustomBubbleProps = {
     body: MessageCustomEvent['body'];
     className?: string;
@@ -135,10 +141,12 @@ export type ChatBubbleProps = {
     Components?: {
         text: TextBubbleComponent;
         custom: CustomBubbleComponent;
+        image: ImageBubbleComponent;
     };
     componentsClassNames?: {
         text?: string;
         custom?: string;
+        image?: string;
     };
 };
 
@@ -149,10 +157,12 @@ const ChatBubble = (
         Components = {
             text: TextBubble,
             custom: CustomBubble,
+            image: ImageBubble,
         },
         componentsClassNames = {
             text: '',
             custom: '',
+            image: '',
         },
     }: ChatBubbleProps) => {
     return (
@@ -160,6 +170,7 @@ const ChatBubble = (
             {match(message)
                 .with({ kind: 'message:text' }, ({ body }) => <Components.text body={body} className={componentsClassNames.text} />)
                 .with({ kind: 'message:custom' }, ({ body }) => <Components.custom body={body} className={componentsClassNames.custom} />)
+                .with({ kind: 'message:image' }, ({ body }) => <Components.image body={body} className={componentsClassNames.image} />)
                 .exhaustive()
             }
         </div>
@@ -285,7 +296,7 @@ export const ChatMessageItem = (
     })
         .exhaustive();
 
-    console.log('ChatMessageItem', { message, user, members, memberName, displayName, avatarUrl, isLocal });
+    console.log('ChatMessageItem', { type: message.kind, message, user, members, memberName, displayName, avatarUrl, isLocal });
 
 
     return (

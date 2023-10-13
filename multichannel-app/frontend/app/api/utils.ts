@@ -92,5 +92,5 @@ export const getConversationName =  async (cid: string) : Promise<string> => {
 };
 
 export const startWithOrExact = (str: string, matchString: string) => {
-    return str.startsWith(matchString+' ') || str === matchString;
-}
+    return str.startsWith(matchString + ' ') || str === matchString;
+};

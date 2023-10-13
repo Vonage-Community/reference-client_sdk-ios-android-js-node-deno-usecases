@@ -1,5 +1,5 @@
 import { MessageEvent } from './events';
-import { csClient, getConversationName, sendMessage,startWithOrExact } from '../utils';
+import { csClient, getConversationName, sendMessage, startWithOrExact } from '../utils';
 import { getRTCLogger } from '../logger';
 import { match, P } from 'ts-pattern';
 import { kv } from '@vercel/kv';
@@ -9,12 +9,39 @@ const logger = getRTCLogger('message');
 
 const isValidUrl = (url: string) => {
     try {
-        return Boolean(new URL(url)); 
+        return Boolean(new URL(url));
     }
     catch (e) {
-        return false; 
+        return false;
     }
 };
+
+const supportedImageTypes = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'svg+xml'
+] as const;
+/**
+ * Checks if the text has a valid image url
+ * if it does, it will return the url
+ * @param text 
+ * @returns url or undefined
+ */
+const getImageUrl = (text: string): string | undefined => {
+    const regex = new RegExp(`(https?:\/\/.*\.(${supportedImageTypes.join('|')}))`, 'gi');
+    const match = text.match(regex);
+    return match?.[0];
+};
+
+const getUrl = (text: string): string | undefined => {
+    const regex = new RegExp('(https?:\/\/.*)', 'gi');
+    const match = text.match(regex);
+    return match?.[0];
+};
+
 
 export const startCommands = [
     '@tts',
@@ -397,9 +424,9 @@ export const onMessage = async (event: MessageEvent) => {
             const messageString = toogleRes.enabled ? 'assistant bot enabled, make your questions' : 'assistant bot disabled';
 
             await sendMessage(convid, {
-                type: 'message', 
+                type: 'message',
                 body: {
-                    message_type: 'text', 
+                    message_type: 'text',
                     text: messageString
                 }
             });
@@ -407,10 +434,41 @@ export const onMessage = async (event: MessageEvent) => {
         .with({
             body: {
                 message_type: 'text',
-                text: P.when((text) => isValidUrl((text as string))),
+                text: P.when((text) => getImageUrl(text as string)),
             }
-        }, async (evt) => {
+        }, async ({ body: { text } }) => {
             // do something with images
+            logger.info('image received');
+            const imageUrl = getImageUrl(text);
+
+            const reqBody = {
+                type: 'message',
+                ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+                body: {
+                    message_type: 'image',
+                    image: { url: imageUrl }
+                }
+            };
+            await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
+        })
+        .with({
+            body: {
+                message_type: 'text',
+                text: P.when((text) => getUrl(text as string)),
+            }
+        }, async ({ body: { text } }) => {
+            // do something with urls
+            logger.info('url received');
+            const url = getUrl(text);
+
+            const reqBody = {
+                type: 'custom:link',
+                ...(event?._embedded?.from_member?.id && { from: event._embedded.from_member.id }),
+                body: {
+                    url: url
+                }
+            };
+            await csClient(`/conversations/${conversationId}/events`, 'POST', reqBody);
         })
         .otherwise((data) => {
             logger.info('No action taken', data);

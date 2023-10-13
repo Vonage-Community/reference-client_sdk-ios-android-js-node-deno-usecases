@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageCustomEvent, Member, MemberInvitedEvent, MemberJoinedEvent, MemberLeftEvent, MessageTextEvent, ConversationEvent, MemberState, PersistentConversationEvent } from '@vonage/client-sdk';
+import { MessageCustomEvent, Member, MemberInvitedEvent, MemberJoinedEvent, MemberLeftEvent, MessageTextEvent, ConversationEvent, MemberState, PersistentConversationEvent, MessageImageEvent } from '@vonage/client-sdk';
 import { createContext, useCallback, useContext, useEffect, useReducer, useTransition } from 'react';
 import { useVonageClient, useVonageSession } from '../VonageClientProvider';
 import { match, P } from 'ts-pattern';
@@ -14,7 +14,7 @@ export type ChatMember = {
     state?: MemberState;
 };
 export const isChatMessage = (event: ConversationEvent): event is ChatMessage => event.kind.startsWith('message:');
-export type ChatMessage = MessageTextEvent | MessageCustomEvent;
+export type ChatMessage = MessageTextEvent | MessageCustomEvent | MessageImageEvent;
 export const isMemberEvent = (event: ConversationEvent): event is MemberEvent => event.kind.startsWith('member:');
 export type MemberEvent = MemberJoinedEvent | MemberInvitedEvent | MemberLeftEvent;
 export const isCustomEvent = (event: ConversationEvent): event is MessageCustomEvent => event.kind.startsWith('message:custom');
@@ -40,7 +40,7 @@ export type ChatAction =
 
 const loadEvent = (event: ConversationEvent, oldState: ChatState) =>
     match<[ChatState, ConversationEvent], ChatState>([oldState, event])
-        .with([P._, { kind: P.union('message:text', 'message:custom', 'custom') }], ([state, event]) => {
+        .with([P._, { kind: P.union('message:text', 'message:custom', 'message:image', 'custom') }], ([state, event]) => {
             state.events.set(event.id, event);
             return state;
         })
