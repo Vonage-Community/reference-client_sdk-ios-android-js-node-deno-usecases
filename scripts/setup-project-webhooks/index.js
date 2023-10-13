@@ -136,7 +136,7 @@ const argv = yargs(hideBin(process.argv))
             throw new Error('An endpoint is required if not using a tunnel');
         }
 
-        if (argv.tunnel) {
+        if (argv.tunnel && !argv.endpoint) {
             const tunnelType = argv.ngrok ? TunnelTypes.ngrok : argv.localtunnel ? TunnelTypes.localtunnel : argv.tunnelType;
             argv.endpoint = await getTunnelUrl(argv.tunnelPort, tunnelType);
             console.log(`Tunneled endpoint: ${argv.endpoint}`);

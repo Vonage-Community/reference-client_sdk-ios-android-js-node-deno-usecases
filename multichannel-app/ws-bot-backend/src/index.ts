@@ -12,6 +12,7 @@ import textToSpeech from '@google-cloud/text-to-speech';
 // Configuration, OpenAIApi
 // openapi.OpenAI
 import OpenAI from 'openai';
+import { ChatCompletionMessageParam } from 'openai/resources';
 
 
 const app = ExpressWS(express()).app;
@@ -22,9 +23,7 @@ const ttsClient = new textToSpeech.TextToSpeechClient();
 
 const SizeChunker = chunkingStreams.SizeChunker;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const openai = new OpenAI();
 
 app.use(express.json());
 
@@ -91,9 +90,15 @@ app.ws('/transcribe', async (ws, req) => {
 
 // ASSISTANT
 app.ws('/assistant', async (ws, req) => {
-    const {webhook_url, webhook_method, webhook_param_name, webhook_param_value} = req.query;
-    console.log('received ws connection transcribe', {webhook_method, webhook_url, webhook_param_name, webhook_param_value});
+    const { webhook_url, webhook_method, webhook_param_name, webhook_param_value } = req.query;
+    console.log('received ws connection transcribe', { webhook_method, webhook_url, webhook_param_name, webhook_param_value });
 
+    const messages: ChatCompletionMessageParam[] = [
+        {
+            role: 'system',
+            content: 'You\'re an unhelpful assistant, You respond to questions with little information using yoda speak.'
+        }
+    ];
     const gRecognizeStream = speechToTextClient
         .streamingRecognize({
             config: {
@@ -105,43 +110,39 @@ app.ws('/assistant', async (ws, req) => {
         })
         .on('error', console.error)
         .on('data', async (data: any) => {
-            console.log('streaming rec res',data);
+            console.log('streaming rec res', data);
 
             const prompt = data.results[0].alternatives[0].transcript;
-            console.log('TRANSCRIBE> ',prompt);
-            if (webhook_url){
-                http_callback(webhook_url.toString(), webhook_method?.toString(),  {
+            console.log('TRANSCRIBE> ', prompt);
+            if (webhook_url) {
+                http_callback(webhook_url.toString(), webhook_method?.toString(), {
                     type: 'transcript',
                     data
-                }, webhook_param_name?.toString(), webhook_param_value?.toString());     
+                }, webhook_param_name?.toString(), webhook_param_value?.toString());
             }
-
+            messages.push({
+                role: 'user',
+                content: prompt
+            });
+            console.log('messages', messages);
             const completion = await openai.chat.completions.create({
                 model: 'gpt-3.5-turbo', 
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You\'re an unhelpful assistant'
-                    },
-                    {
-                        role: 'user', 
-                        content: prompt
-                    }
-                ]
+                messages: messages,
             });
-            const completition_text = completion.choices[0].message.content;
-            // const completition_text = completion.data.choices[0].text;
 
-            if (webhook_url){
+            messages.push(completion.choices[0].message);
+            const completition_text = completion.choices[0].message.content;
+
+            if (webhook_url) {
                 http_callback(webhook_url.toString(), webhook_method?.toString(), {
                     type: 'assistant_response',
-                    data:completion
-                }, webhook_param_name?.toString(), webhook_param_value?.toString());     
+                    data: completion
+                }, webhook_param_name?.toString(), webhook_param_value?.toString());
             }
-            console.log(`completition_text ${completition_text}`)
+            console.log(`completition_text ${completition_text}`);
             const [ttsResponse] = await ttsClient.synthesizeSpeech({
-                input: {text: completition_text},
-                voice: {languageCode: 'en-US', ssmlGender: 'NEUTRAL'},
+                input: { text: completition_text },
+                voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
                 audioConfig: {
                     audioEncoding: 'LINEAR16',
                     sampleRateHertz: 16000
@@ -157,21 +158,21 @@ app.ws('/assistant', async (ws, req) => {
             const audioStream = Readable.from(ttsResponse.audioContent);
             audioStream.pipe(chunker);
 
-            chunker.on('data', function(chunk: any) {
+            chunker.on('data', function (chunk: any) {
                 const data = chunk.data;
                 let buf: any;
-                if (data.length == 640){
+                if (data.length == 640) {
                     try {
-                       ws.send(data);
+                        ws.send(data);
                     }
                     catch (e) {
                     };
                 }
-                else{
+                else {
                     buf += data;
-                    if (buf.length == 640){
+                    if (buf.length == 640) {
                         try {
-                           ws.send(data);
+                            ws.send(data);
                         }
                         catch (e) {
                         };
@@ -184,7 +185,7 @@ app.ws('/assistant', async (ws, req) => {
 
     ws.on('message', (msg: any) => {
         if (ws.readyState === ws.OPEN) {
-            if (typeof msg !== 'string'){
+            if (typeof msg !== 'string') {
                 gRecognizeStream.write(msg);
             }
         }
@@ -194,7 +195,7 @@ app.ws('/assistant', async (ws, req) => {
         gRecognizeStream.destroy();
     });
 
-})
+});
 
 
 
