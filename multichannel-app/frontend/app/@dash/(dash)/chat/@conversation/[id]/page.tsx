@@ -1,4 +1,5 @@
 import { ChatHistory, ChatInput } from '@vonage/client-sdk-react';
+import React from 'react';
 
 type ConversationPageProps = {
     params: {

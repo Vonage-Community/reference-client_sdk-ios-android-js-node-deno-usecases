@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallStatus, VoiceCall } from '@vonage/client-sdk-react';
+import React from 'react';
 import {useState} from 'react';
 
 const callTypes = ['app', 'phone'] as const;

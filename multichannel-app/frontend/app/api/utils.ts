@@ -105,5 +105,5 @@ export const getConversationIdByName =  async (name: string) : Promise<string> =
 };
 
 export const startWithOrExact = (str: string, matchString: string) => {
-    return str.startsWith(matchString+' ') || str === matchString;
-}
+    return str.startsWith(matchString + ' ') || str === matchString;
+};

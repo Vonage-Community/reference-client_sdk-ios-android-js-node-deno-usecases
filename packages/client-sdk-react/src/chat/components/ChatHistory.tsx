@@ -4,7 +4,7 @@ import { ComponentType, useEffect, useRef } from 'react';
 import { useChatHistory, useChatMember } from '../hooks';
 import { ChatMessageItem } from './ChatMessageItem';
 import { match, P } from 'ts-pattern';
-import { MemberEvent, isChatMessage, isCustomEvent, isMemberEvent } from '../ChatContainer';
+import { MemberEvent, ChatMessage } from '../ChatContainer';
 import { CustomConversationEvent, MemberJoinedEvent, MemberLeftEvent } from '@vonage/client-sdk';
 import { MemberInvitedEvent } from '@vonage/client-sdk';
 
@@ -66,6 +66,14 @@ const MemberEventItem = ({ event }: { event: MemberEvent }) => match(event)
     .with({ kind: 'member:invited' }, (event) => <MemberInvitedEventItem event={event} />)
     .exhaustive();
 
+export type ChatMessageComponentProps = {
+    message: ChatMessage
+};
+
+export type MemberEventComponentProps = {
+    event: MemberEvent
+};
+
 export type CustomEventComponentProps = {
     event: CustomConversationEvent
 };
@@ -79,7 +87,11 @@ export type ChatHistoryProps = {
 
     loadingClassName?: string;
 
-    CustomEvent?: ComponentType<CustomEventComponentProps>;
+    componentMap?: {
+        ChatMessageComponent?: ComponentType<ChatMessageComponentProps>;
+        MemberEventComponent?: ComponentType<MemberEventComponentProps>;
+        CustomEventComponent?: ComponentType<CustomEventComponentProps>;
+    };
 };
 
 export const ChatHistory = (
@@ -89,10 +101,15 @@ export const ChatHistory = (
         filter = 'all',
         sort = 'asc',
         loadingClassName = 'vg-loading vg-loading-bars vg-loading-lg',
-        CustomEvent
+        componentMap = {
+            ChatMessageComponent: ChatMessageItem,
+            MemberEventComponent: MemberEventItem,
+            CustomEventComponent: undefined
+        }
     }: ChatHistoryProps) => {
     const { history, isLoading } = useChatHistory({ sort, filter });
     const chatHistoryRef = useRef<HTMLDivElement>(null);
+    const { ChatMessageComponent, MemberEventComponent, CustomEventComponent } = componentMap;
 
     useEffect(() => {
         if (!chatHistoryRef.current) return;
@@ -105,9 +122,9 @@ export const ChatHistory = (
         <div className={className} ref={chatHistoryRef}>
             {isLoading && history.length === 0 ? <div className={loadingClassName} /> : null}
             {history.map(event => match(event)
-                .with({ kind: P.union('member:invited', 'member:joined', 'member:left') }, (event) => <MemberEventItem key={event.id} event={event} />)
-                .with({ kind: P.union('message:text', 'message:custom') }, (event) => <ChatMessageItem key={event.id} message={event} />)
-                .with({ kind: 'custom' }, (event) => CustomEvent ? <CustomEvent key={event.id} event={event} /> : null)
+                .with({ kind: P.union('member:invited', 'member:joined', 'member:left') }, (event) => MemberEventComponent ? <MemberEventComponent key={event.id} event={event} /> : null)
+                .with({ kind: P.union('message:text', 'message:custom', 'message:image') }, (event) => ChatMessageComponent ? <ChatMessageComponent key={event.id} message={event} /> : null)
+                .with({ kind: 'custom' }, (event) => CustomEventComponent ? <CustomEventComponent key={event.id} event={event} /> : null)
                 .otherwise(() => null)
             )}
         </div>
