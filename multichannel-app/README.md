@@ -19,20 +19,25 @@ VONAGE_API_KEY="<your vonage api key>"
 VONAGE_API_SECRET="<your vonage account secret>"
 VONAGE_APPLICATION_ID="<your vonage application id>"
 VONAGE_PRIVATE_KEY="<your vonage api key>"
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<random string>
-DEVICE_REFRESH_TOKEN_SECRET=<random string>
-DEVICE_CODE_SALT=<random string>
 LOCALTUNNEL=true
-VONAGE_LVN=<your lvn>
+VONAGE_LVN=447520635617
 ENABLE_FACEBOOK=false
 VONAGE_ENDPOINT=https://api-us-3.vonage.com/v1
 WEBHOOK_PATH=api/
 TUNNEL_PORT=3000
+
+KV_REST_API_READ_ONLY_TOKEN="AnoCASQgZGMxNGQwN2EtNWFjZS00ZDMwLWIxNTYtNmM2N2VhMjhmZWZjyGaGY9p6iFYqlhfeJtEfa91OI88tHO6QJGg9avRxNs0="
+KV_REST_API_TOKEN="AXoCASQgZGMxNGQwN2EtNWFjZS00ZDMwLWIxNTYtNmM2N2VhMjhmZWZjNDU2ZDA1ODhiZWFhNDYzOGE2Y2I4NDg5ODcxNmUzOTY="
+KV_REST_API_URL="https://glowing-gar-31234.kv.vercel-storage.com"
+KV_URL="redis://default:456d0588beaa4638a6cb84898716e396@glowing-gar-31234.kv.vercel-storage.com:31234"
+
+#ws bot
 WS_BOT_PORT=3001
-GOOGLE_APPLICATION_CREDENTIALS="<your project path>/reference-client_sdk-ios-android-js-node-deno-usecases/gapp-creds.json"
-OPENAI_API_KEY="<openai org id>"
-OPENAI_ORG_ID="<openai org id>"
+OPENAI_API_KEY=
+OPENAI_ORG_ID=
+GOOGLE_PRIVATE_KEY=
+GOOGLE_CLIENT_EMAIL=
+GOOGLE_CLIENT_ID=
 
 ```
 
@@ -49,6 +54,31 @@ then run
 ```
 npm run dev:multichannel-app 
 ```
+
+### how to deploy
+
+#### ws bot on fly.io
+
+first install flyctr and loging 
+
+then set the secrets:
+
+``` 
+cat .env | grep 'GOOGLE\|OPENAI' > .env.deploy.flyio
+fly secrets import < .env.deploy.flyio
+
+```
+
+then deploy with: 
+
+```
+fly deploy
+```
+
+#### frontedn on next
+
+
+
 
 
 <!-- TODO: Add instructions -->

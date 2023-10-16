@@ -1,5 +1,7 @@
 'use client';
+// @ts-ignore
 import { experimental_useFormState as useFormState } from 'react-dom';
+// @ts-ignore
 import { experimental_useFormStatus as useFormStatus } from 'react-dom';
 import { handleLogin } from './loginActions';
 import { defaultLoginState } from './types';
