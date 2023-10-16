@@ -18,8 +18,15 @@ import { ChatCompletionMessageParam } from 'openai/resources';
 const app = ExpressWS(express()).app;
 const port = process.env.WS_BOT_PORT;
 
-const speechToTextClient = new speech.SpeechClient();
-const ttsClient = new textToSpeech.TextToSpeechClient();
+const credentials = {
+    'type': 'service_account',
+    'private_key': process.env.GOOGLE_PRIVATE_KEY,
+    'client_email': process.env.GOOGLE_CLIENT_EMAIL,
+    'client_id': process.env.GOOGLE_CLIENT_ID,
+};
+
+const speechToTextClient = new speech.SpeechClient({ credentials });
+const ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
 
 const SizeChunker = chunkingStreams.SizeChunker;
 
