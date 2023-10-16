@@ -64,7 +64,7 @@ export const GET = async (_req: Request) => {
         }
     }).then(res => {
         if(!res.ok){
-            console.error(`update webhooks`, res);
+            console.error('update webhooks', res);
            throw Error(res.statusText);
         }else {
             return res.json();
