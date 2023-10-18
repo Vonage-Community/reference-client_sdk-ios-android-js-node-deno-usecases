@@ -35,7 +35,7 @@ function networkTestGet(url: string, type: HealthResponseKeys): Promise<TestResu
         });    
     }).catch(err => ({
         healty: false,
-        err: err as string
+        err: `error getting this url: ${url}. ${err.toString()}`
     })).then(res => ({
         ...res,
         type
