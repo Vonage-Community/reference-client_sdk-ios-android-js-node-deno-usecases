@@ -23,7 +23,13 @@ function assignResult(resp: HealthResponse, res: TestResult): HealthResponse {
 }
 
 function networkTestGet(url: string, type: HealthResponseKeys): Promise<TestResult> {
-    return fetch(url,{cache: 'no-cache'}).then((res) => {
+    return fetch(url,{
+        cache: 'no-cache',
+        headers : { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then((res) => {
         if(!res.ok){
             return res.text().then(text => ({
                 healty: false,
