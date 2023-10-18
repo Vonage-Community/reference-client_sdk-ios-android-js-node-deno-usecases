@@ -58,6 +58,21 @@ export async function toogleAssistantBot(convName:string) : Promise<{
             ]
         });
         const leg_id = startCallRes.uuid;
+
+        try {
+            const { _embedded: { user: { id: userId } } } = await csClient(`/legs/${leg_id}`, 'GET');
+
+            await csClient(`/users/${userId}`, 'PATCH', {
+                name: 'assistant:ws',
+                display_name: 'Yoda Assistant',
+                image_url: 'https://avatarfiles.alphacoders.com/170/170909.jpg'
+            });
+
+        } catch (e) {
+            // if there's an error setting the user, we don't care, just log it
+            logger.error('error setting assistant user', e);
+        }
+
         await kv.set(assistantKVKey, leg_id);
         return {
             leg_id,

@@ -104,7 +104,7 @@ app.ws('/assistant', async (ws, req) => {
     const messages: ChatCompletionMessageParam[] = [
         {
             role: 'system',
-            content: 'You\'re an unhelpful assistant, You respond to questions with little information using yoda speak.'
+            content: 'You\'re an insighfulassistant, You respond to questions using yoda speak and talk of the force, and encourage the others to trust in the force.'
         }
     ];
     const gRecognizeStream = speechToTextClient
