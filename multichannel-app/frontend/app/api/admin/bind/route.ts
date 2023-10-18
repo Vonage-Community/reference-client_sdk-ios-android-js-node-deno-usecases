@@ -10,7 +10,9 @@ export const GET = async (_req: Request) => {
     try {
     const phone_number = VONAGE_LVN;
     const application_id = VONAGE_APPLICATION_ID;
-    const WEBHOOKS_URL = `https://${process.env.VERCEL_URL|| process.env.ENDPOINT}/api`;
+    const endpoint = process.env.ENDPOINT;
+    const webhooks_host = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}`:endpoint;
+    const WEBHOOKS_URL = `${webhooks_host}/api`;
     const api_key = VONAGE_API_KEY;
     const api_secret = VONAGE_API_SECRET;
     const dev_api_token = Buffer.from((`${api_key}:${api_secret}`)).toString('base64');
