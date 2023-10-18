@@ -1,7 +1,7 @@
-
-type HealthResponseKeys = 'ping'| 'ws_bot_ping' | 'application' | 'env_vars' | 'token';
-import { boolean } from 'ts-pattern/dist/patterns';
+import { kv } from '@vercel/kv';
 import { getToken } from '../token';
+
+type HealthResponseKeys = 'ping'| 'ws_bot_ping' | 'application' | 'env_vars' | 'token' | 'kv';
 type HealthResponse = {
     healthy: {
         [key in HealthResponseKeys]?: boolean
@@ -64,11 +64,26 @@ export const GET = async (_req: Request) => {
             type: 'token'
         }));
 
+    const kvTestRes: Promise<TestResult> = kv.set('test', 'test').then(val => kv.del('test'))
+        .then(res => ({healty: true }))
+        .catch(err => ({
+            healty: false,
+            err: err as string
+        }))
+        .then((res ) => ({
+            ...res,
+            type: 'kv'
+        }));
+
     const resp:HealthResponse = {
         healthy: {},
         error_message: {}
     };
-    const responses: TestResult[] = await Promise.all<TestResult>([pingRes,wsBotPingRes,tokenRes]);
+    const responses: TestResult[] = await Promise.all<TestResult>([
+        pingRes,
+        wsBotPingRes,
+        tokenRes,
+        kvTestRes]);
     
     responses.forEach(result =>{
         assignResult(resp, result);
