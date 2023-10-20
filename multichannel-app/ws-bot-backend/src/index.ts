@@ -42,6 +42,14 @@ app.get('/ping', async (req, res) => {
         status: 'ok'
     });
 });
+app.get('/post', async (req, res) => {
+    
+
+    return res.status(200).json({
+        status: 'ok'
+    });
+});
+
 
 app.ws('/echo', async (ws, req) => {
     console.log('received ws connection echo');

@@ -11,7 +11,7 @@ export const GET = async (_req: Request) => {
     const phone_number = VONAGE_LVN;
     const application_id = VONAGE_APPLICATION_ID;
     const endpoint = process.env.ENDPOINT;
-    const webhooks_host = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}`:endpoint;
+    const webhooks_host = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`:endpoint;
     const WEBHOOKS_URL = `${webhooks_host}/api`;
     const api_key = VONAGE_API_KEY;
     const api_secret = VONAGE_API_SECRET;
@@ -102,10 +102,8 @@ export const GET = async (_req: Request) => {
     return new Response(JSON.stringify({ 
         env: {
             VONAGE_API_KEY,
-            VONAGE_API_SECRET,
             VONAGE_LVN,
-            WEBHOOKS_URL,
-            dev_api_token
+            WEBHOOKS_URL
         },
         newAppRes,
         bindLvnRes
