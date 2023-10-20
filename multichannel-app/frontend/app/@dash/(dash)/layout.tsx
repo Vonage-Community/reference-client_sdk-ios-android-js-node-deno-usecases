@@ -5,7 +5,6 @@ import { VonageClientProvider } from '@vonage/client-sdk-react';
 
 
 import { UserProfileWidget } from './UserProfileWidget.server';
-import { getUserProfile } from './utils';
 
 import '@vonage/client-sdk-react/dist/vonage-client-sdk-react.css';
 import { Database } from 'supabase-helpers';

@@ -14,13 +14,16 @@ import textToSpeech from '@google-cloud/text-to-speech';
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 
+function sanitizePrivateKey(token: string): string {
+    return token.replace(/\\n/g, '\n');
+}
 
 const app = ExpressWS(express()).app;
 const port = process.env.WS_BOT_PORT;
 
 const credentials = {
     'type': 'service_account',
-    'private_key': process.env.GOOGLE_PRIVATE_KEY,
+    'private_key': sanitizePrivateKey(process.env.GOOGLE_PRIVATE_KEY as string),
     'client_email': process.env.GOOGLE_CLIENT_EMAIL,
     'client_id': process.env.GOOGLE_CLIENT_ID,
 };
@@ -36,9 +39,7 @@ app.use(express.json());
 
 app.get('/ping', async (req, res) => {
     return res.status(200).json({
-        status: 'ok',
-        url: process.env.WS_BOT_URL,
-        url_endpont: process.env.ENDPOINT
+        status: 'ok'
     });
 });
 
@@ -133,7 +134,7 @@ app.ws('/assistant', async (ws, req) => {
             });
             console.log('messages', messages);
             const completion = await openai.chat.completions.create({
-                model: 'gpt-4',
+                model: 'gpt-3.5-turbo',
                 messages: messages,
             });
 
