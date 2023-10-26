@@ -40,7 +40,7 @@ class PagingDataSource<T : Any, PageT: Page>(
             val data : List<T> = when(response){
                 is ConversationsPage -> (response.conversations as List<T>)
                 is MembersPage -> (response.members.filterNot {
-                    // TODO: Filter Out Members who left
+                    // Filter Out Members who left
                     it.state == MemberState.LEFT
                 } as List<T>)
                 is EventsPage -> (response.events as List<T>)

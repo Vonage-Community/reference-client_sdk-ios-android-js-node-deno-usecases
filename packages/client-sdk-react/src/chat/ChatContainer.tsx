@@ -235,7 +235,7 @@ export const ChatContainer = (props: ChatContainerProps) => {
         };
 
         const fetchEvents = async (cursor?: string) => {
-            const { events, nextCursor } = await vonageClient.getConversationEvents(state.id, undefined, 100, cursor);
+            const { events, nextCursor } = await vonageClient.getConversationEvents(state.id, {pageSize: 100, cursor});
             incomingEvents(events);
             if (nextCursor) fetchEvents(nextCursor);
         };
@@ -265,7 +265,7 @@ export const ChatContainer = (props: ChatContainerProps) => {
         };
 
         const fetchMembers = async (cursor?: string) => {
-            const { members, nextCursor } = await vonageClient.getConversationMembers(state.id, undefined, undefined, cursor);
+            const { members, nextCursor } = await vonageClient.getConversationMembers(state.id, {cursor});
             const chatMembers = await Promise.all(
                 members
                     .filter(m => m.user != null)

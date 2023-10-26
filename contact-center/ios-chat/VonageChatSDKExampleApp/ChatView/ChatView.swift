@@ -48,6 +48,7 @@ struct ChatView: View {
                         }
                     }.onDelete(perform: viewModel.onDeleteEvent(indexSet:))
                         .listRowBackground(Color.clear)
+                        .flippedUpsideDown()
                     if #available(iOS 15, *) {
                         view.listRowSeparator(.hidden)
                     }
@@ -55,9 +56,12 @@ struct ChatView: View {
                         ProgressView("Loading..")
                             .tint(Color.black)
                             .progressViewStyle(.circular)
-                            .onAppear { viewModel.getConversationsEvents() }
+                            .onAppear { viewModel.getConversationEvents() }
                     }
-                }.onAppear(perform: viewModel.onViewAppear)
+                }
+                .onAppear(perform: viewModel.onViewAppear)
+                .flippedUpsideDown()
+                
                 Divider().frame(maxHeight: 1).padding(.all, 0)
                 if !viewModel.shouldShowJoin {
                     HStack {
@@ -373,4 +377,18 @@ struct AudioMessageView: View {
             isPlaying.toggle()
         }
     }
+}
+
+
+struct FlippedUpsideDown: ViewModifier {
+   func body(content: Content) -> some View {
+    content
+        .rotationEffect(.radians(.pi))
+        .scaleEffect(x: -1, y: 1, anchor: .center)
+   }
+}
+extension View{
+   func flippedUpsideDown() -> some View{
+     self.modifier(FlippedUpsideDown())
+   }
 }

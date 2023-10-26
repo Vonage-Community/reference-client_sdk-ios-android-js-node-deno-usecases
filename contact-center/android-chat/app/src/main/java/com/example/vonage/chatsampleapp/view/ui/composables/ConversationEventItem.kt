@@ -128,7 +128,9 @@ fun ConversationEventItem(
                 senderImageUrl = senderImageUrl,
                 time = time
             )
-        is CustomConversationEvent, is EphemeralConversationEvent -> {
+        is CustomConversationEvent,
+        is EphemeralConversationEvent,
+        is EventDeleteConversationEvent -> {
         //NOOP
         }
     }
