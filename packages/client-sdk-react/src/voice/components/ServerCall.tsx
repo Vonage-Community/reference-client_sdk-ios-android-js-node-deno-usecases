@@ -8,13 +8,14 @@ import {
   TextProps,
   defaultText,
 } from './utils';
+import { Json } from '@vonage/client-sdk';
 
 export type ServerCallProps = {
   className?: string;
   label?: string;
   ringingLabel?: string;
   cancelLabel?: string;
-  callContext?: Record<string, any>;
+  callContext?: Json;
 
   RootContainer?: ComponentType<ContainerProps>;
   ActionContainer?: ComponentType<ActionProps>;

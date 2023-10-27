@@ -1,3 +1,4 @@
+import { Json } from '@vonage/client-sdk';
 import { VoiceCallContainer } from '../VoiceCallContainer';
 import { CallControls } from './CallControls';
 import { IncomingCall } from './IncomingCall';
@@ -7,7 +8,7 @@ type VoiceCallProps = {
     enableIncomingCall?: boolean;
     enableOutgoingCall?: boolean;
 
-    outgoingCallContext?: Record<string, any>;
+    outgoingCallContext?: Json;
 };
 export const VoiceCall = ({
     enableIncomingCall = true,
