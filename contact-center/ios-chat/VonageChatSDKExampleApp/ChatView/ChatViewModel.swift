@@ -170,10 +170,10 @@ class ChatViewModel: NSObject,ObservableObject {
     func getConversationEvents() {
         Task.detached {
             do {
-                let params = VGGetConversationEventsParameters()
-                params.cursor = self.eventsPage?.nextCursor
-                params.order = .desc
-                let events = try await self.vgClient.getConversationEvents(self.conversation.id, parameters: params)
+                let events = try await self.vgClient.getConversationEvents(
+                    self.conversation.id,
+                    parameters: VGGetConversationEventsParameters(order: .desc, cursor: self.eventsPage?.nextCursor)
+                )
                 DispatchQueue.main.async {
                     self.eventsPage = events
                 }
@@ -191,9 +191,10 @@ class ChatViewModel: NSObject,ObservableObject {
             var cursor: String? = nil
             repeat {
                 do {
-                    let params = VGGetConversationMembersParameters()
-                    params.cursor = cursor
-                    let membersPage = try await self.vgClient.getConversationMembers(self.conversation.id, parameters: params)
+                    let membersPage = try await self.vgClient.getConversationMembers(
+                        self.conversation.id,
+                        parameters: VGGetConversationMembersParameters(cursor: cursor)
+                    )
                     cursor = membersPage.nextCursor
                     DispatchQueue.main.async {
                         self.members.append(contentsOf: membersPage.members)

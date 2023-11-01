@@ -50,10 +50,7 @@ class ChatsListViewModel: NSObject,ObservableObject {
     }
     
     func getConversations() {
-        let params = VGGetConversationsParameters()
-        params.cursor = self.cursor
-        params.includeCustomData = true
-        vgClient.getConversations(params) { error, page in
+        vgClient.getConversations(VGGetConversationsParameters(cursor: self.cursor, includeCustomData: true)) { error, page in
             DispatchQueue.main.async {
                 if let error = error as? VGError {
                     self.alertType = .error(error.message)

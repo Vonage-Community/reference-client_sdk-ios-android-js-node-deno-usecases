@@ -55,10 +55,9 @@ class CreateConversationViewModel: NSObject,ObservableObject {
         }
         Task.detached {
             do {
-                let params = VGCreateConversationParameters()
-                params.name = name
-                params.displayName = displayName
-                let cid = try await self.vgClient.createConversation(params)
+                let cid = try await self.vgClient.createConversation(
+                    VGCreateConversationParameters(name: name, displayName: displayName)
+                )
                 DispatchQueue.main.async {
                     self.error = "Conversation: \(cid) Created successfully"
                     self.displayName = ""
