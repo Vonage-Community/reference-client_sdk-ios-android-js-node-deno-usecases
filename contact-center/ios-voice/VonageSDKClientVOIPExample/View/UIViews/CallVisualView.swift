@@ -13,6 +13,7 @@ enum CallVisualStatus {
     case ringing
     case answered
     case completed
+    case reconnecting
 }
 
 class CallVisualView: UIButton {
@@ -34,12 +35,17 @@ class CallVisualView: UIButton {
                 self.callStatusVisual.backgroundColor = .systemGreen
                 self.callStatusVisualTop.backgroundColor = .systemGreen
                 self.callStatusLabel.text = "answered"
+            case .reconnecting:
+                self.callStatusVisual.backgroundColor = .systemGray
+                self.callStatusVisualTop.backgroundColor = .black
+                self.callStatusVisual.layer.add(CallVisualView.RingingAnimation, forKey: "ringing")
+                self.callStatusLabel.text = "reconnecting"
             case .completed :
                 self.clearAnimation()
                 self.callStatusVisual.backgroundColor = .systemGray
                 self.callStatusVisualTop.backgroundColor = .systemGray
                 self.callStatusLabel.text = "complete"
-            }
+        }
     }
     
     // Private
