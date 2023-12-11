@@ -81,6 +81,18 @@ internal fun notifyCallAnsweredToCallActivity(context: Context) {
     sendMessageToCallActivity(context, extras)
 }
 
+internal fun notifyCallReconnectingToCallActivity(context: Context) {
+    val extras = Bundle()
+    extras.putString(CallActivity.CALL_STATE, CallActivity.CALL_RECONNECTING)
+    sendMessageToCallActivity(context, extras)
+}
+
+internal fun notifyCallReconnectedToCallActivity(context: Context) {
+    val extras = Bundle()
+    extras.putString(CallActivity.CALL_STATE, CallActivity.CALL_RECONNECTED)
+    sendMessageToCallActivity(context, extras)
+}
+
 internal fun notifyCallDisconnectedToCallActivity(context: Context, isRemote:Boolean) {
     val extras = Bundle()
     extras.putString(CallActivity.CALL_STATE, CallActivity.CALL_DISCONNECTED)

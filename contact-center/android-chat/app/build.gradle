@@ -82,7 +82,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging-ktx'
 
     // Vonage Client SDK
-    implementation("com.vonage:client-sdk-chat:1.3.0-alpha.3")
+    implementation("com.vonage:client-sdk-chat:1.3.0")
 
     // Dagger - HILT (Dependency Injector)
     implementation 'com.google.dagger:hilt-android:2.45'

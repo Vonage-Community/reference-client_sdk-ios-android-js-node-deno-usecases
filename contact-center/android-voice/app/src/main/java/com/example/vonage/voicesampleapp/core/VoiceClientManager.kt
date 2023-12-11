@@ -39,7 +39,6 @@ class VoiceClientManager(private val context: Context) {
 
     private fun initClient(){
         val config = VGClientInitConfig(LoggingLevel.Info)
-
         client = VoiceClient(context, config)
     }
 
@@ -96,6 +95,27 @@ class VoiceClientManager(private val context: Context) {
                     HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED to true
                 }
                 cleanUp(DisconnectCause(cause), isRemote)
+            }
+        }
+
+        client.setOnCallMediaDisconnectListener { callId, reason ->
+            println("Call $callId has been disconnected with reason: ${reason.name}")
+            takeIfActive(callId)?.apply {
+                cleanUp(DisconnectCause(DisconnectCause.ERROR), isRemote = false)
+            }
+        }
+
+        client.setOnCallMediaReconnectingListener { callId ->
+            println("Call $callId is reconnecting")
+            takeIfActive(callId)?.apply {
+                notifyCallReconnectingToCallActivity(context)
+            }
+        }
+
+        client.setOnCallMediaReconnectionListener { callId ->
+            println("Call $callId has successfully reconnected")
+            takeIfActive(callId)?.apply {
+                notifyCallReconnectedToCallActivity(context)
             }
         }
 
