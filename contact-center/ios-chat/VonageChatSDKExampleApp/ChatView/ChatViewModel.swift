@@ -167,11 +167,13 @@ class ChatViewModel: NSObject,ObservableObject {
         }
     }
     
-    func getConversationsEvents() {
+    func getConversationEvents() {
         Task.detached {
             do {
-                let events = try await self.vgClient.getConversationEvents(self.conversation.id,
-                                                                           cursor: self.eventsPage?.nextCursor)
+                let events = try await self.vgClient.getConversationEvents(
+                    self.conversation.id,
+                    parameters: VGGetConversationEventsParameters(order: .desc, cursor: self.eventsPage?.nextCursor)
+                )
                 DispatchQueue.main.async {
                     self.eventsPage = events
                 }
@@ -189,7 +191,10 @@ class ChatViewModel: NSObject,ObservableObject {
             var cursor: String? = nil
             repeat {
                 do {
-                    let membersPage = try await self.vgClient.getConversationMembers(self.conversation.id, cursor: cursor)
+                    let membersPage = try await self.vgClient.getConversationMembers(
+                        self.conversation.id,
+                        parameters: VGGetConversationMembersParameters(cursor: cursor)
+                    )
                     cursor = membersPage.nextCursor
                     DispatchQueue.main.async {
                         self.members.append(contentsOf: membersPage.members)
@@ -198,7 +203,7 @@ class ChatViewModel: NSObject,ObservableObject {
                     self.processFailure(error: error)
                 }
             } while(cursor?.isEmpty == false)
-            self.getConversationsEvents()
+            self.getConversationEvents()
         }
     }
     
@@ -329,7 +334,8 @@ extension ChatViewModel {
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { event in
                 print("\(event.kind) received")
-                self.messages.append(self.getMessage(fromEvent: event))
+                // Insert at beginning due to reversed chat view
+                self.messages.insert(self.getMessage(fromEvent: event), at: 0)
             })
     }
 }

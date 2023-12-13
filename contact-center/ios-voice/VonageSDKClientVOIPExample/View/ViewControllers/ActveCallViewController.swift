@@ -102,6 +102,8 @@ class ActiveCallViewController: UIViewController {
                     self.callVisual.setCallState(.ringing)
                 case .answered:
                     self.callVisual.setCallState(.answered)
+                case .reconnecting:
+                    self.callVisual.setCallState(.reconnecting)
                 case .completed:
                     self.callVisual.setCallState(.completed)
                     self.eventuallyDismiss()

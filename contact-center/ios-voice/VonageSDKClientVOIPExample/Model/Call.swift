@@ -14,6 +14,7 @@ import CallKit
 enum CallStatus {
     case ringing
     case answered
+    case reconnecting
     case completed(remote:Bool, reason:CXCallEndedReason?)
 }
 

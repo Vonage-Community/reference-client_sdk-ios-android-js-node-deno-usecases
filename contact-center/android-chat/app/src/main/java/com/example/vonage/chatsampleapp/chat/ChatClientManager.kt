@@ -99,34 +99,34 @@ class ChatClientManager(
     suspend fun getConversations(pageSize: Int = Constants.PAGE_SIZE,
                                  cursor: String? = null,
                                  order: PresentingOrder = Constants.DEFAULT_ORDER) : ConversationsPage =
-        client.getConversations(order, pageSize, cursor)
+        client.getConversations(GetConversationsParameters(order, pageSize, cursor))
 
     suspend fun getMembers(pageSize: Int = Constants.PAGE_SIZE,
                           cursor: String? = null,
                           order: PresentingOrder = Constants.DEFAULT_ORDER,
                            conversationId: ConversationId = currentConversation.id) : MembersPage =
-        client.getConversationMembers(conversationId, order, pageSize, cursor)
+        client.getConversationMembers(conversationId, GetConversationMembersParameters(order, pageSize, cursor))
 
     suspend fun getEvents(pageSize: Int = Constants.PAGE_SIZE,
                           cursor: String? = null,
                           order: PresentingOrder = Constants.DEFAULT_ORDER,
                           conversationId: ConversationId = currentConversation.id) : EventsPage =
-        client.getConversationEvents(conversationId, order, pageSize, cursor)
+        client.getConversationEvents(conversationId, GetConversationEventsParameters(order, pageSize, cursor))
 
     suspend fun createConversation(name: String, displayName: String?) : ConversationId =
-        client.createConversation(name, displayName)
+        client.createConversation(CreateConversationParameters(name, displayName))
 
     suspend fun joinConversation(conversationId: ConversationId) : MemberId =
         client.joinConversation(conversationId)
 
     private suspend fun hasNoOtherMembers(conversationId: ConversationId) : Boolean {
-        val page = client.getConversationMembers(pageSize = 2, cid = conversationId)
+        val page = client.getConversationMembers(conversationId, GetConversationMembersParameters(pageSize = 2))
         return page.members.none { it.user?.name != currentUser.name }
     }
 
     suspend fun leaveConversation(conversationId: ConversationId){
         client.leaveConversation(conversationId)
-        //TODO: Check ASYNCHRONOUSLY if Conversation Needs to be cleaned up
+        // Check ASYNCHRONOUSLY if Conversation Needs to be cleaned up
         CoroutineScope(Dispatchers.IO).launch {
             if(hasNoOtherMembers(conversationId)){
                 deleteConversation(conversationId)
@@ -191,6 +191,7 @@ class ChatClientManager(
             is MessageVideoEvent -> "$sender has sent a video in the conversation ${event.conversationId}"
             is CustomConversationEvent -> "$sender has sent a custom event in the conversation ${event.conversationId}"
             is EphemeralConversationEvent -> "$sender has sent an ephemeral event in the conversation ${event.conversationId}"
+            is EventDeleteConversationEvent -> "$sender has deleted event body ${event.body} in conversation ${event.conversationId}"
         }
 
         // TODO: Provide utility to parse Conversation?

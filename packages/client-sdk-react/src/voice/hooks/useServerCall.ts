@@ -1,4 +1,4 @@
-import { LegStatus } from '@vonage/client-sdk';
+import { Json, LegStatus } from '@vonage/client-sdk';
 import { useEffect, useMemo } from 'react';
 import { useVoiceCallContainer } from '../VoiceCallContainer';
 import { useVonageClient } from '../../VonageClientProvider';
@@ -23,7 +23,7 @@ export const useServerCall = () => {
     const isRinging = call.callState === 'ringing' && call.direction === 'outgoing';
 
 
-    const startCall = async (context?: Record<string, unknown>) => {
+    const startCall = async (context?: Json) => {
         try {
             const callId = await vonageClient.serverCall(context);
             callDispatch({ type: 'call:initiated', callId, callCtx: context });

@@ -20,7 +20,6 @@
 		97070A1A2A14F78B00F7A93D /* MembersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A182A14F78B00F7A93D /* MembersView.swift */; };
 		97070A1D2A1C168600F7A93D /* ChatClientManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97070A1C2A1C168600F7A93D /* ChatClientManager.swift */; };
 		97CCB97E2A3F333200C9424B /* LoginAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CCB97D2A3F333200C9424B /* LoginAPI.swift */; };
-		97D43D4C2A49EF6D0076EC77 /* secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 97D43D4B2A49EF6D0076EC77 /* secrets.xcconfig */; };
 		97E4C2F12A308D8E00DBAD55 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E4C2F02A308D8E00DBAD55 /* Extensions.swift */; };
 		97E4C2F32A30E82F00DBAD55 /* MemberViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E4C2F22A30E82F00DBAD55 /* MemberViewModel.swift */; };
 		97E4C2F52A30E85D00DBAD55 /* MemberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E4C2F42A30E85D00DBAD55 /* MemberView.swift */; };
@@ -364,7 +363,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1430;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					97FD32EB2A123CF700BF3873 = {
 						CreatedOnToolsVersion = 14.3;
@@ -404,7 +403,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				97D43D4C2A49EF6D0076EC77 /* secrets.xcconfig in Resources */,
 				97FD32F72A123CF800BF3873 /* Preview Assets.xcassets in Resources */,
 				97FD32F42A123CF800BF3873 /* Assets.xcassets in Resources */,
 			);

@@ -11,10 +11,10 @@ import SwiftUI
 import VonageClientSDKChat
 
 class LoginViewModel: NSObject, ObservableObject {
-    @Published var username: String = ""
+    @Published var tokenOrCode: String = Configuration.defaultToken
     @Published var isSessionActive: Bool = false
     @Published var error: String = ""
-    @Published var selectedLoginType: LoginType = .code
+    @Published var selectedLoginType: LoginType = .token
     var loginTypes = [LoginType.code, .token]
     private var cancelable = Set<AnyCancellable>()
     private var sessionId: String? = nil
@@ -33,7 +33,7 @@ class LoginViewModel: NSObject, ObservableObject {
         case .code:
             loginWithCode()
         case .token:
-            createSession(token: username)
+            createSession(token: tokenOrCode)
         }
     }
     
@@ -44,7 +44,7 @@ class LoginViewModel: NSObject, ObservableObject {
     
     private func loginWithCode() {
         networkClient
-            .sendRequest(apiType: CodeLoginAPI(body: LoginRequest(code: username)))
+            .sendRequest(apiType: CodeLoginAPI(body: LoginRequest(code: tokenOrCode)))
             .receive(on: DispatchQueue.main)
             .sink { completion in
                 switch completion {
@@ -54,7 +54,7 @@ class LoginViewModel: NSObject, ObservableObject {
                     break
                 }
             } receiveValue: { (user: TokenResponse) in
-                self.username = ""
+                self.tokenOrCode = ""
                 self.createSession(token: user.vonageToken)
             }.store(in: &cancelable)
     }
@@ -97,7 +97,7 @@ class LoginViewModel: NSObject, ObservableObject {
     
     func onLoginTypeChange(type: LoginType) {
         print("Selected login option: \(selectedLoginType.rawValue)")
-        username = type == .token ? Configuration.defaultToken : ""
+        tokenOrCode = type == .token ? Configuration.defaultToken : ""
     }
 }
 

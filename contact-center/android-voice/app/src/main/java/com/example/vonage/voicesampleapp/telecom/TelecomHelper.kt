@@ -56,6 +56,8 @@ class TelecomHelper(private val context: Context) {
         PhoneAccount
             .builder(phoneAccountHandle, CUSTOM_PHONE_ACCOUNT_NAME)
             .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+            // To handle calls with your custom UI change it to:
+            // .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
             .setIcon(Icon.createWithResource(context, R.drawable.vonage_logo_svg))
             .build()
             .also {

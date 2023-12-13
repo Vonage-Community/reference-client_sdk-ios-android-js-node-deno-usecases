@@ -40,7 +40,7 @@ export const ConversationListContainer = (props: ConversationListContainerProps)
         } satisfies Conversation;
     }, [vonageClient]);
     const fetchConversations = useCallback(async (cursor?: string, Conversations: Conversation[] = []): Promise<Conversation[]> => {
-        const { conversations, nextCursor } = await vonageClient.getConversations(undefined, undefined, cursor);
+        const { conversations, nextCursor } = await vonageClient.getConversations({cursor});
         const newConversations = await Promise.all(conversations.map(conversation => fetchConversation(conversation.id)));
         if (!nextCursor) return [...newConversations, ...Conversations];
         return await fetchConversations(nextCursor, [...newConversations, ...Conversations]);

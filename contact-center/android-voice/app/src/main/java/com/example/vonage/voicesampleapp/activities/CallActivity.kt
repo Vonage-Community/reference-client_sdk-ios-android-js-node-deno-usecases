@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telecom.Connection
 import android.view.View
+import androidx.core.content.ContextCompat
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.R
 import com.example.vonage.voicesampleapp.databinding.ActivityCallBinding
@@ -51,11 +52,8 @@ class CallActivity : AppCompatActivity() {
                 fallbackState = if(it) Connection.STATE_DISCONNECTED else null
             }
             // Call State Updated
-            intent?.getStringExtra(CALL_STATE)?.let {
-                setStateUI()
-                if(it == CALL_DISCONNECTED){
-                    finish()
-                }
+            intent?.getStringExtra(CALL_STATE)?.let { callStateExtra ->
+                setStateUI(callStateExtra)
             }
         }
     }
@@ -65,7 +63,12 @@ class CallActivity : AppCompatActivity() {
         setContentView(binding.root)
         handleIntent(intent)
         setBindings()
-        registerReceiver(messageReceiver, IntentFilter(MESSAGE_ACTION))
+        ContextCompat.registerReceiver(
+            this,
+            messageReceiver,
+            IntentFilter(MESSAGE_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onDestroy() {
@@ -104,10 +107,10 @@ class CallActivity : AppCompatActivity() {
         userName.text = coreContext.activeCall?.callerDisplayName ?: fallbackUsername
     }
 
-    private fun setStateUI() = binding.run {
-        val state = coreContext.activeCall?.state ?: fallbackState
+    private fun setStateUI(callStateExtra: String? = null) = binding.run {
+        val callState = coreContext.activeCall?.state ?: fallbackState
         //Buttons Visibility
-        if(state == Connection.STATE_RINGING){
+        if(callState == Connection.STATE_RINGING){
             btnAnswer.visibility = View.VISIBLE
             btnReject.visibility = View.VISIBLE
             btnHangup.visibility = View.GONE
@@ -122,7 +125,10 @@ class CallActivity : AppCompatActivity() {
             btnKeypad.visibility = View.VISIBLE
         }
         //Background Color and State label
-        val (backgroundColor, stateLabel) = when(state) {
+        val (backgroundColor, stateLabel) = when(callStateExtra){
+            CALL_RECONNECTING -> R.color.gray to R.string.call_state_reconnecting_label
+            else -> null
+        } ?: when(callState) {
             Connection.STATE_RINGING -> R.color.gray to R.string.call_state_ringing_label
             Connection.STATE_DIALING -> R.color.gray to R.string.call_state_dialing_label
             Connection.STATE_ACTIVE -> R.color.green to R.string.call_state_active_label
@@ -130,7 +136,10 @@ class CallActivity : AppCompatActivity() {
             else -> R.color.red to R.string.call_state_locally_disconnected_label
         }
         cardView.setCardBackgroundColor(getColor(backgroundColor))
-        callState.text = getString(stateLabel)
+        callStateLabel.text = getString(stateLabel)
+        if(callStateExtra == CALL_DISCONNECTED){
+            finish()
+        }
     }
 
     private fun onAnswer(){
@@ -181,6 +190,8 @@ class CallActivity : AppCompatActivity() {
         const val IS_MUTED = "isMuted"
         const val CALL_STATE = "callState"
         const val CALL_ANSWERED = "answered"
+        const val CALL_RECONNECTING = "reconnecting"
+        const val CALL_RECONNECTED = "reconnected"
         const val CALL_DISCONNECTED = "disconnected"
         const val IS_REMOTE_DISCONNECT = "isRemoteDisconnect"
     }

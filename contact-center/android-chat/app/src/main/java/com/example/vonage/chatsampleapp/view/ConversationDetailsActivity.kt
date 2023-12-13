@@ -74,7 +74,7 @@ class ConversationDetailsActivity : ComponentActivity() {
                 LaunchedEffect(true){
                     val conversationDetails = viewModel.getConversationDetails()
                     // Possible use: handle Custom Data
-                    conversationDetails?.customData
+                    conversationDetails?.properties?.customData
                 }
                 ConversationDetailsScreen(
                     conversationName,

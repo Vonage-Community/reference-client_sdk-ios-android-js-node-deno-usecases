@@ -1,5 +1,5 @@
-import { ComponentType, ReactFragment, ReactNode } from "react";
-import { useServerCall, useCallStatus, useHangup } from "../hooks";
+import { ComponentType, ReactFragment, ReactNode } from 'react';
+import { useServerCall, useCallStatus, useHangup } from '../hooks';
 import {
   ContainerProps,
   ActionProps,
@@ -7,14 +7,15 @@ import {
   defaultAction,
   TextProps,
   defaultText,
-} from "./utils";
+} from './utils';
+import { Json } from '@vonage/client-sdk';
 
 export type ServerCallProps = {
   className?: string;
   label?: string;
   ringingLabel?: string;
   cancelLabel?: string;
-  callContext?: Record<string, unknown>;
+  callContext?: Json;
 
   RootContainer?: ComponentType<ContainerProps>;
   ActionContainer?: ComponentType<ActionProps>;
@@ -27,14 +28,14 @@ export type ServerCallProps = {
 
 export const ServerCall = ({
   callContext,
-  className = "vg-server-call",
-  actionClassName = "vg-server-call__action",
-  ringingClassName = "vg-server-call__ringing",
-  label = "Start Call",
+  className = 'vg-server-call',
+  actionClassName = 'vg-server-call__action',
+  ringingClassName = 'vg-server-call__ringing',
+  label = 'Start Call',
   RootContainer = defaultContainer,
   ActionContainer = defaultAction,
-  cancelLabel = "Cancel Call",
-  ringingLabel = "Call is ringing",
+  cancelLabel = 'Cancel Call',
+  ringingLabel = 'Call is ringing',
   RingingContainer = defaultContainer,
   RingingMessage = defaultText,
   CancelActionContainer: RingingActionContainer = defaultAction,
@@ -57,7 +58,7 @@ export const ServerCall = ({
       </RingingContainer>
     );
 
-  if (callStatus !== "reconnectable" && callStatus !== "idle") return null;
+  if (callStatus !== 'reconnectable' && callStatus !== 'idle') return null;
 
   return (
     <RootContainer className={className}>

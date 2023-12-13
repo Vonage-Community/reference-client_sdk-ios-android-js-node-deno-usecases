@@ -69,6 +69,20 @@ extension VonageCallController: VGVoiceClientDelegate {
         self.vonageCallUpdates.send((uuid, CallStatus.completed(remote: true, reason: cxreason)))
     }
     
+    func voiceClient(_ client: VGVoiceClient, didReceiveMediaDisconnectForCall callId: VGCallId, reason: VGCallDisconnectReason) {
+        let uuid = UUID(uuidString: callId)!
+        self.vonageCallUpdates.send((uuid, CallStatus.completed(remote: false, reason: .failed)))
+    }
+    
+    func voiceClient(_ client: VGVoiceClient, didReceiveMediaReconnectingForCall callId: VGCallId) {
+        let uuid = UUID(uuidString: callId)!
+        self.vonageCallUpdates.send((uuid, CallStatus.reconnecting))
+    }
+    
+    func voiceClient(_ client: VGVoiceClient, didReceiveMediaReconnectionForCall callId: VGCallId) {
+        let uuid = UUID(uuidString: callId)!
+        self.vonageCallUpdates.send((uuid, CallStatus.answered))
+    }
     
     // MARK: VGVoiceClientDelegate LegStatus
     

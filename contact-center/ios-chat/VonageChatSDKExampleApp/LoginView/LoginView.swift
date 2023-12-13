@@ -14,7 +14,7 @@ struct LoginView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Enter \(viewModel.selectedLoginType.rawValue)...", text: $viewModel.username)
+                    TextField("Enter \(viewModel.selectedLoginType.rawValue)...", text: $viewModel.tokenOrCode)
                             .frame(maxWidth: .infinity, idealHeight: 50, alignment: .leading)
                             .autocorrectionDisabled()
                             .autocapitalization(.none)
