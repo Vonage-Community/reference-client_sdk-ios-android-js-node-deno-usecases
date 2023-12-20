@@ -1,0 +1,33 @@
+PODS:
+  - Flutter (1.0.0)
+  - permission_handler_apple (9.1.1):
+    - Flutter
+  - VonageClientSDKVoice (1.3.0):
+    - VonageWebRTC (~> 99.9.26)
+  - VonageWebRTC (99.9.30)
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - VonageClientSDKVoice (~> 1.3.0)
+
+SPEC REPOS:
+  trunk:
+    - VonageClientSDKVoice
+    - VonageWebRTC
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
+
+SPEC CHECKSUMS:
+  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
+  permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
+  VonageClientSDKVoice: 68a15ea84a70d97576d50b8638adec2cbd4605f4
+  VonageWebRTC: 70c4c5c6fcdbc975793ef8b81163e9cb8a4ca768
+
+PODFILE CHECKSUM: 85b0b2016191037f445620ca1622f60b39090615
+
+COCOAPODS: 1.14.3

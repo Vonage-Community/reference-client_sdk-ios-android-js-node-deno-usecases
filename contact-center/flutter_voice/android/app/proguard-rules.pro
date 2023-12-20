@@ -1,0 +1,4 @@
+-keeppackagenames
+-keep class org.webrtc.**  { *; }
+-keep class org.vonage.**  { *; }
+-keep class com.vonage.**  { *; }
