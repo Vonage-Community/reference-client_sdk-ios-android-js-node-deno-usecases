@@ -129,4 +129,16 @@ class CallClient with CallClientStub {
   Future<void> unmuteCall(String callId) {
     return _client.unmute(callId);
   }
+
+  /// Web doesn't support audio control
+  @override
+  Future<void> enableAudio() async {
+    return;
+  }
+
+  /// Web doesn't support audio control
+  @override
+  Future<void> disableAudio() async {
+    return;
+  }
 }

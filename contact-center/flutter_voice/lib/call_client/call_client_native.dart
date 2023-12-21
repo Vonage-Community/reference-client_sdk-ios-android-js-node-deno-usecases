@@ -133,4 +133,28 @@ class CallClient with CallClientStub {
       rethrow;
     }
   }
+
+  @override
+  Future<void> enableAudio() async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.enableAudio.name,
+      );
+    } on PlatformException catch (e) {
+      print('Failed to enable audio: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> disableAudio() async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.disableAudio.name,
+      );
+    } on PlatformException catch (e) {
+      print('Failed to disable audio: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
 }

@@ -37,6 +37,8 @@ dependencies:
   cupertino_icons: ^1.0.2
   js: ^0.6.7
   permission_handler: ^11.1.0
+  flutter_callkit_incoming: ^2.0.0+2
+  uuid: ^4.2.2
 
 dev_dependencies:
   flutter_test:

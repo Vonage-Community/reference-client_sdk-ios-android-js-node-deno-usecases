@@ -22,6 +22,8 @@ class CallClient(context: Context, binaryMessenger: BinaryMessenger) {
                 "unmute" -> unmute(result, call.argument("callId")!!)
                 "disableEarmuff" -> disableEarmuff(result, call.argument("callId")!!)
                 "enableEarmuff" -> enableEarmuff(result, call.argument("callId")!!)
+                "enableAudio" -> result.success(null) // Not Needed on Android
+                "disableAudio" -> result.success(null) // Not Needed on Android
                 else -> result.notImplemented()
             }
         }

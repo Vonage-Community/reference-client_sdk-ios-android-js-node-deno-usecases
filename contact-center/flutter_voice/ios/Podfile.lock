@@ -1,5 +1,9 @@
 PODS:
+  - CryptoSwift (1.8.0)
   - Flutter (1.0.0)
+  - flutter_callkit_incoming (0.0.1):
+    - CryptoSwift
+    - Flutter
   - permission_handler_apple (9.1.1):
     - Flutter
   - VonageClientSDKVoice (1.3.0):
@@ -8,26 +12,32 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - flutter_callkit_incoming (from `.symlinks/plugins/flutter_callkit_incoming/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - VonageClientSDKVoice (~> 1.3.0)
 
 SPEC REPOS:
   trunk:
+    - CryptoSwift
     - VonageClientSDKVoice
     - VonageWebRTC
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  flutter_callkit_incoming:
+    :path: ".symlinks/plugins/flutter_callkit_incoming/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
 
 SPEC CHECKSUMS:
+  CryptoSwift: 52aaf3fce7337552863b1d952e408085f0e65030
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
+  flutter_callkit_incoming: 417dd1b46541cdd5d855ad795ccbe97d1c18155e
   permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
   VonageClientSDKVoice: 68a15ea84a70d97576d50b8638adec2cbd4605f4
   VonageWebRTC: 70c4c5c6fcdbc975793ef8b81163e9cb8a4ca768
 
-PODFILE CHECKSUM: 85b0b2016191037f445620ca1622f60b39090615
+PODFILE CHECKSUM: a1fae148bf1fc53ddcacb289cd78bab20bfd7974
 
 COCOAPODS: 1.14.3

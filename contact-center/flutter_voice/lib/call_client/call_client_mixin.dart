@@ -11,6 +11,9 @@ mixin CallClientStub {
   Future<void> disableEarmuff(String callId);
   Future<void> enableEarmuff(String callId);
 
+  Future<void> enableAudio();
+  Future<void> disableAudio();
+
   void handleEvent(String event, List<dynamic> args) {
     final callEvent = CallEvent.values.firstWhere(
       (e) => e.toString() == 'CallEvent.$event',
@@ -54,7 +57,9 @@ enum CallClientMethod {
   mute,
   unmute,
   enableEarmuff,
-  disableEarmuff
+  disableEarmuff,
+  enableAudio,
+  disableAudio
 }
 
 enum CallEvent {

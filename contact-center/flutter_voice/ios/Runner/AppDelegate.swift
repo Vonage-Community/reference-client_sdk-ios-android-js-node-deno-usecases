@@ -24,7 +24,6 @@ class CallClient: NSObject, VGVoiceClientDelegate {
     let client: VGVoiceClient
     
     init(_ binaryMessenger: FlutterBinaryMessenger) {
-        VGVoiceClient.isUsingCallKit = false
         client = VGVoiceClient()
         channel = FlutterMethodChannel(name: "com.vonage.flutter_voice/client", binaryMessenger: binaryMessenger);
         super.init()
@@ -39,6 +38,8 @@ class CallClient: NSObject, VGVoiceClientDelegate {
                 case "unmute": unmute(result, callId: args?["callId"] as? String)
                 case "disableEarmuff": disableEarmuff(result, callId: args?["callId"] as? String)
                 case "enableEarmuff": enableEarmuff(result, callId: args?["callId"] as? String)
+                case "enableAudio": enableAudio(result, audioSession: AVAudioSession.sharedInstance())
+                case "disableAudio": disableAudio(result, audioSession: AVAudioSession.sharedInstance())
                 default: result(FlutterMethodNotImplemented)
             }
         }
@@ -146,6 +147,26 @@ class CallClient: NSObject, VGVoiceClientDelegate {
             }
             result(nil)
         }
+    }
+
+    func enableAudio(_ result: @escaping FlutterResult, audioSession: AVAudioSession?) {
+        guard audioSession != nil else {
+            result(FlutterError(code: "Bad Agrument", message: "audioSession was null", details: nil))
+            return
+        }
+        
+        VGVoiceClient.enableAudio(audioSession!)
+        result(nil)
+    }
+
+    func disableAudio(_ result: @escaping FlutterResult, audioSession: AVAudioSession?) {
+        guard audioSession != nil else {
+            result(FlutterError(code: "Bad Agrument", message: "audioSession was null", details: nil))
+            return
+        }
+        
+        VGVoiceClient.disableAudio(audioSession!)
+        result(nil)
     }
     
     // MARK: Client Delegate methods

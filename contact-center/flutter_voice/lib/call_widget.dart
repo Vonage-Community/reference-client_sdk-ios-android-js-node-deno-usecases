@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_voice/call_client/call_client.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+import 'package:uuid/uuid.dart';
+
+Uuid uuid = const Uuid();
 
 class CallWidget extends StatefulWidget {
   @override
@@ -11,14 +16,17 @@ class CallWidget extends StatefulWidget {
 class _CallWidgetState extends State<CallWidget> {
   final CallClient _callClient = CallClient();
 
-  String? _token;
+  String? _token =
+      'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MDMxNjIzNTYsImV4cCI6MTcwMzI0ODc1NiwiYXBwbGljYXRpb25faWQiOiI5NjFkZTZkZi05YzVlLTQ0NTgtYmI1NS04YTI2OTNiYjQxMTIiLCJqdGkiOiIxYzkwYTIzMi1jNzA3LTQ3MmMtYjUwYS1jNDUyYjhjMGRiYzMiLCJhY2wiOnsicGF0aHMiOnsiLyovdXNlcnMvKioiOnt9LCIvKi9jb252ZXJzYXRpb25zLyoqIjp7fSwiLyovc2Vzc2lvbnMvKioiOnt9LCIvKi9kZXZpY2VzLyoqIjp7fSwiLyovaW1hZ2UvKioiOnt9LCIvKi9tZWRpYS8qKiI6e30sIi8qL2FwcGxpY2F0aW9ucy8qKiI6e30sIi8qL3B1c2gvKioiOnt9LCIvKi9rbm9ja2luZy8qKiI6e30sIi8qL2xlZ3MvKioiOnt9fX0sInN1YiI6ImFsaWNlIn0.bDUpM267SdT3oUqc1P5uCQa3k6if1dFF6EqNB85lrPe30iq_pVgauWH_LJ4mdoTFyW9V8qkcnizqFNiUxNsB17LTo4d0UIvOfYKTgkNqhqLcs07RQgAft15oIGYwcJgwEqqjpvk1JV1SABucZMO5_hF2A54D6EKgwo7xdib8WAZKVwfv7sJGRAd3THX7OZXOvvMGmGUyYtn59o9PVQo5KDa7s-4irWp0zehgOi91ixUENTpJUUBiqdR-cDs_DtWYQV3kmI8aWmhXF_ofLJN0yW78Ve_cg9lQ4yr8zFR3vbv22KDfWmaXV1YbJBb9b_tXsOrkDAtnmp2Dz6A_G4inuQ';
   String? _sessionId;
   String? _callId;
+  String? _callKituuid;
 
   bool _isMuted = false;
   bool _isEarmuffed = false;
 
   _CallWidgetState() {
+    _getNotificationPermission();
     _callClient.onCallHangup =
         (String callId, dynamic callQuality, String reason) {
       print('Call hangup: $callId, $callQuality, $reason');
@@ -48,6 +56,42 @@ class _CallWidgetState extends State<CallWidget> {
         _isEarmuffed = isEarmuffed;
       });
     };
+
+    FlutterCallkitIncoming.onEvent.listen((event) {
+      switch (event!.event) {
+        case Event.actionCallToggleMute:
+          _toggleMute();
+          break;
+        case Event.actionCallEnded:
+          _callClient.hangupCall(_callId!);
+          break;
+        case Event.actionCallToggleAudioSession:
+          bool isAudioActive = event.body['isActivate'];
+          if (isAudioActive) {
+            _callClient.enableAudio();
+          } else {
+            _callClient.disableAudio();
+          }
+          break;
+        default:
+          print('Unknown event: ${event.event}');
+      }
+    });
+  }
+
+  Future<void> _getNotificationPermission() async {
+    try {
+      var notificationPermission = await Permission.notification.request();
+      if (notificationPermission.isGranted) {
+        print('notificationPermission granted');
+      } else {
+        print('notificationPermission not granted');
+        openAppSettings();
+      }
+    } on PlatformException catch (e) {
+      print(
+          'Failed to get notification permission: ${e.message}'); // use a logger here
+    }
   }
 
   Future<void> _createSession(String token) async {
@@ -66,7 +110,23 @@ class _CallWidgetState extends State<CallWidget> {
       var micPermission = await Permission.microphone.request();
       if (micPermission.isGranted) {
         print('micPermission granted');
+        _callKituuid = uuid.v4();
+        CallKitParams params = CallKitParams(
+            id: _callKituuid!,
+            handle: 'Server Call',
+            type: 0,
+            extra: context,
+            ios: const IOSParams(
+                handleType: 'generic',
+                supportsVideo: false,
+                supportsHolding: false,
+                supportsDTMF: false,
+                supportsGrouping: false,
+                supportsUngrouping: false,
+                audioSessionMode: 'voiceChat'));
+        await FlutterCallkitIncoming.startCall(params);
         final callId = await _callClient.serverCall(context);
+        await FlutterCallkitIncoming.setCallConnected(_callKituuid!);
         setState(() {
           _callId = callId;
         });
@@ -75,13 +135,14 @@ class _CallWidgetState extends State<CallWidget> {
         openAppSettings();
       }
     } on PlatformException catch (e) {
+      await FlutterCallkitIncoming.endCall(_callKituuid!);
       print('Failed to create call: ${e.message}'); // use a logger here
     }
   }
 
   Future<void> _hangup() async {
     try {
-      await _callClient.hangupCall(_callId!);
+      await FlutterCallkitIncoming.endCall(_callKituuid!);
     } on PlatformException catch (e) {
       print('Failed to hangup: ${e.message}'); // use a logger here
     }
