@@ -100,6 +100,7 @@ class CallActivity : AppCompatActivity() {
         btnHangup.setOnClickListener { onHangup() }
         btnMute.setOnClickListener { onMute() }
         btnKeypad.setOnClickListener { onKeypad() }
+        noiseSuppressionSwitch.setOnCheckedChangeListener { _, isChecked -> onNoiseSuppression(isChecked) }
     }
 
     private fun setUserUI() = binding.run{
@@ -116,6 +117,7 @@ class CallActivity : AppCompatActivity() {
             btnHangup.visibility = View.GONE
             btnMute.visibility = View.GONE
             btnKeypad.visibility = View.GONE
+            noiseSuppressionSwitch.visibility = View.GONE
         }
         else {
             btnAnswer.visibility = View.GONE
@@ -123,6 +125,7 @@ class CallActivity : AppCompatActivity() {
             btnHangup.visibility = View.VISIBLE
             btnMute.visibility = View.VISIBLE
             btnKeypad.visibility = View.VISIBLE
+            noiseSuppressionSwitch.visibility = View.VISIBLE
         }
         //Background Color and State label
         val (backgroundColor, stateLabel) = when(callStateExtra){
@@ -166,6 +169,16 @@ class CallActivity : AppCompatActivity() {
                 clientManager.muteCall(call)
             } else {
                 clientManager.unmuteCall(call)
+            }
+        }
+    }
+
+    private fun onNoiseSuppression(isChecked: Boolean){
+        coreContext.activeCall?.let { call ->
+            if(isChecked){
+                clientManager.enableNoiseSuppression(call)
+            } else {
+                clientManager.disableNoiseSuppression(call)
             }
         }
     }
