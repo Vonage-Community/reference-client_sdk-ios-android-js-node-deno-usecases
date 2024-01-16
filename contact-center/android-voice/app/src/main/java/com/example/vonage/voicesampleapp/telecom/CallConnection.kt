@@ -14,6 +14,7 @@ class CallConnection(val callId: CallId) : Connection() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
     var isMuted = false
+    var isCallOnHold = false
     init {
         val properties = connectionProperties or PROPERTY_SELF_MANAGED
         connectionProperties = properties
@@ -58,6 +59,17 @@ class CallConnection(val callId: CallId) : Connection() {
     override fun onPlayDtmfTone(c: Char) {
         println("Dtmf Char received: $c")
         clientManager.sendDtmf(this, c.toString())
+    }
+
+    override fun onHold() {
+        if (!isCallOnHold){
+            clientManager.holdCall(this)
+            isCallOnHold = true
+        } else{
+            clientManager.unholdCall(this)
+            isCallOnHold = false
+        }
+
     }
 
     fun selfDestroy(){

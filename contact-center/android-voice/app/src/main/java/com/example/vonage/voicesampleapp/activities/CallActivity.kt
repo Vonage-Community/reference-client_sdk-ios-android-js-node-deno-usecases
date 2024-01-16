@@ -23,6 +23,7 @@ class CallActivity : AppCompatActivity() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
     private var isMuteToggled = false
+    private var isHoldToggled = false
 
     /**
      * When an Active Call gets disconnected
@@ -45,6 +46,12 @@ class CallActivity : AppCompatActivity() {
             intent?.getBooleanExtra(IS_MUTED, false)?.let {
                 if(isMuteToggled != it){
                     toggleMute()
+                }
+            }
+
+            intent?.getBooleanExtra(IS_CALL_ON_HOLD, false)?.let{
+                if(isHoldToggled != it){
+                    toggleHold()
                 }
             }
             // Call Remotely Disconnected
@@ -99,6 +106,7 @@ class CallActivity : AppCompatActivity() {
         btnReject.setOnClickListener { onReject() }
         btnHangup.setOnClickListener { onHangup() }
         btnMute.setOnClickListener { onMute() }
+        btnHold.setOnClickListener {onHold()}
         btnKeypad.setOnClickListener { onKeypad() }
     }
 
@@ -115,6 +123,7 @@ class CallActivity : AppCompatActivity() {
             btnReject.visibility = View.VISIBLE
             btnHangup.visibility = View.GONE
             btnMute.visibility = View.GONE
+            btnHold.visibility = View.GONE
             btnKeypad.visibility = View.GONE
         }
         else {
@@ -122,6 +131,7 @@ class CallActivity : AppCompatActivity() {
             btnReject.visibility = View.GONE
             btnHangup.visibility = View.VISIBLE
             btnMute.visibility = View.VISIBLE
+            btnHold.visibility = View.VISIBLE
             btnKeypad.visibility = View.VISIBLE
         }
         //Background Color and State label
@@ -170,6 +180,16 @@ class CallActivity : AppCompatActivity() {
         }
     }
 
+    private fun onHold(){
+        coreContext.activeCall?.let { call ->
+            if(toggleHold()){
+                clientManager.holdCall(call)
+            }else{
+                clientManager.unholdCall(call)
+            }
+        }
+    }
+
     private fun onKeypad(){
         showDialerFragment()
     }
@@ -177,6 +197,11 @@ class CallActivity : AppCompatActivity() {
     private fun toggleMute() : Boolean{
         isMuteToggled = binding.btnMute.toggleButton(isMuteToggled)
         return isMuteToggled
+    }
+
+    private fun toggleHold(): Boolean{
+        isHoldToggled = binding.btnHold.toggleButton(isHoldToggled)
+        return isHoldToggled
     }
 
     private fun FloatingActionButton.toggleButton(toggle: Boolean): Boolean {
@@ -188,11 +213,13 @@ class CallActivity : AppCompatActivity() {
     companion object {
         const val MESSAGE_ACTION = "com.example.vonage.voicesampleapp.MESSAGE_TO_CALL_ACTIVITY"
         const val IS_MUTED = "isMuted"
+        const val IS_CALL_ON_HOLD = "isCallOnHold"
         const val CALL_STATE = "callState"
         const val CALL_ANSWERED = "answered"
         const val CALL_RECONNECTING = "reconnecting"
         const val CALL_RECONNECTED = "reconnected"
         const val CALL_DISCONNECTED = "disconnected"
         const val IS_REMOTE_DISCONNECT = "isRemoteDisconnect"
+
     }
 }

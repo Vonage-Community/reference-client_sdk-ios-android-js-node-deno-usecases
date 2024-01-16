@@ -345,6 +345,44 @@ class VoiceClientManager(private val context: Context) {
         }
     }
 
+    fun holdCall(call: CallConnection){
+        call.takeIfActive()?.apply{
+            client.mute(callId){error ->
+                if (error != null){
+                    println("Error muting in holdCall with id: $callId")
+                }else{
+                    println("Call muted in holdCall with id: $callId")
+                }
+            }
+            client.enableEarmuff(callId){ error ->
+                if (error != null){
+                    println("Error enabling earmuff in holdCall with id: $callId")
+                }else{
+                    println("Call earmuffed in holdCall with id: $callId")
+                }
+            }
+        }
+    }
+
+    fun unholdCall(call: CallConnection){
+        call.takeIfActive()?.apply{
+            client.unmute(callId){error ->
+                if (error != null){
+                    println("Error unmuting in holdCall with id: $callId")
+                }else{
+                    println("Call unmuted in holdCall with id: $callId")
+                }
+            }
+            client.disableEarmuff(callId){ error ->
+                if (error != null){
+                    println("Error disabling earmuff in holdCall with id: $callId")
+                }else{
+                    println("Earmuff disabled in holdCall with id: $callId")
+                }
+            }
+        }
+    }
+
     /*
      * Utilities to handle errors on telecomHelper
      */
