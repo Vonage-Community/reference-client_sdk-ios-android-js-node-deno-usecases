@@ -31,6 +31,9 @@ protocol CallController {
     
     // Special case for CXStartCallAction
     func startOutboundCall(_ context:[String:String]) -> UUID
+    
+    // Enable/Disable Noise Suppression in ongoing calls
+    func toggleNoiseSuppression(call: Call, isOn: Bool)
 }
 
 
@@ -151,6 +154,18 @@ extension VonageCallController: CallController {
             }
         }
         .store(in: &cancellables)
+    }
+    
+    func toggleNoiseSuppression(call: Call, isOn: Bool) {
+        let callId = call.id.toVGCallID()
+        isOn ? 
+        client.enableNoiseSuppression(callId) { err in
+            // Handle the completion/error if needed
+        }
+        :
+        client.disableNoiseSuppression(callId) { err in
+            // Handle the completion/error if needed
+        }
     }
 }
 

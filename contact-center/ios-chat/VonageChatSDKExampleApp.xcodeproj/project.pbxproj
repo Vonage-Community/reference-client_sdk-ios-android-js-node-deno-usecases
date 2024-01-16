@@ -775,7 +775,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F1F14A1361D2150F805A7E26 /* Pods-VonageChatSDKExampleAppTests.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -796,7 +795,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 31E6D6078738B0F40A67B5B4 /* Pods-VonageChatSDKExampleAppTests.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -817,7 +815,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FAEF0785EE15550D9A078528 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
@@ -836,7 +833,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 74EB7738A0FA5547C95FD369 /* Pods-VonageChatSDKExampleApp-VonageChatSDKExampleAppUITests.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7F2B5ZSP8Q;
