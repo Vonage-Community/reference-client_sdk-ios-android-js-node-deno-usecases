@@ -187,7 +187,7 @@ class CallActivity : AppCompatActivity() {
         coreContext.activeCall?.let { call ->
             if(toggleHold()){
                 clientManager.holdCall(call)
-            }else{
+            } else {
                 clientManager.unholdCall(call)
             }
         }
@@ -211,10 +211,7 @@ class CallActivity : AppCompatActivity() {
         return isMuteToggled
     }
 
-    private fun toggleHold(): Boolean{
-        isHoldToggled = binding.btnHold.toggleButton(isHoldToggled)
-        return isHoldToggled
-    }
+    private fun toggleHold(): Boolean = binding.btnHold.toggleButton(isHoldToggled)
 
     private fun FloatingActionButton.toggleButton(toggle: Boolean): Boolean {
         backgroundTintList = ColorStateList.valueOf(getColor(if(!toggle) R.color.gray else R.color.white))

@@ -124,7 +124,7 @@ extension VonageCallController {
                     case .ringing:
                         // Outbound calls need reporting to callkit
                         self.cxController.requestTransaction(
-                            with: CXStartCallAction(call: callId, handle: CXHandle(type: .phoneNumber, value: to)),
+                            with: CXStartCallAction(call: callId, handle: CXHandle(type: .generic, value: to)),
                             completion: { err in
                                 guard err == nil else {
                                     self.client.hangup(callId.toVGCallID()) { err in
@@ -143,6 +143,8 @@ extension VonageCallController {
                         update.localizedCallerName = "me"
                         update.supportsDTMF = true
                         update.supportsHolding = true
+                        update.supportsGrouping = false
+                        update.hasVideo = false
                         self.callProvider.reportCall(with: callId, updated: update)
                         
                     case .completed(true, .some(let reason)):

@@ -62,10 +62,10 @@ class CallConnection(val callId: CallId) : Connection() {
     }
 
     override fun onHold() {
-        if (!isCallOnHold){
+        if (!isCallOnHold) {
             clientManager.holdCall(this)
             isCallOnHold = true
-        } else{
+        } else {
             clientManager.unholdCall(this)
             isCallOnHold = false
         }
