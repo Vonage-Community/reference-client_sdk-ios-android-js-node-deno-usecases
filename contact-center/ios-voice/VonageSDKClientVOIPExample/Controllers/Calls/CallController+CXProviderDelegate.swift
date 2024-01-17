@@ -89,8 +89,8 @@ extension VonageCallController: CXProviderDelegate {
             action.fail()
             return
         }
-        
-        if (action.isOnHold) {
+        action.fulfill()
+        if (!action.isOnHold) {
             self.client.unmute(action.callUUID.toVGCallID()) { err in
                 // TODO:
             }
@@ -106,8 +106,9 @@ extension VonageCallController: CXProviderDelegate {
                 // TODO:
             }
         }
-        action.fulfill()
     }
+    
+    
 }
 
 extension VonageCallController {
@@ -123,7 +124,7 @@ extension VonageCallController {
                     case .ringing:
                         // Outbound calls need reporting to callkit
                         self.cxController.requestTransaction(
-                            with: CXStartCallAction(call: callId, handle: CXHandle(type: .generic, value: to)),
+                            with: CXStartCallAction(call: callId, handle: CXHandle(type: .phoneNumber, value: to)),
                             completion: { err in
                                 guard err == nil else {
                                     self.client.hangup(callId.toVGCallID()) { err in
@@ -138,6 +139,11 @@ extension VonageCallController {
                     case .answered:
                         // Answers are remote by definition, so report them
                         self.callProvider.reportOutgoingCall(with: callId, connectedAt: Date.now)
+                        let update = CXCallUpdate()
+                        update.localizedCallerName = "me"
+                        update.supportsDTMF = true
+                        update.supportsHolding = true
+                        self.callProvider.reportCall(with: callId, updated: update)
                         
                     case .completed(true, .some(let reason)):
                         // Report Remote Hangups + Cancels
@@ -154,10 +160,8 @@ extension VonageCallController {
                         // Report new Inbound calls so we follow PushKit and Callkit Rules
                         let update = CXCallUpdate()
                         update.localizedCallerName = from
-                        update.supportsDTMF = false
+                        update.supportsDTMF = true
                         update.supportsHolding = true
-                        update.supportsGrouping = false
-                        update.hasVideo = false
                         self.callProvider.reportNewIncomingCall(with: callId, update: update) { err in
                             if err != nil {
                                 self.client.reject(callId.toVGCallID()){ err in
