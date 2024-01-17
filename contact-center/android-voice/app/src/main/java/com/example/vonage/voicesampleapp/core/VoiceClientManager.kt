@@ -142,10 +142,14 @@ class VoiceClientManager(private val context: Context) {
         client.setOnMutedListener { callId, legId, isMuted ->
             println("LegId $legId for Call $callId has been ${if(isMuted) "muted" else "unmuted"}")
             takeIf { callId == legId } ?: return@setOnMutedListener
-            // Update Active Call Mute State
-            takeIfActive(callId)?.isMuted = isMuted
-            // Notify Call Activity
-            notifyIsMutedToCallActivity(context, isMuted)
+            takeIfActive(callId)?.run {
+                // Update Active Call Mute State
+                toggleMuteState()
+                takeUnless { it.isOnHold }?.run {
+                    // Notify Call Activity
+                    notifyIsMutedToCallActivity(context, isMuted)
+                }
+            }
         }
 
         client.setOnDTMFListener { callId, legId, digits ->
@@ -381,6 +385,8 @@ class VoiceClientManager(private val context: Context) {
                     println("Call earmuffed in holdCall with id: $callId")
                 }
             }
+            toggleHoldState()
+            notifyIsOnHoldToCallActivity(context, true)
         }
     }
 
@@ -400,6 +406,8 @@ class VoiceClientManager(private val context: Context) {
                     println("Earmuff disabled in holdCall with id: $callId")
                 }
             }
+            toggleHoldState()
+            notifyIsOnHoldToCallActivity(context, false)
         }
     }
 

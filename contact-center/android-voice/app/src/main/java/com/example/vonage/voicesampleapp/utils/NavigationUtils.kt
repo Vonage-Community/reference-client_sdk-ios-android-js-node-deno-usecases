@@ -75,6 +75,13 @@ internal fun notifyIsMutedToCallActivity(context: Context, isMuted: Boolean){
     sendMessageToCallActivity(context, extras)
 }
 
+internal fun notifyIsOnHoldToCallActivity(context: Context, isOnHold: Boolean){
+    val extras = Bundle()
+    val state = if(isOnHold) CallActivity.CALL_ON_HOLD else CallActivity.CALL_ANSWERED
+    extras.putString(CallActivity.CALL_STATE, state)
+    sendMessageToCallActivity(context, extras)
+}
+
 internal fun notifyCallAnsweredToCallActivity(context: Context) {
     val extras = Bundle()
     extras.putString(CallActivity.CALL_STATE, CallActivity.CALL_ANSWERED)

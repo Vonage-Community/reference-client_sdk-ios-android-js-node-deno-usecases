@@ -14,7 +14,10 @@ class CallConnection(val callId: CallId) : Connection() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
     var isMuted = false
-    var isCallOnHold = false
+        private set
+    var isOnHold = false
+        private set
+
     init {
         val properties = connectionProperties or PROPERTY_SELF_MANAGED
         connectionProperties = properties
@@ -62,12 +65,14 @@ class CallConnection(val callId: CallId) : Connection() {
     }
 
     override fun onHold() {
-        if (!isCallOnHold) {
+        if(!isOnHold){
             clientManager.holdCall(this)
-            isCallOnHold = true
-        } else {
+        }
+    }
+
+    override fun onUnhold() {
+        if(isOnHold){
             clientManager.unholdCall(this)
-            isCallOnHold = false
         }
     }
 
@@ -86,6 +91,15 @@ class CallConnection(val callId: CallId) : Connection() {
     private fun setActiveCall(){
         // Update active call only if current is null
         coreContext.activeCall = coreContext.activeCall ?: this
+    }
+
+    fun toggleHoldState(){
+        isOnHold = !isOnHold
+        if(isOnHold) setOnHold() else setActive()
+    }
+
+    fun toggleMuteState(){
+        isMuted = !isMuted
     }
 
     private fun clearActiveCall(){

@@ -60,7 +60,7 @@
                         android:orientation="horizontal"
                         android:gravity="center"
                         android:layout_width="match_parent"
-                        android:layout_height="100dp">
+                        android:layout_height="match_parent">
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -95,15 +95,17 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             app:fabSize="normal"
+                            android:layout_marginStart="10dp"
                             android:id="@+id/btn_hold"
                             app:backgroundTint="@color/white"
                             app:tint="@color/gray"
+                            app:srcCompat="@drawable/hold"
                             android:contentDescription="@string/hold_button_description"/>
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             app:fabSize="normal"
-                            android:layout_marginStart="24dp"
+                            android:layout_marginStart="10dp"
                             android:layout_marginTop="16dp"
                             android:id="@+id/btn_hangup"
                             app:backgroundTint="@color/red"
@@ -114,21 +116,23 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             app:fabSize="normal"
-                            android:layout_marginStart="24dp"
+                            android:layout_marginStart="10dp"
+                            android:id="@+id/btn_noise_suppression"
+                            app:backgroundTint="@color/white"
+                            app:tint="@color/gray"
+                            app:srcCompat="@drawable/noise_suppression"
+                            android:contentDescription="@string/noise_suppression_button_description"/>
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:fabSize="normal"
+                            android:layout_marginStart="10dp"
                             android:id="@+id/btn_keypad"
                             app:backgroundTint="@color/white"
                             app:tint="@color/gray"
                             app:srcCompat="@drawable/keypad"
                             android:contentDescription="@string/keypad_button_description"/>
                 </LinearLayout>
-                <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/noise_suppression_switch"
-                        android:layout_below="@+id/call_actions"
-                        android:layout_centerHorizontal="true"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:switchPadding="5dp"
-                        android:text="@string/noise_suppression_switch_label"/>
             </RelativeLayout>
             <FrameLayout
                     android:background="?attr/colorOnPrimary"

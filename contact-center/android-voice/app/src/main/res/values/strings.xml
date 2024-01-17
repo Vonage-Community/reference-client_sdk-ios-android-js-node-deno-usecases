@@ -40,5 +40,6 @@
     <string name="answer_button_description">Answer</string>
     <string name="reject_button_description">Reject</string>
     <string name="login_with_token_label">Login with Vonage Token</string>
-    <string name="noise_suppression_switch_label">Noise Suppression</string>
+    <string name="noise_suppression_button_description">Noise Suppression</string>
+    <string name="call_state_holding_label">On Hold</string>
 </resources>
