@@ -69,7 +69,6 @@ class CallConnection(val callId: CallId) : Connection() {
             clientManager.unholdCall(this)
             isCallOnHold = false
         }
-
     }
 
     fun selfDestroy(){

@@ -107,8 +107,6 @@ extension VonageCallController: CXProviderDelegate {
             }
         }
     }
-    
-    
 }
 
 extension VonageCallController {
