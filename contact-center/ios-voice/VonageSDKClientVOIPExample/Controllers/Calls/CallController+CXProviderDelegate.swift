@@ -164,6 +164,8 @@ extension VonageCallController {
                         update.localizedCallerName = from
                         update.supportsDTMF = true
                         update.supportsHolding = true
+                        update.supportsGrouping = false
+                        update.hasVideo = false
                         self.callProvider.reportNewIncomingCall(with: callId, update: update) { err in
                             if err != nil {
                                 self.client.reject(callId.toVGCallID()){ err in
