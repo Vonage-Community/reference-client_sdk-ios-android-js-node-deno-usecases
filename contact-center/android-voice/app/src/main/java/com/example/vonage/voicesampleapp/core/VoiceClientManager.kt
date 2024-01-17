@@ -333,6 +333,26 @@ class VoiceClientManager(private val context: Context) {
         }
     }
 
+    fun enableNoiseSuppression(call: CallConnection){
+        call.takeIfActive()?.apply {
+            client.enableNoiseSuppression(callId) { err ->
+                err?.let {
+                    println("Error enabling noise suppression on Call: $it")
+                } ?: println("Enabled noise suppression on Call with id: $callId")
+            }
+        }
+    }
+
+    fun disableNoiseSuppression(call: CallConnection){
+        call.takeIfActive()?.apply {
+            client.disableNoiseSuppression(callId) { err ->
+                err?.let {
+                    println("Error disabling noise suppression on Call: $it")
+                } ?: println("Disabled noise suppression on Call with id: $callId")
+            }
+        }
+    }
+
     fun sendDtmf(call: CallConnection, digit: String){
         call.takeIfActive()?.apply {
             client.sendDTMF(callId, digit){ err ->
