@@ -84,6 +84,30 @@ extension VonageCallController: CXProviderDelegate {
     func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession){
         VGVoiceClient.disableAudio(audioSession)
     }
+    func provider(_ provider: CXProvider, perform action: CXSetHeldCallAction){
+        guard let _ = self.vonageActiveCalls.value[action.callUUID]  else {
+            action.fail()
+            return
+        }
+        
+        if (action.isOnHold) {
+            self.client.unmute(action.callUUID.toVGCallID()) { err in
+                // TODO:
+            }
+            self.client.disableEarmuff(action.callUUID.toVGCallID()) { err in
+                // TODO:
+            }
+        }
+        else {
+            self.client.mute(action.callUUID.toVGCallID()) { err in
+                // TODO:
+            }
+            self.client.enableEarmuff(action.callUUID.toVGCallID()) { err in
+                // TODO:
+            }
+        }
+        action.fulfill()
+    }
 }
 
 extension VonageCallController {
@@ -131,7 +155,7 @@ extension VonageCallController {
                         let update = CXCallUpdate()
                         update.localizedCallerName = from
                         update.supportsDTMF = false
-                        update.supportsHolding = false
+                        update.supportsHolding = true
                         update.supportsGrouping = false
                         update.hasVideo = false
                         self.callProvider.reportNewIncomingCall(with: callId, update: update) { err in
