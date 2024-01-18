@@ -216,7 +216,10 @@ class CallActivity : AppCompatActivity() {
         return isMuteToggled
     }
 
-    private fun toggleHold(): Boolean = binding.btnHold.toggleButton(isHoldToggled)
+    private fun toggleHold(): Boolean {
+        isHoldToggled = binding.btnHold.toggleButton(isHoldToggled)
+        return isHoldToggled
+    }
 
     private fun toggleNoiseSuppression(): Boolean {
         isNoiseSuppressionToggled = binding.btnNoiseSuppression.toggleButton(isNoiseSuppressionToggled)

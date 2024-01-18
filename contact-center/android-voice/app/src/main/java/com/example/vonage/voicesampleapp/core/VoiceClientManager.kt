@@ -371,43 +371,41 @@ class VoiceClientManager(private val context: Context) {
 
     fun holdCall(call: CallConnection){
         call.takeIfActive()?.apply{
-            client.mute(callId){error ->
-                if (error != null){
+            client.mute(callId){ error ->
+                error?.let {
                     println("Error muting in holdCall with id: $callId")
-                }else{
-                    println("Call muted in holdCall with id: $callId")
+                } ?: run {
+                    client.enableEarmuff(callId){ error ->
+                        error?.let {
+                            println("Error enabling earmuff in holdCall with id: $callId")
+                        } ?: run {
+                            println("Call $callId successfully put on hold")
+                            toggleHoldState()
+                            notifyIsOnHoldToCallActivity(context, true)
+                        }
+                    }
                 }
             }
-            client.enableEarmuff(callId){ error ->
-                if (error != null){
-                    println("Error enabling earmuff in holdCall with id: $callId")
-                }else{
-                    println("Call earmuffed in holdCall with id: $callId")
-                }
-            }
-            toggleHoldState()
-            notifyIsOnHoldToCallActivity(context, true)
         }
     }
 
     fun unholdCall(call: CallConnection){
         call.takeIfActive()?.apply{
-            client.unmute(callId){error ->
-                if (error != null){
-                    println("Error unmuting in holdCall with id: $callId")
-                }else{
-                    println("Call unmuted in holdCall with id: $callId")
+            client.unmute(callId){ error ->
+                error?.let {
+                    println("Error unmuting in unholdCall with id: $callId")
+                } ?: run {
+                    client.disableEarmuff(callId){ error ->
+                        error?.let {
+                            println("Error disabling earmuff in unholdCall with id: $callId")
+                        } ?: run {
+                            println("Call $callId successfully removed from hold")
+                            toggleHoldState()
+                            notifyIsOnHoldToCallActivity(context, false)
+                        }
+                    }
                 }
             }
-            client.disableEarmuff(callId){ error ->
-                if (error != null){
-                    println("Error disabling earmuff in holdCall with id: $callId")
-                }else{
-                    println("Earmuff disabled in holdCall with id: $callId")
-                }
-            }
-            toggleHoldState()
-            notifyIsOnHoldToCallActivity(context, false)
         }
     }
 
