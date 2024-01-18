@@ -89,23 +89,36 @@ extension VonageCallController: CXProviderDelegate {
             action.fail()
             return
         }
+        let callId = action.callUUID.toVGCallID()
+        if (action.isOnHold) {
+            self.client.mute(callId) { error in
+                if let error = error {
+                    // TODO:
+                    return
+                }
+                self.client.enableEarmuff(callId) { error in
+                    if let error = error {
+                        // TODO:
+                        return
+                    }
+                }
+            }
+        } else {
+            self.client.unmute(callId) { error in
+                if let error = error {
+                    // TODO:
+                    return
+                }
+                self.client.disableEarmuff(callId) { error in
+                    if let error = error {
+                        // TODO:
+                        return
+                    }
+                }
+            }
+        }
+        // CallKit requires to fulfill the action synchronously
         action.fulfill()
-        if (!action.isOnHold) {
-            self.client.unmute(action.callUUID.toVGCallID()) { err in
-                // TODO:
-            }
-            self.client.disableEarmuff(action.callUUID.toVGCallID()) { err in
-                // TODO:
-            }
-        }
-        else {
-            self.client.mute(action.callUUID.toVGCallID()) { err in
-                // TODO:
-            }
-            self.client.enableEarmuff(action.callUUID.toVGCallID()) { err in
-                // TODO:
-            }
-        }
     }
 }
 
