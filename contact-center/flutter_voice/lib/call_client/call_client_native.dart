@@ -36,6 +36,13 @@ class CallClient with CallClientStub {
           call.arguments['data']['earmuffed']
         ]);
         break;
+      case 'onCallInvite':
+        handleEvent('onCallInvite', [
+          call.arguments['callId'],
+          call.arguments['data']['from'],
+          call.arguments['data']['channelType']
+        ]);
+        break;
       default:
         print('Unknowm method ${call.method}');
     }
@@ -154,6 +161,33 @@ class CallClient with CallClientStub {
       );
     } on PlatformException catch (e) {
       print('Failed to disable audio: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+  
+  @override
+  Future<String> registerPushToken() async {
+    try {
+      final token = await platformChannel.invokeMethod<String>(
+        CallClientMethod.registerPushToken.name,
+      );
+      return token!;
+    } on PlatformException catch (e) {
+      print('Failed to register push token: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> unregisterPushToken(String deviceId) async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.unregisterPushToken.name,
+        <String, dynamic>{'deviceId': deviceId},
+      );
+    } on PlatformException catch (e) {
+      print(
+          'Failed to unregister push token: ${e.message}'); // use a logger here
       rethrow;
     }
   }

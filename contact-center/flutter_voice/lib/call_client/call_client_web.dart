@@ -93,6 +93,10 @@ class CallClient with CallClientStub {
     _client.on('earmuff', (String callId, String legId, bool isEarmuffed) {
       handleEvent('onEarmuffUpdate', [callId, legId, isEarmuffed]);
     });
+
+    _client.on('callInvite', (String callId, String from, String channelType) {
+      handleEvent('onCallInvite', [callId, from, channelType]);
+    });
   }
 
   @override
@@ -139,6 +143,18 @@ class CallClient with CallClientStub {
   /// Web doesn't support audio control
   @override
   Future<void> disableAudio() async {
+    return;
+  }
+  
+  @override
+  Future<String> registerPushToken() async {
+    print('registerPushToken not supported on web');
+    return '';
+  }
+
+  @override
+  Future<void> unregisterPushToken(String deviceId) async {
+    print('unregisterPushToken not supported on web');
     return;
   }
 }

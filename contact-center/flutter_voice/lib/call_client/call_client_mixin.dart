@@ -14,6 +14,10 @@ mixin CallClientStub {
   Future<void> enableAudio();
   Future<void> disableAudio();
 
+
+  Future<String> registerPushToken();
+  Future<void> unregisterPushToken(String deviceId);
+
   void handleEvent(String event, List<dynamic> args) {
     final callEvent = CallEvent.values.firstWhere(
       (e) => e.toString() == 'CallEvent.$event',
@@ -48,6 +52,13 @@ mixin CallClientStub {
       callback(args[0], args[1], args[2]);
     };
   }
+
+  set onCallInvite(
+      void Function(String callId, String from, String channelType) callback) {
+    _eventHandlers[CallEvent.onCallInvite] = (List<dynamic> args) {
+      callback(args[0], args[1], args[2]);
+    };
+  }
 }
 
 enum CallClientMethod {
@@ -59,12 +70,15 @@ enum CallClientMethod {
   enableEarmuff,
   disableEarmuff,
   enableAudio,
-  disableAudio
+  disableAudio,
+  registerPushToken,
+  unregisterPushToken
 }
 
 enum CallEvent {
   onCallHangup,
   onCallInviteCancel,
   onMuteUpdate,
-  onEarmuffUpdate
+  onEarmuffUpdate,
+  onCallInvite,
 }
