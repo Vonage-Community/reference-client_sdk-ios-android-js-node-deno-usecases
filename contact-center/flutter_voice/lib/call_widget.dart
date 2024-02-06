@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_callkit_incoming/entities/entities.dart';
@@ -97,6 +99,10 @@ class _CallWidgetState extends State<CallWidget> {
   Future<void> _createSession(String token) async {
     try {
       final sessionId = await _callClient.createSession(token);
+      if (Platform.isIOS || Platform.isAndroid) {
+        final _deviceId = await _callClient.registerPushToken();
+        print('Registered device: $_deviceId');
+      }
       setState(() {
         _sessionId = sessionId;
       });
