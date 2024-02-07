@@ -15,57 +15,144 @@ class CallWidget extends StatefulWidget {
   _CallWidgetState createState() => _CallWidgetState();
 }
 
+enum CallStatus { none, ringing, connected, ended }
+
 class _CallWidgetState extends State<CallWidget> {
   final CallClient _callClient = CallClient();
 
-  String? _token =
-      'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MDMxNjIzNTYsImV4cCI6MTcwMzI0ODc1NiwiYXBwbGljYXRpb25faWQiOiI5NjFkZTZkZi05YzVlLTQ0NTgtYmI1NS04YTI2OTNiYjQxMTIiLCJqdGkiOiIxYzkwYTIzMi1jNzA3LTQ3MmMtYjUwYS1jNDUyYjhjMGRiYzMiLCJhY2wiOnsicGF0aHMiOnsiLyovdXNlcnMvKioiOnt9LCIvKi9jb252ZXJzYXRpb25zLyoqIjp7fSwiLyovc2Vzc2lvbnMvKioiOnt9LCIvKi9kZXZpY2VzLyoqIjp7fSwiLyovaW1hZ2UvKioiOnt9LCIvKi9tZWRpYS8qKiI6e30sIi8qL2FwcGxpY2F0aW9ucy8qKiI6e30sIi8qL3B1c2gvKioiOnt9LCIvKi9rbm9ja2luZy8qKiI6e30sIi8qL2xlZ3MvKioiOnt9fX0sInN1YiI6ImFsaWNlIn0.bDUpM267SdT3oUqc1P5uCQa3k6if1dFF6EqNB85lrPe30iq_pVgauWH_LJ4mdoTFyW9V8qkcnizqFNiUxNsB17LTo4d0UIvOfYKTgkNqhqLcs07RQgAft15oIGYwcJgwEqqjpvk1JV1SABucZMO5_hF2A54D6EKgwo7xdib8WAZKVwfv7sJGRAd3THX7OZXOvvMGmGUyYtn59o9PVQo5KDa7s-4irWp0zehgOi91ixUENTpJUUBiqdR-cDs_DtWYQV3kmI8aWmhXF_ofLJN0yW78Ve_cg9lQ4yr8zFR3vbv22KDfWmaXV1YbJBb9b_tXsOrkDAtnmp2Dz6A_G4inuQ';
+  String? _token = '';
   String? _sessionId;
-  String? _callId;
-  String? _callKituuid;
-
-  bool _isMuted = false;
-  bool _isEarmuffed = false;
+  ({
+    String id,
+    CallStatus status,
+    bool isMuted,
+    bool isEarmuffed
+  })? _currentCall;
 
   _CallWidgetState() {
     _getNotificationPermission();
     _callClient.onCallHangup =
-        (String callId, dynamic callQuality, String reason) {
+        (String callId, dynamic callQuality, String reason) async {
       print('Call hangup: $callId, $callQuality, $reason');
+      if (_currentCall?.status == CallStatus.ended) return;
       setState(() {
-        _callId = null;
+        _currentCall = (
+          id: callId,
+          status: CallStatus.ended,
+          isMuted: false,
+          isEarmuffed: false
+        );
       });
+      // make sure callkit knows the call has ended
+      await FlutterCallkitIncoming.endCall(callId);
     };
 
-    _callClient.onCallInviteCancel = (String callId, String reason) {
+    _callClient.onCallInviteCancel = (String callId, String reason) async {
       print('Call invite cancel: $callId, $reason');
+      if (_currentCall == null) return;
       setState(() {
-        _callId = null;
+        _currentCall = (
+          id: callId,
+          status: CallStatus.ended,
+          isMuted: false,
+          isEarmuffed: false
+        );
       });
+      await FlutterCallkitIncoming.endCall(callId);
     };
 
     _callClient.onMuteUpdate = (String callId, String legId, bool isMuted) {
       print('Mute update: $callId, $legId, $isMuted');
+      if (_currentCall?.id != callId && callId != legId) return;
       setState(() {
-        _isMuted = isMuted;
+        _currentCall = (
+          id: callId,
+          status: _currentCall!.status,
+          isMuted: isMuted,
+          isEarmuffed: _currentCall!.isEarmuffed
+        );
       });
+      FlutterCallkitIncoming.muteCall(callId, isMuted: isMuted);
     };
 
     _callClient.onEarmuffUpdate =
         (String callId, String legId, bool isEarmuffed) {
       print('Earmuff update: $callId, $legId, $isEarmuffed');
+      // check its the current call and the local leg
+      if (_currentCall?.id != callId && callId != legId) return;
       setState(() {
-        _isEarmuffed = isEarmuffed;
+        _currentCall = (
+          id: callId,
+          status: _currentCall!.status,
+          isMuted: _currentCall!.isMuted,
+          isEarmuffed: isEarmuffed
+        );
       });
     };
 
     FlutterCallkitIncoming.onEvent.listen((event) {
-      switch (event!.event) {
+      if (event == null) return;
+      switch (event.event) {
         case Event.actionCallToggleMute:
-          _toggleMute();
+          String callId = event.body['id'];
+          bool isMuted = event.body['isMuted'];
+          // check if the call is connected and the mute status is different
+          if (_currentCall?.status != CallStatus.connected ||
+              _currentCall?.isMuted == isMuted) return;
+          if (isMuted) {
+            _callClient.muteCall(callId).then((value) => setState(() {
+                  _currentCall = (
+                    id: callId,
+                    status: _currentCall!.status,
+                    isMuted: true,
+                    isEarmuffed: _currentCall!.isEarmuffed
+                  );
+                }));
+          } else {
+            _callClient.unmuteCall(callId).then((value) => setState(() {
+                  _currentCall = (
+                    id: callId,
+                    status: _currentCall!.status,
+                    isMuted: false,
+                    isEarmuffed: _currentCall!.isEarmuffed
+                  );
+                }));
+          }
+          break;
+        case Event.actionCallStart:
+          String callId = event.body['id'];
+          setState(() {
+            _currentCall = (
+              id: callId,
+              status: CallStatus.connected,
+              isMuted: false,
+              isEarmuffed: false
+            );
+          });
           break;
         case Event.actionCallEnded:
-          _callClient.hangupCall(_callId!);
+          String callId = event.body['id'];
+          if (_currentCall?.id != callId) return;
+          if (_currentCall?.status != CallStatus.connected) return;
+          _callClient.hangupCall(callId).then((value) => setState(() {
+                _currentCall = (
+                  id: callId,
+                  status: CallStatus.ended,
+                  isMuted: false,
+                  isEarmuffed: false
+                );
+              }));
+          break;
+        case Event.actionCallIncoming:
+          String callId = event.body['id'];
+          setState(() {
+            _currentCall = (
+              id: callId,
+              status: CallStatus.ringing,
+              isMuted: false,
+              isEarmuffed: false
+            );
+          });
           break;
         case Event.actionCallToggleAudioSession:
           bool isAudioActive = event.body['isActivate'];
@@ -74,6 +161,34 @@ class _CallWidgetState extends State<CallWidget> {
           } else {
             _callClient.disableAudio();
           }
+          break;
+        case Event.actionCallToggleHold:
+        case Event.actionCallToggleDmtf:
+          print(event);
+          break;
+        case Event.actionCallAccept:
+          String callId = event.body['id'];
+          if (_currentCall?.status != CallStatus.ringing) return;
+          _callClient.answer(callId).then((value) => setState(() {
+                _currentCall = (
+                  id: callId,
+                  status: CallStatus.connected,
+                  isMuted: false,
+                  isEarmuffed: false
+                );
+              }));
+          break;
+        case Event.actionCallDecline:
+          String callId = event.body['id'];
+          if (_currentCall?.status != CallStatus.ringing) return;
+          _callClient.reject(callId).then((value) => setState(() {
+                _currentCall = (
+                  id: callId,
+                  status: CallStatus.ended,
+                  isMuted: false,
+                  isEarmuffed: false
+                );
+              }));
           break;
         default:
           print('Unknown event: ${event.event}');
@@ -100,8 +215,8 @@ class _CallWidgetState extends State<CallWidget> {
     try {
       final sessionId = await _callClient.createSession(token);
       if (Platform.isIOS || Platform.isAndroid) {
-        final _deviceId = await _callClient.registerPushToken();
-        print('Registered device: $_deviceId');
+        final deviceId = await _callClient.registerPushToken();
+        print('Registered device: $deviceId');
       }
       setState(() {
         _sessionId = sessionId;
@@ -115,10 +230,9 @@ class _CallWidgetState extends State<CallWidget> {
     try {
       var micPermission = await Permission.microphone.request();
       if (micPermission.isGranted) {
-        print('micPermission granted');
-        _callKituuid = uuid.v4();
+        final callId = await _callClient.serverCall(context);
         CallKitParams params = CallKitParams(
-            id: _callKituuid!,
+            id: callId,
             handle: 'Server Call',
             type: 0,
             extra: context,
@@ -131,57 +245,28 @@ class _CallWidgetState extends State<CallWidget> {
                 supportsUngrouping: false,
                 audioSessionMode: 'voiceChat'));
         await FlutterCallkitIncoming.startCall(params);
-        final callId = await _callClient.serverCall(context);
-        await FlutterCallkitIncoming.setCallConnected(_callKituuid!);
-        setState(() {
-          _callId = callId;
-        });
+        await FlutterCallkitIncoming.setCallConnected(callId);
       } else {
         print('micPermission not granted');
         openAppSettings();
       }
     } on PlatformException catch (e) {
-      await FlutterCallkitIncoming.endCall(_callKituuid!);
       print('Failed to create call: ${e.message}'); // use a logger here
     }
   }
 
   Future<void> _hangup() async {
     try {
-      await FlutterCallkitIncoming.endCall(_callKituuid!);
+      await FlutterCallkitIncoming.endCall(_currentCall!.id);
     } on PlatformException catch (e) {
       print('Failed to hangup: ${e.message}'); // use a logger here
     }
   }
 
   Future<void> _toggleMute() async {
-    try {
-      if (_isMuted) {
-        await _callClient.unmuteCall(_callId!);
-      } else {
-        await _callClient.muteCall(_callId!);
-      }
-      setState(() {
-        _isMuted = !_isMuted;
-      });
-    } on PlatformException catch (e) {
-      print('Failed to toggle mute: ${e.message}'); // use a logger here
-    }
-  }
-
-  Future<void> _toggleEarmuff() async {
-    try {
-      if (_isEarmuffed) {
-        await _callClient.disableEarmuff(_callId!);
-      } else {
-        await _callClient.enableEarmuff(_callId!);
-      }
-      setState(() {
-        _isEarmuffed = !_isEarmuffed;
-      });
-    } on PlatformException catch (e) {
-      print('Failed to toggle earmuff: ${e.message}'); // use a logger here
-    }
+    if (_currentCall?.status != CallStatus.connected) return;
+    await FlutterCallkitIncoming.muteCall(_currentCall!.id,
+        isMuted: !_currentCall!.isMuted);
   }
 
   List<Widget> _buildNoSession() {
@@ -236,13 +321,8 @@ class _CallWidgetState extends State<CallWidget> {
           ),
           IconButton(
             onPressed: _toggleMute,
-            color: _isMuted ? Colors.red : null,
-            icon: Icon(_isMuted ? Icons.mic_off : Icons.mic),
-          ),
-          IconButton(
-            onPressed: _toggleEarmuff,
-            color: _isEarmuffed ? Colors.red : null,
-            icon: Icon(_isEarmuffed ? Icons.headset_off : Icons.headset),
+            color: _currentCall!.isMuted ? Colors.red : null,
+            icon: Icon(_currentCall!.isMuted ? Icons.mic_off : Icons.mic),
           ),
         ],
       )
@@ -258,8 +338,12 @@ class _CallWidgetState extends State<CallWidget> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (_sessionId == null) ..._buildNoSession(),
-          if (_sessionId != null && _callId == null) ..._buildSessionCreated(),
-          if (_sessionId != null && _callId != null) ..._buildCallInProgress(),
+          if (_sessionId != null &&
+              _currentCall?.status != CallStatus.connected)
+            ..._buildSessionCreated(),
+          if (_sessionId != null &&
+              _currentCall?.status == CallStatus.connected)
+            ..._buildCallInProgress(),
         ],
       ),
     ));

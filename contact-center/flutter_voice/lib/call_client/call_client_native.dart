@@ -43,6 +43,7 @@ class CallClient with CallClientStub {
           call.arguments['data']['channelType']
         ]);
         break;
+      
       default:
         print('Unknowm method ${call.method}');
     }
@@ -72,6 +73,32 @@ class CallClient with CallClientStub {
       return callId!;
     } on PlatformException catch (e) {
       print('Failed to create call: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> answer(String callId) async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.answer.name,
+        <String, dynamic>{'callId': callId},
+      );
+    } on PlatformException catch (e) {
+      print('Failed to answer call: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> reject(String callId) async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.reject.name,
+        <String, dynamic>{'callId': callId},
+      );
+    } on PlatformException catch (e) {
+      print('Failed to reject call: ${e.message}'); // use a logger here
       rethrow;
     }
   }
@@ -164,13 +191,13 @@ class CallClient with CallClientStub {
       rethrow;
     }
   }
-  
+
   @override
   Future<String> registerPushToken() async {
     try {
       final token = await platformChannel.invokeMethod<String>(
-        CallClientMethod.registerPushToken.name,
-      );
+          CallClientMethod.registerPushToken.name,
+          <String, dynamic>{'isSandbox': true});
       return token!;
     } on PlatformException catch (e) {
       print('Failed to register push token: ${e.message}'); // use a logger here

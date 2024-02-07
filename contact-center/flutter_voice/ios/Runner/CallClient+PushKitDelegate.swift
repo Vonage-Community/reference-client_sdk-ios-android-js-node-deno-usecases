@@ -14,13 +14,11 @@ import flutter_callkit_incoming
 
 extension CallClient: PKPushRegistryDelegate, UNUserNotificationCenterDelegate {
     func registerForVoIPPushes() {
-        print("register push")
         voipRegistry.delegate = self
         voipRegistry.desiredPushTypes = [PKPushType.voIP]
     }
     
     func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) {
-        print("new token")
         if (type == .voIP) {
             voipToken = pushCredentials.token
         }
@@ -31,14 +29,20 @@ extension CallClient: PKPushRegistryDelegate, UNUserNotificationCenterDelegate {
     
     func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
         let vonagePushType = VGVoiceClient.vonagePushType(payload.dictionaryPayload);
-        print("push payload\(payload.dictionaryPayload as AnyObject)")
         switch vonagePushType {
         case .incomingCall:
             let lastPushCallInvite = client.processCallInvitePushData(payload.dictionaryPayload)
             var callData = [String: Any?]()
             callData["id"] = lastPushCallInvite
-            callData["nameCaller"] = "From Vonage"
-            callData["type"] = 1
+            callData["nameCaller"] = "Vonage"
+            callData["type"] = 0
+            callData["ios"] = [
+                "supportsVideo": false,
+                "supportsGrouping": false,
+                "supportsUngrouping": false,
+                "supportsHolding": true,
+                "handleType": "generic"
+            ]
             SwiftFlutterCallkitIncomingPlugin.sharedInstance?.showCallkitIncoming(flutter_callkit_incoming.Data(args: callData), fromPushKit: true)
             completion()
             break

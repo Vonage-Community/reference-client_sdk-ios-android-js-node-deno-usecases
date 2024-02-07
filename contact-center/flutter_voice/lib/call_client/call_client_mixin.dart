@@ -5,6 +5,8 @@ mixin CallClientStub {
 
   Future<String> createSession(String token);
   Future<String> serverCall(Map<String, String>? context);
+  Future<void> answer(String callId);
+  Future<void> reject(String callId);
   Future<void> hangupCall(String callId);
   Future<void> muteCall(String callId);
   Future<void> unmuteCall(String callId);
@@ -13,7 +15,6 @@ mixin CallClientStub {
 
   Future<void> enableAudio();
   Future<void> disableAudio();
-
 
   Future<String> registerPushToken();
   Future<void> unregisterPushToken(String deviceId);
@@ -64,6 +65,8 @@ mixin CallClientStub {
 enum CallClientMethod {
   createSession,
   serverCall,
+  answer,
+  reject,
   hangup,
   mute,
   unmute,

@@ -27,6 +27,8 @@ class CallClient: NSObject, VGVoiceClientDelegate {
             switch call.method {
                 case "createSession": createSession(result, token: args?["token"] as? String)
                 case "serverCall": serverCall(result, context: args?["context"] as? [AnyHashable : Any])
+                case "answer": answer(result, callId: args?["callId"] as? String)
+                case "reject": reject(result, callId: args?["callId"] as? String)
                 case "hangup": hangup(result, callId: args?["callId"] as? String)
                 case "mute": mute(result, callId: args?["callId"] as? String)
                 case "unmute": unmute(result, callId: args?["callId"] as? String)
@@ -67,6 +69,36 @@ class CallClient: NSObject, VGVoiceClientDelegate {
                 return
             }
             result(callId)
+        }
+    }
+    
+    func answer(_ result: @escaping FlutterResult, callId: String?) {
+        guard callId != nil else {
+            result(FlutterError(code: "Bad Agrument", message: "callId was null", details: nil))
+            return
+        }
+        
+        client.answer(callId!) { err in
+            guard err == nil else {
+                result(FlutterError(code: "Exception", message: err?.localizedDescription, details: nil))
+                return
+            }
+            result(nil)
+        }
+    }
+    
+    func reject(_ result: @escaping FlutterResult, callId: String?) {
+        guard callId != nil else {
+            result(FlutterError(code: "Bad Agrument", message: "callId was null", details: nil))
+            return
+        }
+        
+        client.reject(callId!) { err in
+            guard err == nil else {
+                result(FlutterError(code: "Exception", message: err?.localizedDescription, details: nil))
+                return
+            }
+            result(nil)
         }
     }
     

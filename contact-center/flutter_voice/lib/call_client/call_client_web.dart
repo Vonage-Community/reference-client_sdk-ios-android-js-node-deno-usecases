@@ -26,6 +26,20 @@ extension on VonageClient {
     return await promiseToFuture(_serverCall(context));
   }
 
+  @JS('answer')
+  external dynamic _answer(String callId);
+
+  Future<void> answer(String callId) async {
+    return await promiseToFuture(_answer(callId));
+  }
+
+  @JS('reject')
+  external dynamic _reject(String callId);
+
+  Future<void> reject(String callId) async {
+    return await promiseToFuture(_reject(callId));
+  }
+
   @JS('hangup')
   external dynamic _hangup(String callId);
 
@@ -130,6 +144,16 @@ class CallClient with CallClientStub {
   }
 
   @override
+  Future<void> answer(String callId) {
+    return _client.answer(callId);
+  }
+
+  @override
+  Future<void> reject(String callId) {
+    return _client.reject(callId);
+  }
+
+  @override
   Future<void> unmuteCall(String callId) {
     return _client.unmute(callId);
   }
@@ -148,13 +172,13 @@ class CallClient with CallClientStub {
   
   @override
   Future<String> registerPushToken() async {
-    print('registerPushToken not supported on web');
+    print('registerPushToken not supported on web yet');
     return '';
   }
 
   @override
   Future<void> unregisterPushToken(String deviceId) async {
-    print('unregisterPushToken not supported on web');
+    print('unregisterPushToken not supported on web yet');
     return;
   }
 }
