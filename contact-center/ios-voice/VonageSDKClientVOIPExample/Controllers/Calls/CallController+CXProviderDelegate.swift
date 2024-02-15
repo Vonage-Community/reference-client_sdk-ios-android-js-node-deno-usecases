@@ -84,6 +84,42 @@ extension VonageCallController: CXProviderDelegate {
     func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession){
         VGVoiceClient.disableAudio(audioSession)
     }
+    func provider(_ provider: CXProvider, perform action: CXSetHeldCallAction){
+        guard let _ = self.vonageActiveCalls.value[action.callUUID]  else {
+            action.fail()
+            return
+        }
+        let callId = action.callUUID.toVGCallID()
+        if (action.isOnHold) {
+            self.client.mute(callId) { error in
+                if let error = error {
+                    // TODO:
+                    return
+                }
+                self.client.enableEarmuff(callId) { error in
+                    if let error = error {
+                        // TODO:
+                        return
+                    }
+                }
+            }
+        } else {
+            self.client.unmute(callId) { error in
+                if let error = error {
+                    // TODO:
+                    return
+                }
+                self.client.disableEarmuff(callId) { error in
+                    if let error = error {
+                        // TODO:
+                        return
+                    }
+                }
+            }
+        }
+        // CallKit requires to fulfill the action synchronously
+        action.fulfill()
+    }
 }
 
 extension VonageCallController {
@@ -114,6 +150,13 @@ extension VonageCallController {
                     case .answered:
                         // Answers are remote by definition, so report them
                         self.callProvider.reportOutgoingCall(with: callId, connectedAt: Date.now)
+                        let update = CXCallUpdate()
+                        update.localizedCallerName = "me"
+                        update.supportsDTMF = true
+                        update.supportsHolding = true
+                        update.supportsGrouping = false
+                        update.hasVideo = false
+                        self.callProvider.reportCall(with: callId, updated: update)
                         
                     case .completed(true, .some(let reason)):
                         // Report Remote Hangups + Cancels
@@ -130,8 +173,8 @@ extension VonageCallController {
                         // Report new Inbound calls so we follow PushKit and Callkit Rules
                         let update = CXCallUpdate()
                         update.localizedCallerName = from
-                        update.supportsDTMF = false
-                        update.supportsHolding = false
+                        update.supportsDTMF = true
+                        update.supportsHolding = true
                         update.supportsGrouping = false
                         update.hasVideo = false
                         self.callProvider.reportNewIncomingCall(with: callId, update: update) { err in

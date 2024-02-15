@@ -142,10 +142,14 @@ class VoiceClientManager(private val context: Context) {
         client.setOnMutedListener { callId, legId, isMuted ->
             println("LegId $legId for Call $callId has been ${if(isMuted) "muted" else "unmuted"}")
             takeIf { callId == legId } ?: return@setOnMutedListener
-            // Update Active Call Mute State
-            takeIfActive(callId)?.isMuted = isMuted
-            // Notify Call Activity
-            notifyIsMutedToCallActivity(context, isMuted)
+            takeIfActive(callId)?.run {
+                // Update Active Call Mute State
+                toggleMuteState()
+                takeUnless { it.isOnHold }?.run {
+                    // Notify Call Activity
+                    notifyIsMutedToCallActivity(context, isMuted)
+                }
+            }
         }
 
         client.setOnDTMFListener { callId, legId, digits ->
@@ -360,6 +364,46 @@ class VoiceClientManager(private val context: Context) {
                     println("Error in Sending DTMF '$digit': $err")
                 } else {
                     println("Sent DTMF '$digit' on call with id: $callId")
+                }
+            }
+        }
+    }
+
+    fun holdCall(call: CallConnection){
+        call.takeIfActive()?.apply{
+            client.mute(callId){ error ->
+                error?.let {
+                    println("Error muting in holdCall with id: $callId")
+                } ?: run {
+                    client.enableEarmuff(callId){ error ->
+                        error?.let {
+                            println("Error enabling earmuff in holdCall with id: $callId")
+                        } ?: run {
+                            println("Call $callId successfully put on hold")
+                            toggleHoldState()
+                            notifyIsOnHoldToCallActivity(context, true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun unholdCall(call: CallConnection){
+        call.takeIfActive()?.apply{
+            client.unmute(callId){ error ->
+                error?.let {
+                    println("Error unmuting in unholdCall with id: $callId")
+                } ?: run {
+                    client.disableEarmuff(callId){ error ->
+                        error?.let {
+                            println("Error disabling earmuff in unholdCall with id: $callId")
+                        } ?: run {
+                            println("Call $callId successfully removed from hold")
+                            toggleHoldState()
+                            notifyIsOnHoldToCallActivity(context, false)
+                        }
+                    }
                 }
             }
         }

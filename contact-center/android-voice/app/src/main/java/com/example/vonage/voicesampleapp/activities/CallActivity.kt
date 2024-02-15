@@ -23,6 +23,8 @@ class CallActivity : AppCompatActivity() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
     private var isMuteToggled = false
+    private var isHoldToggled = false
+    private var isNoiseSuppressionToggled = false
 
     /**
      * When an Active Call gets disconnected
@@ -99,8 +101,9 @@ class CallActivity : AppCompatActivity() {
         btnReject.setOnClickListener { onReject() }
         btnHangup.setOnClickListener { onHangup() }
         btnMute.setOnClickListener { onMute() }
+        btnHold.setOnClickListener {onHold()}
         btnKeypad.setOnClickListener { onKeypad() }
-        noiseSuppressionSwitch.setOnCheckedChangeListener { _, isChecked -> onNoiseSuppression(isChecked) }
+        btnNoiseSuppression.setOnClickListener { onNoiseSuppression() }
     }
 
     private fun setUserUI() = binding.run{
@@ -116,16 +119,27 @@ class CallActivity : AppCompatActivity() {
             btnReject.visibility = View.VISIBLE
             btnHangup.visibility = View.GONE
             btnMute.visibility = View.GONE
+            btnHold.visibility = View.GONE
             btnKeypad.visibility = View.GONE
-            noiseSuppressionSwitch.visibility = View.GONE
+            btnNoiseSuppression.visibility = View.GONE
         }
         else {
             btnAnswer.visibility = View.GONE
             btnReject.visibility = View.GONE
             btnHangup.visibility = View.VISIBLE
             btnMute.visibility = View.VISIBLE
+            btnHold.visibility = View.VISIBLE
             btnKeypad.visibility = View.VISIBLE
-            noiseSuppressionSwitch.visibility = View.VISIBLE
+            btnNoiseSuppression.visibility = View.VISIBLE
+        }
+        // Buttons Toggled
+        coreContext.activeCall?.run {
+            if(isMuteToggled != isMuted && !isOnHold){
+                toggleMute()
+            }
+            if(isHoldToggled != isOnHold){
+                toggleHold()
+            }
         }
         //Background Color and State label
         val (backgroundColor, stateLabel) = when(callStateExtra){
@@ -135,6 +149,7 @@ class CallActivity : AppCompatActivity() {
             Connection.STATE_RINGING -> R.color.gray to R.string.call_state_ringing_label
             Connection.STATE_DIALING -> R.color.gray to R.string.call_state_dialing_label
             Connection.STATE_ACTIVE -> R.color.green to R.string.call_state_active_label
+            Connection.STATE_HOLDING -> R.color.gray to R.string.call_state_holding_label
             Connection.STATE_DISCONNECTED -> R.color.red to R.string.call_state_remotely_disconnected_label
             else -> R.color.red to R.string.call_state_locally_disconnected_label
         }
@@ -173,9 +188,18 @@ class CallActivity : AppCompatActivity() {
         }
     }
 
-    private fun onNoiseSuppression(isChecked: Boolean){
+    private fun onHold(){
         coreContext.activeCall?.let { call ->
-            if(isChecked){
+            if(toggleHold()){
+                call.onHold()
+            }else{
+                call.onUnhold()
+            }
+        }
+    }
+    private fun onNoiseSuppression(){
+        coreContext.activeCall?.let { call ->
+            if(toggleNoiseSuppression()){
                 clientManager.enableNoiseSuppression(call)
             } else {
                 clientManager.disableNoiseSuppression(call)
@@ -187,9 +211,19 @@ class CallActivity : AppCompatActivity() {
         showDialerFragment()
     }
 
-    private fun toggleMute() : Boolean{
+    private fun toggleMute(): Boolean{
         isMuteToggled = binding.btnMute.toggleButton(isMuteToggled)
         return isMuteToggled
+    }
+
+    private fun toggleHold(): Boolean {
+        isHoldToggled = binding.btnHold.toggleButton(isHoldToggled)
+        return isHoldToggled
+    }
+
+    private fun toggleNoiseSuppression(): Boolean {
+        isNoiseSuppressionToggled = binding.btnNoiseSuppression.toggleButton(isNoiseSuppressionToggled)
+        return isNoiseSuppressionToggled
     }
 
     private fun FloatingActionButton.toggleButton(toggle: Boolean): Boolean {
@@ -203,9 +237,11 @@ class CallActivity : AppCompatActivity() {
         const val IS_MUTED = "isMuted"
         const val CALL_STATE = "callState"
         const val CALL_ANSWERED = "answered"
+        const val CALL_ON_HOLD = "holding"
         const val CALL_RECONNECTING = "reconnecting"
         const val CALL_RECONNECTED = "reconnected"
         const val CALL_DISCONNECTED = "disconnected"
         const val IS_REMOTE_DISCONNECT = "isRemoteDisconnect"
+
     }
 }
