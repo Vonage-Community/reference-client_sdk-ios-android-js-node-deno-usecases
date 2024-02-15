@@ -14,7 +14,8 @@ class CallClient: NSObject, VGVoiceClientDelegate {
     let channel: FlutterMethodChannel
     let client: VGVoiceClient
     let voipRegistry = PKPushRegistry(queue: nil)
-    var voipToken: Data?
+    
+    let preferences = VonagePreferences()
     
     init(_ binaryMessenger: FlutterBinaryMessenger) {
         client = VGVoiceClient()
@@ -25,7 +26,10 @@ class CallClient: NSObject, VGVoiceClientDelegate {
             let args: [String: Any]? = call.arguments as? [String: Any]
             guard let self = self else { return }
             switch call.method {
+                case "getVonageJwt": getVonageJwt(result)
                 case "createSession": createSession(result, token: args?["token"] as? String)
+                case "deleteSession": deleteSession(result)
+                case "refreshSession":refreshSession(result, token: args?["token"] as? String)
                 case "serverCall": serverCall(result, context: args?["context"] as? [AnyHashable : Any])
                 case "answer": answer(result, callId: args?["callId"] as? String)
                 case "reject": reject(result, callId: args?["callId"] as? String)
@@ -45,6 +49,11 @@ class CallClient: NSObject, VGVoiceClientDelegate {
 
     }
     
+    // MARK: Tokens
+    func getVonageJwt(_ result: @escaping FlutterResult) {
+        result(preferences.vonageJwt)
+    }
+    
     // MARK: Client Methods
 
     func createSession(_ result: @escaping FlutterResult, token: String?) {
@@ -58,7 +67,35 @@ class CallClient: NSObject, VGVoiceClientDelegate {
                 result(FlutterError(code: "Exception", message: err?.localizedDescription, details: nil))
                 return
             }
+            self.preferences.vonageJwt = token
             result(sessionId)
+        }
+    }
+    
+    func deleteSession(_ result: @escaping FlutterResult) {
+        client.deleteSession() { err in
+            guard err == nil else {
+                result(FlutterError(code: "Exception", message: err?.localizedDescription, details: nil))
+                return
+            }
+            result(nil)
+        }
+    }
+    
+    func refreshSession(_ result: @escaping FlutterResult, token: String?) {
+        guard token != nil else {
+            result(FlutterError(code: "Bad Agrument", message: "Token was null", details: nil))
+            return
+        }
+        
+        client.refreshSession(token!) { err in
+            guard err == nil else {
+                result(FlutterError(code: "Exception", message: err?.localizedDescription, details: nil))
+                self.preferences.voipToken = nil
+                return
+            }
+            self.preferences.vonageJwt = token
+            result(nil)
         }
     }
     
@@ -202,24 +239,26 @@ class CallClient: NSObject, VGVoiceClientDelegate {
     // MARK: PushKit Methods
     
     func registerVoipToken(_ result: @escaping FlutterResult, isSandbox: Bool?){
-        guard voipToken != nil else {
-            result(FlutterError(code: "No Push Token",message: "Voip token was null", details: nil))
+        guard preferences.voipToken != nil else {
+            result(FlutterError(code: "No Voip Token",message: "Voip token was null", details: nil))
             return
         }
         
         let callback = {(err: Error?, deviceId: String?) in
             guard err == nil else {
                 result(FlutterError(code: "Exception", message: err?.localizedDescription, details: nil))
+                self.preferences.deviceId = nil
                 return
             }
+            self.preferences.deviceId = deviceId
             result(deviceId)
         }
         
         guard isSandbox == nil else {
-            client.registerVoipToken(voipToken!, isSandbox: isSandbox!, callback: callback)
+            client.registerVoipToken(preferences.voipToken!, isSandbox: isSandbox!, callback: callback)
             return
         }
-        client.registerVoipToken(voipToken!, callback: callback)
+        client.registerVoipToken(preferences.voipToken!, callback: callback)
     }
     
     func unregisterDeviceTokens(_ result: @escaping FlutterResult, deviceId: String?) {
@@ -227,6 +266,7 @@ class CallClient: NSObject, VGVoiceClientDelegate {
             result(FlutterError(code: "Bad Agrument", message: "deviceId was null", details: nil))
             return
         }
+        preferences.deviceId = nil
         
         client.unregisterDeviceTokens(byDeviceId: deviceId!){ err in
             guard err == nil else {

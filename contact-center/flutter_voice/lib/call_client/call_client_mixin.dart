@@ -3,7 +3,10 @@
 mixin CallClientStub {
   final Map<CallEvent, void Function(List<dynamic>)> _eventHandlers = {};
 
+  Future<String?> getVonageJwt();
   Future<String> createSession(String token);
+  Future<void> deleteSession();
+  Future<void> refreshSession(String token);
   Future<String> serverCall(Map<String, String>? context);
   Future<void> answer(String callId);
   Future<void> reject(String callId);
@@ -63,7 +66,10 @@ mixin CallClientStub {
 }
 
 enum CallClientMethod {
+  getVonageJwt,
   createSession,
+  deleteSession,
+  refreshSession,
   serverCall,
   answer,
   reject,

@@ -43,9 +43,22 @@ class CallClient with CallClientStub {
           call.arguments['data']['channelType']
         ]);
         break;
-      
+
       default:
         print('Unknowm method ${call.method}');
+    }
+  }
+
+  @override
+  Future<String?> getVonageJwt() async {
+    try {
+      final token = await platformChannel.invokeMethod<String?>(
+        CallClientMethod.getVonageJwt.name,
+      );
+      return token;
+    } on PlatformException catch (e) {
+      print('Failed to get Vonage JWT: ${e.message}'); // use a logger here
+      rethrow;
     }
   }
 
@@ -59,6 +72,31 @@ class CallClient with CallClientStub {
       return sessionId!;
     } on PlatformException catch (e) {
       print('Failed to create session: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteSession() async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.deleteSession.name,
+      );
+    } on PlatformException catch (e) {
+      print('Failed to delete session: ${e.message}'); // use a logger here
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> refreshSession(String token) async {
+    try {
+      await platformChannel.invokeMethod<void>(
+        CallClientMethod.refreshSession.name,
+        <String, dynamic>{'token': token},
+      );
+    } on PlatformException catch (e) {
+      print('Failed to refresh session: ${e.message}'); // use a logger here
       rethrow;
     }
   }

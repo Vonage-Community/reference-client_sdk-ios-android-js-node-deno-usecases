@@ -11,6 +11,7 @@
 		1B148DF02B348C380094CFDC /* CallClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B148DEF2B348C380094CFDC /* CallClient.swift */; };
 		1B148DF22B348CF50094CFDC /* CallClient+PushKitDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B148DF12B348CF50094CFDC /* CallClient+PushKitDelegate.swift */; };
 		1B94B4B02B34C61E000C13EC /* PushKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B94B4AF2B34C61E000C13EC /* PushKit.framework */; };
+		1BECB7762B752177008FF841 /* VonagePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BECB7752B752177008FF841 /* VonagePreferences.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
@@ -50,6 +51,7 @@
 		1B148DF12B348CF50094CFDC /* CallClient+PushKitDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CallClient+PushKitDelegate.swift"; sourceTree = "<group>"; };
 		1B94B4AF2B34C61E000C13EC /* PushKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PushKit.framework; path = System/Library/Frameworks/PushKit.framework; sourceTree = SDKROOT; };
 		1B94B4B12B34C827000C13EC /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		1BECB7752B752177008FF841 /* VonagePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VonagePreferences.swift; sourceTree = "<group>"; };
 		31B8E0B9A69E03700BCCDF93 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -143,6 +145,7 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				1B148DF12B348CF50094CFDC /* CallClient+PushKitDelegate.swift */,
+				1BECB7752B752177008FF841 /* VonagePreferences.swift */,
 				1B148DEF2B348C380094CFDC /* CallClient.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -369,6 +372,7 @@
 				1B148DF02B348C380094CFDC /* CallClient.swift in Sources */,
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
+				1BECB7762B752177008FF841 /* VonagePreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

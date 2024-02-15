@@ -20,11 +20,11 @@ extension CallClient: PKPushRegistryDelegate, UNUserNotificationCenterDelegate {
     
     func pushRegistry(_ registry: PKPushRegistry, didUpdate pushCredentials: PKPushCredentials, for type: PKPushType) {
         if (type == .voIP) {
-            voipToken = pushCredentials.token
+            preferences.voipToken = pushCredentials.token
         }
     }
     func pushRegistry(_ registry: PKPushRegistry, didInvalidatePushTokenFor type: PKPushType) {
-        voipToken = nil
+        preferences.voipToken = nil
     }
     
     func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {

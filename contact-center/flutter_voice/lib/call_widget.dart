@@ -6,9 +6,6 @@ import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:flutter_voice/call_client/call_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
-import 'package:uuid/uuid.dart';
-
-Uuid uuid = const Uuid();
 
 class CallWidget extends StatefulWidget {
   @override
@@ -30,6 +27,15 @@ class _CallWidgetState extends State<CallWidget> {
   })? _currentCall;
 
   _CallWidgetState() {
+    _callClient.getVonageJwt().then((value) {
+      print('Vonage JWT: $value');
+      if (value != null) {
+        _createSession(value);
+        // setState(() {
+        // _token = value;
+        // });
+      }
+    });
     _getNotificationPermission();
     _callClient.onCallHangup =
         (String callId, dynamic callQuality, String reason) async {
@@ -205,24 +211,25 @@ class _CallWidgetState extends State<CallWidget> {
         print('notificationPermission not granted');
         openAppSettings();
       }
-    } on PlatformException catch (e) {
-      print(
-          'Failed to get notification permission: ${e.message}'); // use a logger here
+    } catch (e) {
+      print('Failed to get notification permission: ${e}'); // use a logger here
     }
   }
 
   Future<void> _createSession(String token) async {
+    print('Creating session with token: $token');
     try {
       final sessionId = await _callClient.createSession(token);
-      if (Platform.isIOS || Platform.isAndroid) {
-        final deviceId = await _callClient.registerPushToken();
-        print('Registered device: $deviceId');
-      }
       setState(() {
         _sessionId = sessionId;
       });
-    } on PlatformException catch (e) {
-      print('Failed to create session: ${e.message}'); // use a logger here
+      if (Platform.isIOS || Platform.isAndroid) {
+        print('Registering push token');
+        final deviceId = await _callClient.registerPushToken();
+        print('Registered device: $deviceId');
+      }
+    } catch (e) {
+      print('Failed to create session: $e'); // use a logger here
     }
   }
 
@@ -250,16 +257,16 @@ class _CallWidgetState extends State<CallWidget> {
         print('micPermission not granted');
         openAppSettings();
       }
-    } on PlatformException catch (e) {
-      print('Failed to create call: ${e.message}'); // use a logger here
+    } catch (e) {
+      print('Failed to create call: ${e}'); // use a logger here
     }
   }
 
   Future<void> _hangup() async {
     try {
       await FlutterCallkitIncoming.endCall(_currentCall!.id);
-    } on PlatformException catch (e) {
-      print('Failed to hangup: ${e.message}'); // use a logger here
+    } catch (e) {
+      print('Failed to hangup: ${e}'); // use a logger here
     }
   }
 

@@ -19,6 +19,20 @@ extension on VonageClient {
     return await promiseToFuture(_createSession(token));
   }
 
+  @JS('deleteSession')
+  external dynamic _deleteSession();
+
+  Future<void> deleteSession() async {
+    return await promiseToFuture(_deleteSession());
+  }
+
+  @JS('refreshSession')
+  external dynamic _refreshSession(String token);
+
+  Future<void> refreshSession(String token) async {
+    return await promiseToFuture(_refreshSession(token));
+  }
+
   @JS('serverCall')
   external dynamic _serverCall(Map<String, String>? context);
 
@@ -114,8 +128,24 @@ class CallClient with CallClientStub {
   }
 
   @override
+  Future<String?> getVonageJwt() {
+    // get token from local storage
+    return Future.value(null);
+  }
+
+  @override
   Future<String> createSession(String token) {
     return _client.createSession(token);
+  }
+
+  @override
+  Future<void> deleteSession() {
+    return _client.deleteSession();
+  }
+
+  @override
+  Future<void> refreshSession(String token) {
+    return _client.refreshSession(token);
   }
 
   @override

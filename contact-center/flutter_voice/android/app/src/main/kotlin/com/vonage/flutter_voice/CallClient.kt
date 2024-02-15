@@ -3,20 +3,48 @@ package com.vonage.flutter_voice
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService.MODE_PRIVATE
+import com.vonage.android_core.VGClientConfig
+import com.vonage.android_core.VGClientInitConfig
+import com.vonage.android_core.VGConfigRegion
+import com.vonage.clientcore.core.api.ClientConfig
+import com.vonage.clientcore.core.api.LoggingLevel
 import com.vonage.voice.api.VoiceClient
+import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
+import javax.inject.Inject
 
 
-class CallClient(context: Context, binaryMessenger: BinaryMessenger) {
-    private val channel = MethodChannel(binaryMessenger, "com.vonage.flutter_voice/client")
-    private val client = VoiceClient(context);
+class CallClient @Inject constructor (
+    @ApplicationContext private val context: Context,
+    private val vonagePreferences: VonagePreferences
+) {
 
-    init {
+
+    val client = VoiceClient(context, VGClientInitConfig(
+        loggingLevel =  LoggingLevel.Info,
+        region =  VGConfigRegion.US,
+    ));
+    private lateinit var channel: MethodChannel
+
+    companion object {
+        const val CHANNEL_NAME = "com.vonage.flutter_voice/client"
+    }
+
+    fun setBinaryMessenger(value: BinaryMessenger) {
+        channel = MethodChannel(value, CHANNEL_NAME)
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "getVonageJwt" -> result.success(getVonageJwt())
                 "createSession" -> createSession(result, call.argument("token")!!)
+                "deleteSession" -> deleteSession(result)
+                "refreshSession" -> refreshSession(result, call.argument("token")!!)
                 "serverCall" -> serverCall(result, call.argument("context"))
+                "answer" -> answer(result, call.argument("callId")!!)
+                "reject" -> reject(result, call.argument("callId")!!)
                 "hangup" -> hangup(result, call.argument("callId")!!)
                 "mute" -> mute(result, call.argument("callId")!!)
                 "unmute" -> unmute(result, call.argument("callId")!!)
@@ -24,6 +52,8 @@ class CallClient(context: Context, binaryMessenger: BinaryMessenger) {
                 "enableEarmuff" -> enableEarmuff(result, call.argument("callId")!!)
                 "enableAudio" -> result.success(null) // Not Needed on Android
                 "disableAudio" -> result.success(null) // Not Needed on Android
+                "registerPushToken" -> registerPushToken(result)
+                "unregisterPushToken" -> unregisterPushToken(result, call.argument("deviceId")!!)
                 else -> result.notImplemented()
             }
         }
@@ -72,13 +102,31 @@ class CallClient(context: Context, binaryMessenger: BinaryMessenger) {
             }
         }
     }
-
+    private fun getVonageJwt(): String? = vonagePreferences.vonageJwt
 
     private fun createSession(result: MethodChannel.Result, token: String) {
         client.createSession(token) { err, sessionId ->
             when {
-                err == null && sessionId != null -> result.success(sessionId)
+                err == null && sessionId != null -> result.success(sessionId).also { vonagePreferences.vonageJwt = token }
                 err is Exception -> result.error("Exception", err.message, null)
+            }
+        }
+    }
+
+    private fun deleteSession(result: MethodChannel.Result) {
+        client.deleteSession { err ->
+            when (err) {
+                null -> result.success(null).also { vonagePreferences.vonageJwt = null}
+                else -> result.error("Exception", err.message, null)
+            }
+        }
+    }
+
+    private fun refreshSession(result: MethodChannel.Result, token: String) {
+        client.refreshSession(token) { err ->
+            when (err) {
+                null -> result.success(null).also { vonagePreferences.vonageJwt = token }
+                else -> result.error("Exception", err.message, null)
             }
         }
     }
@@ -89,6 +137,24 @@ class CallClient(context: Context, binaryMessenger: BinaryMessenger) {
                 callId != null -> result.success(callId)
                 err is Exception -> result.error("Exception", err.message, null)
                 else -> result.error("Exception", "Unknown error", null) // should never happen
+            }
+        }
+    }
+
+    private fun answer(result: MethodChannel.Result, callId: String) {
+        client.answer(callId) { err ->
+            when (err) {
+                null -> result.success(null)
+                else -> result.error("Exception", err.message, null)
+            }
+        }
+    }
+
+    private fun reject(result: MethodChannel.Result, callId: String) {
+        client.reject(callId) { err ->
+            when (err) {
+                null -> result.success(null)
+                else -> result.error("Exception", err.message, null)
             }
         }
     }
@@ -138,6 +204,33 @@ class CallClient(context: Context, binaryMessenger: BinaryMessenger) {
         }
     }
 
+    private fun registerPushToken(result: MethodChannel.Result) {
+        vonagePreferences.pushToken?.let { token ->
+            client.registerDevicePushToken(token) { err, deviceId ->
+                when (err) {
+                    null -> result.success(deviceId)
+                    else -> result.error("Exception", err.message, null)
+                }
+            }
+        } ?: FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            vonagePreferences.pushToken = token
+            client.registerDevicePushToken(token) { err, deviceId ->
+                when (err) {
+                    null -> result.success(deviceId)
+                    else -> result.error("Exception", err.message, null)
+                }
+            }
+        }
+    }
+
+    private fun unregisterPushToken(result: MethodChannel.Result, deviceId: String) {
+        client.unregisterDevicePushToken(deviceId) { err ->
+            when (err) {
+                null -> result.success(null)
+                else -> result.error("Exception", err.message, null)
+            }
+        }
+    }
 
 
 }

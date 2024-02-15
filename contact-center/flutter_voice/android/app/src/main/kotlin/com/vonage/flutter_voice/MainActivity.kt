@@ -1,14 +1,27 @@
 package com.vonage.flutter_voice
 
-import com.vonage.voice.api.VoiceClient
+import androidx.appcompat.app.AppCompatActivity
+import dagger.Module
+import dagger.hilt.EntryPoint
+import dagger.hilt.EntryPoints
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.components.ActivityComponent
+import dagger.hilt.components.SingletonComponent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
-    private lateinit var callClient: CallClient
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface CallClientEntryPoint {
+        fun callClient(): CallClient
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        this.callClient = CallClient(this, flutterEngine.dartExecutor.binaryMessenger)
+        val callClient =  EntryPoints.get(this.applicationContext, CallClientEntryPoint::class.java).callClient()
+        callClient.setBinaryMessenger(flutterEngine.dartExecutor.binaryMessenger)
     }
 }
