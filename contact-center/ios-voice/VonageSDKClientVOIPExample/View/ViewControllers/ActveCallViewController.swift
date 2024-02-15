@@ -25,6 +25,10 @@ class ActiveCallViewModel: ObservableObject {
     func modifyCall(action: CXAction) {
         controller?.reportCXAction(action)
     }
+    
+    func toggleNoiseSuppression(call: Call, isOn: Bool){
+        controller?.toggleNoiseSuppression(call: call, isOn: isOn)
+    }
 }
 
 class ActiveCallViewController: UIViewController {
@@ -35,6 +39,7 @@ class ActiveCallViewController: UIViewController {
     var rejectButton: UIButton!
     var hangupButton: UIButton!
     var muteButton: UIButton!
+    var noiseSuppressionSwitch: UISwitch!
     
     var inboundCallControls: UIView!
     var activeCallControls: UIView!
@@ -164,6 +169,14 @@ class ActiveCallViewController: UIViewController {
         muteButton.setTitle("X", for: .normal)
         muteButton.addTarget(self, action: #selector(hangupButtonPressed), for: .touchUpInside)
         
+        noiseSuppressionSwitch = UISwitch()
+        noiseSuppressionSwitch.addTarget(self, action: #selector(noiseSuppressionSwitchChanged), for: .valueChanged)
+        
+        let noiseSuppressionLabel = UILabel()
+        noiseSuppressionLabel.text = "Noise Suppression"
+        noiseSuppressionLabel.textAlignment = .center
+        noiseSuppressionLabel.font = UIFont.preferredFont(forTextStyle: .caption1)
+        
         let inboundCallControlStack = UIStackView()
         inboundCallControls = inboundCallControlStack
         inboundCallControls.translatesAutoresizingMaskIntoConstraints = false
@@ -182,6 +195,8 @@ class ActiveCallViewController: UIViewController {
         activeCallControlStack.addArrangedSubview(UIView())
         activeCallControlStack.addArrangedSubview(hangupButton)
         activeCallControlStack.addArrangedSubview(UIView())
+        activeCallControlStack.addArrangedSubview(noiseSuppressionLabel)
+        activeCallControlStack.addArrangedSubview(noiseSuppressionSwitch)
         
         let callControlRoot = UIStackView()
         self.callControlRoot = callControlRoot
@@ -246,6 +261,15 @@ class ActiveCallViewController: UIViewController {
         }
         self.rejectButton.layer.add(ActiveCallViewController.ButtonPressedAnimation, forKey: "press")
         viewModel?.modifyCall(action: CXEndCallAction(call: call.id))
+    }
+    
+    @objc func noiseSuppressionSwitchChanged(_ sender: UISwitch) {
+        guard let call = viewModel?.call,
+              let viewModel = viewModel
+        else {
+            return
+        }
+        viewModel.toggleNoiseSuppression(call: call, isOn: sender.isOn)
     }
 }
 
