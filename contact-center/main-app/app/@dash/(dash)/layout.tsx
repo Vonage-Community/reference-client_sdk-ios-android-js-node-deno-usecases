@@ -23,8 +23,7 @@ const acl = {
         '/*/sessions/**': {},
         '/*/devices/**': {},
         '/*/image/**': {},
-        '/*/media/**': {},
-        '/*/applications/**': {},
+        '/*/media/**': {},     
         '/*/push/**': {},
         '/*/knocking/**': {},
         '/*/legs/**': {}

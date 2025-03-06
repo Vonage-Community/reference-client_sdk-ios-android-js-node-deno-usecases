@@ -16,7 +16,6 @@ const acl:ACL = {
         '/*/devices/**': {},
         '/*/image/**': {},
         '/*/media/**': {},
-        '/*/applications/**': {},
         '/*/push/**': {},
         '/*/knocking/**': {},
         '/*/legs/**': {}
