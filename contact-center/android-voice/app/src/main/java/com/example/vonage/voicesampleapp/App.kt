@@ -12,6 +12,9 @@ class App: Application() {
     override fun onCreate() {
         super.onCreate()
         coreContext = CoreContext.getInstance(applicationContext)
-    }
 
+        // TelecomHelper initializes automatically when accessed via lazy initialization
+        // This ensures proper telecom service setup early in app lifecycle
+        coreContext.telecomHelper
+    }
 }

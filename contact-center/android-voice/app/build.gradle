@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace 'com.example.vonage.voicesampleapp'
-    compileSdk 33
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.example.vonage.voicesampleapp"
@@ -18,6 +18,11 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Ensure native libraries are compatible with 16KB page sizes
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
     }
 
     buildTypes {
@@ -27,42 +32,49 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '21'
     }
     buildFeatures {
         dataBinding = true
+    }
+    packagingOptions {
+        // Enable legacy packaging for 16KB page size device compatibility
+        // This ensures native audio libraries load correctly
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.8.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.core:core-ktx:1.17.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
     // Firebase
-    implementation platform('com.google.firebase:firebase-bom:31.3.0')
-    implementation('com.google.gms:google-services:4.3.15')
-    implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
+    implementation platform('com.google.firebase:firebase-bom:34.1.0')
+    implementation('com.google.gms:google-services:4.4.3')
+    implementation 'com.google.firebase:firebase-messaging-ktx:24.1.2'
     implementation 'com.google.firebase:firebase-messaging-ktx'
 
     // Vonage Client SDK
-    implementation("com.vonage:client-sdk:1.4.0")
+    implementation("com.vonage:client-sdk:2.0.1-rc.1")
 
     // Retrofit + Moshi (HTTP Client)
-    def retrofit_version = "2.9.0"
+    def retrofit_version = "3.0.0"
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-moshi:$retrofit_version"
 
-    def moshi_version = "1.12.0"
+    def moshi_version = "1.15.2"
     implementation "com.squareup.moshi:moshi:$moshi_version"
     implementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
 
