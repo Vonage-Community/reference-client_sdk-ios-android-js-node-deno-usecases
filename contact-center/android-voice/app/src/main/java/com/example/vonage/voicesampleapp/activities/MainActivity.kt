@@ -1,9 +1,16 @@
 package com.example.vonage.voicesampleapp.activities
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
+import android.util.Log
+import androidx.activity.result.ActivityResultCallback
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.vonage.voicesampleapp.App
@@ -12,22 +19,60 @@ import com.example.vonage.voicesampleapp.utils.*
 import com.example.vonage.voicesampleapp.utils.navigateToCallActivity
 import com.example.vonage.voicesampleapp.utils.navigateToLoginActivity
 import com.example.vonage.voicesampleapp.utils.showDialerFragment
+import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+
 
 class MainActivity : AppCompatActivity() {
+
+    private val permissionLauncher =
+        registerForActivityResult(
+            RequestMultiplePermissions()
+        ) { result ->
+            result.entries.forEach { entry ->
+                val permission = entry.key
+                val isGranted = entry.value
+                Log.d(
+                    "Permission",
+                    "$permission -> ${if (isGranted) "GRANTED" else "DENIED"}"
+                )
+            }
+        }
     companion object {
         private const val PERMISSIONS_REQUEST_CODE = 123
     }
 
     // Only permission with a 'dangerous' Protection Level
     // need to be requested explicitly
-    private val permissions = arrayOf(
-        Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.READ_PHONE_STATE,
-        Manifest.permission.ANSWER_PHONE_CALLS,
-        Manifest.permission.MANAGE_OWN_CALLS,
-        Manifest.permission.READ_PHONE_NUMBERS,
-        Manifest.permission.CALL_PHONE
-    )
+    private val permissions by lazy {
+        val permissions = mutableListOf(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.CALL_PHONE
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            permissions += listOf(
+                Manifest.permission.READ_PHONE_NUMBERS,
+                Manifest.permission.ANSWER_PHONE_CALLS,
+                Manifest.permission.MANAGE_OWN_CALLS
+            )
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions += listOf(
+                Manifest.permission.INTERNET,
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.POST_NOTIFICATIONS,
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.MANAGE_OWN_CALLS,
+                Manifest.permission.FOREGROUND_SERVICE,
+                Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+            )
+        }
+        permissions.toTypedArray()
+    }
     private val arePermissionsGranted : Boolean get() {
         return permissions.all {
             ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
@@ -81,12 +126,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Checks if battery optimizations are ignored for the app.
+     *
+     * @return true if the app is ignoring battery optimizations, false otherwise.
+     */
+    fun isBatteryOptimizationIgnored(): Boolean {
+        val powerManager = applicationContext.getSystemService(POWER_SERVICE) as PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(applicationContext.packageName)
+    }
+
+    /**
+     * Setting Battery to Ignore Optimizations will prevent on Android 15 or above to disable network
+     * connectivity when app is on background
+     * +info: https://developer.android.com/reference/android/provider/Settings#ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+     *
+     * @return The Intent to request battery optimization exemption, or null if already ignored.
+     */
+    fun requestBatteryOptimizationIntent() {
+        val powerManager = applicationContext.getSystemService(POWER_SERVICE) as PowerManager
+        val packageName = applicationContext.packageName
+
+        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            val intent: Intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            intent.data = Uri.parse("package:$packageName")
+            startActivity(intent)
+        }
+    }
+
     private fun checkPermissions(){
-        if (!arePermissionsGranted) {
-            // Request permissions
-            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE)
-        } else {
-            coreContext.telecomHelper
+        if(!arePermissionsGranted) {
+            permissionLauncher.launch(permissions.map { it }.toTypedArray())
+        } else { coreContext.telecomHelper }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            if (!isBatteryOptimizationIgnored()) {
+                requestBatteryOptimizationIntent();
+            }
         }
     }
 

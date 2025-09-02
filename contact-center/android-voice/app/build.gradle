@@ -8,17 +8,17 @@ plugins {
 
 android {
     namespace 'com.example.vonage.voicesampleapp'
-    compileSdk 33
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.example.vonage.voicesampleapp"
         minSdk 33
-        targetSdk 33
+        targetSdk 36
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        
+
         // BuildConfig fields - replace these with your actual values
         buildConfigField "String", "VONAGE_API_TOKEN", "\"your_token_here\""
         buildConfigField "String", "API_LOGIN_URL", "\"your_login_url_here\""
@@ -61,7 +61,7 @@ dependencies {
 
     // Vonage Client SDK
 //    implementation("com.vonage:client-sdk-voice:2.0.1-snapshot.90.0")
-    implementation("com.vonage:client-sdk:2.0.0")
+    implementation("com.vonage:client-sdk:2.0.1-rc.1")
 
     // Retrofit + Moshi (HTTP Client)
     def retrofit_version = "2.9.0"
