@@ -1,7 +1,6 @@
 package com.example.vonage.voicesampleapp.core
 
 import android.content.Context
-import android.net.Uri
 import android.telecom.DisconnectCause
 import android.telecom.TelecomManager
 import com.example.vonage.voicesampleapp.App
@@ -19,6 +18,7 @@ import com.vonage.clientcore.core.api.models.User
 import com.vonage.clientcore.core.conversation.VoiceChannelType
 import com.vonage.voice.api.VoiceClient
 import java.lang.Exception
+import androidx.core.net.toUri
 
 /**
  * This Class will act as an interface
@@ -39,6 +39,7 @@ class VoiceClientManager(private val context: Context) {
 
     private fun initClient(){
         val config = VGClientInitConfig(LoggingLevel.Info)
+        config.rtcStatsTelemetry = false
         client = VoiceClient(context, config)
     }
 
@@ -456,7 +457,7 @@ class VoiceClientManager(private val context: Context) {
     private fun mockOutgoingConnection(callId: CallId, to: String, isReconnected: Boolean) : CallConnection {
         showToast(context, "ConnectionService Not Available")
         val connection = CallConnection(callId).apply {
-            setAddress(Uri.parse(to), TelecomManager.PRESENTATION_ALLOWED)
+            setAddress(to.toUri(), TelecomManager.PRESENTATION_ALLOWED)
             setCallerDisplayName(to, TelecomManager.PRESENTATION_ALLOWED)
             setDialing()
             if(isReconnected){ setAnswered() }
