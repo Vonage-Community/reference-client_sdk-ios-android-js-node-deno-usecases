@@ -36,6 +36,7 @@ android {
 
     buildFeatures {
         dataBinding = true
+        buildConfig = true
     }
 }
 
@@ -62,7 +63,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging-ktx'
 
     // Vonage Client SDK
-    implementation("com.vonage:client-sdk:2.0.1-rc.1")
+    implementation("com.vonage:client-sdk:2.0.1-snapshot.90.0")
 
     // Retrofit + Moshi (HTTP Client)
     def retrofit_version = "3.0.0"
