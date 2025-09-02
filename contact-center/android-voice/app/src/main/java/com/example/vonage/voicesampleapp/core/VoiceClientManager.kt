@@ -207,9 +207,11 @@ class VoiceClientManager(private val context: Context) {
     }
 
     fun startOutboundCall(callContext: Map<String, String>? = null){
+        startForegroundService(context)
         client.serverCall(callContext) { err, callId ->
             err?.let {
                 println("Error starting outbound call: $it")
+                stopForegroundService(context)
             } ?: callId?.let {
                 println("Outbound Call successfully started with Call ID: $it")
                 val callee = callContext?.get(Constants.CONTEXT_KEY_CALLEE) ?: Constants.DEFAULT_DIALED_NUMBER

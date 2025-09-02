@@ -2,6 +2,7 @@ package com.example.vonage.voicesampleapp.utils
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import com.example.vonage.voicesampleapp.*
 import com.example.vonage.voicesampleapp.activities.CallActivity
@@ -112,7 +113,9 @@ internal fun startForegroundService(context: Context, extras: Bundle? = null){
     extras?.let {
         intent.putExtras(it)
     }
-    context.startForegroundService(intent)
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(intent)
+    }
 }
 
 internal fun stopForegroundService(context: Context, extras: Bundle? = null){

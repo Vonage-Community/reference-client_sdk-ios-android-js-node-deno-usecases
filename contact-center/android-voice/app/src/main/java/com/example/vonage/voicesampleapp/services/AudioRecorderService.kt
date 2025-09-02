@@ -36,7 +36,9 @@ class AudioRecorderService : Service() {
         val notification = createNotification()
         startForeground(1, notification)
 
-        return START_NOT_STICKY
+        // Use START_STICKY to keep service running and restart if killed
+        // This is important for Android 15+ audio focus requirements
+        return START_STICKY
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -44,7 +46,7 @@ class AudioRecorderService : Service() {
         val serviceChannel = NotificationChannel(
             CHANNEL_ID,
             "Foreground Service Channel",
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH  // Higher importance for faster startup
         )
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(serviceChannel)
@@ -65,6 +67,8 @@ class AudioRecorderService : Service() {
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setLargeIcon(BitmapFactory.decodeResource(resources, android.R.drawable.ic_btn_speak_now))
             .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)  // High priority for faster startup
+            .setCategory(NotificationCompat.CATEGORY_CALL)  // Indicate this is call-related
             .build()
     }
 }
