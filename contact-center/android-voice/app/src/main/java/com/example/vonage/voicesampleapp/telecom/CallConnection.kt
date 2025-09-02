@@ -1,6 +1,5 @@
 package com.example.vonage.voicesampleapp.telecom
 
-import android.telecom.CallAudioState
 import android.telecom.Connection
 import android.telecom.DisconnectCause
 import com.example.vonage.voicesampleapp.App
@@ -47,16 +46,14 @@ class CallConnection(val callId: CallId) : Connection() {
         clientManager.hangupCall(this)
     }
 
-    override fun onCallAudioStateChanged(state: CallAudioState?) {
-        state ?: return
-        // Trigger mute/unmute only if states are not consistent
-        val shouldMute = state.isMuted
-        if (shouldMute != this.isMuted) {
-            val muteAction = if (shouldMute) clientManager::muteCall else clientManager::unmuteCall
+    override fun onMuteStateChanged(isMuted: Boolean) {
+        // debouncing: toggle mute state only if it's different from current state
+        if (isMuted != this.isMuted) {
+            val muteAction = if (isMuted) clientManager::muteCall else clientManager::unmuteCall
             muteAction(this)
+            this.isMuted = isMuted
         }
-        val route = state.route
-        println("isMuted: $isMuted, route: $route")
+        println("isMuted: $isMuted")
     }
 
     override fun onPlayDtmfTone(c: Char) {
@@ -98,8 +95,11 @@ class CallConnection(val callId: CallId) : Connection() {
         if(isOnHold) setOnHold() else setActive()
     }
 
-    fun toggleMuteState(){
-        isMuted = !isMuted
+    fun toggleMuteState(isMuted: Boolean){
+        // debouncing: toggle mute state only if it's different from current state
+        if(isMuted != this.isMuted){
+            this.isMuted = isMuted
+        }
     }
 
     private fun clearActiveCall(){
