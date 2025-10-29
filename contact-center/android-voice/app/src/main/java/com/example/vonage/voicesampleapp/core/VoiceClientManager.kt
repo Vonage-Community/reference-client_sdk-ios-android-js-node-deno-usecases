@@ -1,7 +1,6 @@
 package com.example.vonage.voicesampleapp.core
 
 import android.content.Context
-import android.net.Uri
 import android.telecom.DisconnectCause
 import android.telecom.TelecomManager
 import com.example.vonage.voicesampleapp.App
@@ -19,6 +18,7 @@ import com.vonage.clientcore.core.api.models.User
 import com.vonage.clientcore.core.conversation.VoiceChannelType
 import com.vonage.voice.api.VoiceClient
 import java.lang.Exception
+import androidx.core.net.toUri
 
 /**
  * This Class will act as an interface
@@ -39,6 +39,7 @@ class VoiceClientManager(private val context: Context) {
 
     private fun initClient(){
         val config = VGClientInitConfig(LoggingLevel.Info)
+        config.rtcStatsTelemetry = false
         client = VoiceClient(context, config)
     }
 
@@ -144,7 +145,7 @@ class VoiceClientManager(private val context: Context) {
             takeIf { callId == legId } ?: return@setOnMutedListener
             takeIfActive(callId)?.run {
                 // Update Active Call Mute State
-                toggleMuteState()
+                toggleMuteState(isMuted)
                 takeUnless { it.isOnHold }?.run {
                     // Notify Call Activity
                     notifyIsMutedToCallActivity(context, isMuted)
@@ -213,6 +214,9 @@ class VoiceClientManager(private val context: Context) {
                 println("Outbound Call successfully started with Call ID: $it")
                 val callee = callContext?.get(Constants.CONTEXT_KEY_CALLEE) ?: Constants.DEFAULT_DIALED_NUMBER
                 placeOutgoingCall(it, callee)
+                // NOTE: since API level 34, a foreground service needs to be started to record the audio also when app is in the foreground
+                // https://developer.android.com/develop/connectivity/telecom/voip-app/telecom#foreground-support
+                startForegroundService(context)
             }
         }
     }
@@ -456,7 +460,7 @@ class VoiceClientManager(private val context: Context) {
     private fun mockOutgoingConnection(callId: CallId, to: String, isReconnected: Boolean) : CallConnection {
         showToast(context, "ConnectionService Not Available")
         val connection = CallConnection(callId).apply {
-            setAddress(Uri.parse(to), TelecomManager.PRESENTATION_ALLOWED)
+            setAddress(to.toUri(), TelecomManager.PRESENTATION_ALLOWED)
             setCallerDisplayName(to, TelecomManager.PRESENTATION_ALLOWED)
             setDialing()
             if(isReconnected){ setAnswered() }

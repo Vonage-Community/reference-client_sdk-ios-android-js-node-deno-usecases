@@ -3,6 +3,7 @@ package com.example.vonage.voicesampleapp.utils
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.vonage.voicesampleapp.*
 import com.example.vonage.voicesampleapp.activities.CallActivity
 import com.example.vonage.voicesampleapp.activities.LoginActivity
@@ -66,7 +67,7 @@ internal fun sendMessageToCallActivity(context: Context, extras: Bundle? = null)
     extras?.let {
         intent.putExtras(it)
     }
-    context.sendBroadcast(intent)
+    LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
 }
 
 internal fun notifyIsMutedToCallActivity(context: Context, isMuted: Boolean){

@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.telecom.Connection
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.R
 import com.example.vonage.voicesampleapp.databinding.ActivityCallBinding
@@ -65,17 +66,13 @@ class CallActivity : AppCompatActivity() {
         setContentView(binding.root)
         handleIntent(intent)
         setBindings()
-        ContextCompat.registerReceiver(
-            this,
-            messageReceiver,
-            IntentFilter(MESSAGE_ACTION),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(messageReceiver, IntentFilter(MESSAGE_ACTION))
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(messageReceiver)
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
     }
 
     /**
