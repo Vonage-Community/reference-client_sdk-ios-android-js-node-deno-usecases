@@ -27,6 +27,7 @@
     <string name="call_state_active_label">Active</string>
     <string name="call_state_remotely_disconnected_label">Remotely Disconnected</string>
     <string name="call_state_locally_disconnected_label">Hung Up</string>
+    <string name="call_state_rejected_label">Rejected</string>
     <string name="call_state_reconnecting_label">Reconnecting…</string>
     <string name="keypad_button_description">Keypad</string>
     <string name="mute_button_description">Mute</string>

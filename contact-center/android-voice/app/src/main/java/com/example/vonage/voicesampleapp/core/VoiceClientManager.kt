@@ -7,9 +7,6 @@ import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.services.PushNotificationService
 import com.example.vonage.voicesampleapp.telecom.CallConnection
 import com.example.vonage.voicesampleapp.utils.*
-import com.example.vonage.voicesampleapp.utils.notifyCallAnsweredToCallActivity
-import com.example.vonage.voicesampleapp.utils.notifyCallDisconnectedToCallActivity
-import com.example.vonage.voicesampleapp.utils.notifyIsMutedToCallActivity
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
 import com.vonage.android_core.VGClientInitConfig
@@ -62,7 +59,7 @@ class VoiceClientManager(private val context: Context) {
                 onErrorCallback = {
                     // Cleanup any active call upon login failure
                     coreContext.activeCall?.run {
-                        cleanUp(DisconnectCause(DisconnectCause.MISSED), false)
+                        cleanUp(DisconnectCause(DisconnectCause.MISSED))
                     } ?: navigateToMainActivity(context)
                 }
             )
@@ -88,35 +85,35 @@ class VoiceClientManager(private val context: Context) {
         client.setOnCallHangupListener { callId, callQuality, reason ->
             println("Call $callId has been hung up with reason: ${reason.name} and quality: $callQuality")
             takeIfActive(callId)?.apply {
-                val (cause, isRemote) = when(reason) {
-                    HangupReason.remoteReject -> DisconnectCause.REJECTED to true
-                    HangupReason.remoteHangup -> DisconnectCause.REMOTE to true
-                    HangupReason.localHangup -> DisconnectCause.LOCAL to false
-                    HangupReason.mediaTimeout -> DisconnectCause.BUSY to true
-                    HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED to true
+                val cause = when(reason) {
+                    HangupReason.remoteReject -> DisconnectCause.REJECTED
+                    HangupReason.remoteHangup -> DisconnectCause.REMOTE
+                    HangupReason.localHangup -> DisconnectCause.LOCAL
+                    HangupReason.mediaTimeout -> DisconnectCause.BUSY
+                    HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED
                 }
-                cleanUp(DisconnectCause(cause), isRemote)
+                cleanUp(DisconnectCause(cause))
             }
         }
 
         client.setOnCallMediaDisconnectListener { callId, reason ->
             println("Call $callId has been disconnected with reason: ${reason.name}")
             takeIfActive(callId)?.apply {
-                cleanUp(DisconnectCause(DisconnectCause.ERROR), isRemote = false)
+                cleanUp(DisconnectCause(DisconnectCause.ERROR))
             }
         }
-
+        
         client.setOnCallMediaReconnectingListener { callId ->
             println("Call $callId is reconnecting")
             takeIfActive(callId)?.apply {
-                notifyCallReconnectingToCallActivity(context)
+                setInitializing()
             }
         }
 
         client.setOnCallMediaReconnectionListener { callId ->
             println("Call $callId has successfully reconnected")
             takeIfActive(callId)?.apply {
-                notifyCallReconnectedToCallActivity(context)
+                setActive()
             }
         }
 
@@ -129,7 +126,7 @@ class VoiceClientManager(private val context: Context) {
                     VoiceInviteCancelReason.RemoteCancel -> DisconnectCause(DisconnectCause.CANCELED)
                     VoiceInviteCancelReason.RemoteTimeout -> DisconnectCause(DisconnectCause.MISSED)
                 }
-                cleanUp(cause, true)
+                cleanUp(cause)
             } ?: stopForegroundService(context)
         }
 
@@ -143,14 +140,8 @@ class VoiceClientManager(private val context: Context) {
         client.setOnMutedListener { callId, legId, isMuted ->
             println("LegId $legId for Call $callId has been ${if(isMuted) "muted" else "unmuted"}")
             takeIf { callId == legId } ?: return@setOnMutedListener
-            takeIfActive(callId)?.run {
-                // Update Active Call Mute State
-                toggleMuteState(isMuted)
-                takeUnless { it.isOnHold }?.run {
-                    // Notify Call Activity
-                    notifyIsMutedToCallActivity(context, isMuted)
-                }
-            }
+            // SDK confirms mute state change - no action needed
+            // onMuteStateChanged already handled the state update
         }
 
         client.setOnDTMFListener { callId, legId, digits ->
@@ -278,7 +269,7 @@ class VoiceClientManager(private val context: Context) {
             client.answer(callId) { err ->
                 if (err != null) {
                     println("Error Answering Call: $err")
-                    cleanUp(DisconnectCause(DisconnectCause.ERROR), false)
+                    cleanUp(DisconnectCause(DisconnectCause.ERROR))
                 } else {
                     println("Answered call with id: $callId")
                     setAnswered()
@@ -292,10 +283,10 @@ class VoiceClientManager(private val context: Context) {
             client.reject(callId){ err ->
                 if (err != null) {
                     println("Error Rejecting Call: $err")
-                    cleanUp(DisconnectCause(DisconnectCause.ERROR), false)
+                    cleanUp(DisconnectCause(DisconnectCause.ERROR))
                 } else {
                     println("Rejected call with id: $callId")
-                    cleanUp(DisconnectCause(DisconnectCause.REJECTED), false)
+                    cleanUp(DisconnectCause(DisconnectCause.REJECTED))
                 }
             }
         } ?: call.selfDestroy()
@@ -309,9 +300,10 @@ class VoiceClientManager(private val context: Context) {
                     // If there has been an error
                     // the onCallHangupListener will not be invoked,
                     // hence the Call needs to be explicitly disconnected
-                    cleanUp(DisconnectCause(DisconnectCause.LOCAL), false)
+                    cleanUp(DisconnectCause(DisconnectCause.LOCAL))
                 } else {
                     println("Hung up call with id: $callId")
+                    // The onCallHangupListener will be invoked with the reason
                 }
             }
         } ?: call.selfDestroy()
@@ -384,8 +376,6 @@ class VoiceClientManager(private val context: Context) {
                             println("Error enabling earmuff in holdCall with id: $callId")
                         } ?: run {
                             println("Call $callId successfully put on hold")
-                            toggleHoldState()
-                            notifyIsOnHoldToCallActivity(context, true)
                         }
                     }
                 }
@@ -404,8 +394,6 @@ class VoiceClientManager(private val context: Context) {
                             println("Error disabling earmuff in unholdCall with id: $callId")
                         } ?: run {
                             println("Call $callId successfully removed from hold")
-                            toggleHoldState()
-                            notifyIsOnHoldToCallActivity(context, false)
                         }
                     }
                 }
@@ -440,13 +428,13 @@ class VoiceClientManager(private val context: Context) {
     private fun abortOutboundCall(callId: CallId, message: String?){
         showToast(context, "Outgoing Call Error: $message")
         client.hangup(callId){}
-        notifyCallDisconnectedToCallActivity(context, false)
+        // Disconnect state is handled automatically through CallConnection StateFlow
     }
 
     private fun abortInboundCall(callId: CallId, message: String?){
         showToast(context, "Incoming Call Error: $message")
         client.reject(callId){}
-        notifyCallDisconnectedToCallActivity(context, false)
+        // Disconnect state is handled automatically through CallConnection StateFlow
     }
 
     /**
@@ -479,13 +467,13 @@ class VoiceClientManager(private val context: Context) {
     }
 
     private fun CallConnection.setAnswered(){
+        // setActive() updates the connection state, which is observed via StateFlow
         this.setActive()
-        notifyCallAnsweredToCallActivity(context)
     }
 
-    private fun CallConnection.cleanUp(disconnectCause: DisconnectCause, isRemote: Boolean){
+    private fun CallConnection.cleanUp(disconnectCause: DisconnectCause){
+        // disconnect() updates the connection state, which is observed via StateFlow
         this.disconnect(disconnectCause)
-        notifyCallDisconnectedToCallActivity(context, isRemote)
         stopForegroundService(context)
     }
 }

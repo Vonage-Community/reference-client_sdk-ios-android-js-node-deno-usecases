@@ -4,6 +4,9 @@ import android.telecom.Connection
 import android.telecom.DisconnectCause
 import com.example.vonage.voicesampleapp.App
 import com.vonage.voice.api.CallId
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * A Connection class used to initiate a connection
@@ -12,10 +15,16 @@ import com.vonage.voice.api.CallId
 class CallConnection(val callId: CallId) : Connection() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
-    var isMuted = false
-        private set
-    var isOnHold = false
-        private set
+    
+    // StateFlows for observing state changes
+    private val _isMuted = MutableStateFlow(false)
+    val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
+    
+    private val _isOnHold = MutableStateFlow(false)
+    val isOnHold: StateFlow<Boolean> = _isOnHold.asStateFlow()
+    
+    private val _connectionState = MutableStateFlow(STATE_INITIALIZING)
+    val connectionState: StateFlow<Int> = _connectionState.asStateFlow()
 
     init {
         val properties = connectionProperties or PROPERTY_SELF_MANAGED
@@ -28,6 +37,7 @@ class CallConnection(val callId: CallId) : Connection() {
     }
 
     override fun onStateChanged(state: Int) {
+        _connectionState.value = state
         when(state){
             STATE_RINGING, STATE_DIALING -> { setActiveCall() }
             STATE_DISCONNECTED -> { clearActiveCall() }
@@ -47,13 +57,13 @@ class CallConnection(val callId: CallId) : Connection() {
     }
 
     override fun onMuteStateChanged(isMuted: Boolean) {
-        // debouncing: toggle mute state only if it's different from current state
-        if (isMuted != this.isMuted) {
+        // Called by phone UI when user toggles mute from phone controls
+        println("onMuteStateChanged: $isMuted")
+        if (isMuted != this.isMuted.value) {
             val muteAction = if (isMuted) clientManager::muteCall else clientManager::unmuteCall
             muteAction(this)
-            this.isMuted = isMuted
+            _isMuted.value = isMuted
         }
-        println("isMuted: $isMuted")
     }
 
     override fun onPlayDtmfTone(c: Char) {
@@ -62,14 +72,22 @@ class CallConnection(val callId: CallId) : Connection() {
     }
 
     override fun onHold() {
-        if(!isOnHold){
+        // Called by phone UI when user puts call on hold from phone controls
+        println("onHold")
+        if(!isOnHold.value){
             clientManager.holdCall(this)
+            _isOnHold.value = true
+            setOnHold()
         }
     }
 
     override fun onUnhold() {
-        if(isOnHold){
+        // Called by phone UI when user takes call off hold from phone controls
+        println("onUnhold")
+        if(isOnHold.value){
             clientManager.unholdCall(this)
+            _isOnHold.value = false
+            setActive()
         }
     }
 
@@ -91,15 +109,19 @@ class CallConnection(val callId: CallId) : Connection() {
     }
 
     fun toggleHoldState(){
-        isOnHold = !isOnHold
-        if(isOnHold) setOnHold() else setActive()
+        // Called by CallActivity when user taps hold button
+        println("toggleHoldState: ${!isOnHold.value}")
+        if(isOnHold.value){
+            onUnhold()
+        } else {
+            onHold()
+        }
     }
 
-    fun toggleMuteState(isMuted: Boolean){
-        // debouncing: toggle mute state only if it's different from current state
-        if(isMuted != this.isMuted){
-            this.isMuted = isMuted
-        }
+    fun toggleMuteState(){
+        // Called by CallActivity when user taps mute button
+        println("toggleMuteState: ${!isMuted.value}")
+        onMuteStateChanged(!isMuted.value)
     }
 
     private fun clearActiveCall(){
