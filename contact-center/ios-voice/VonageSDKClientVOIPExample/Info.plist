@@ -8,6 +8,8 @@
 	<string>$(API_LOGIN_URL)</string>
 	<key>API_REFRESH_URL</key>
 	<string>$(API_REFRESH_URL)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -32,6 +34,17 @@
 		<string>processing</string>
 		<string>remote-notification</string>
 		<string>voip</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.nexmo.nexmoclient-push-notifications-test-app-ios.refresh</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>

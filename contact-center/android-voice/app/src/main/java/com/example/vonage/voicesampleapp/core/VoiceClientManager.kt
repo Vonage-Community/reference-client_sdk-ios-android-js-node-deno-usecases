@@ -39,7 +39,7 @@ class VoiceClientManager(private val context: Context) {
 
     private fun initClient(){
         val config = VGClientInitConfig(LoggingLevel.Info)
-        config.rtcStatsTelemetry = false
+        //config.rtcStatsTelemetry = false
         client = VoiceClient(context, config)
     }
 
