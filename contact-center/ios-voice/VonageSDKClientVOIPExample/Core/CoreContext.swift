@@ -34,8 +34,23 @@ class CoreContext: ObservableObject {
     private init() {
         // Initialize Vonage Client with configuration
         let config = VGClientInitConfig(loggingLevel: .debug, region: .US)
+        
+        #if targetEnvironment(simulator)
+        // On simulator: disable CallKit and enable WebSocket invites
+        config.enableWebsocketInvites = true
+        print("🖥️ Running on simulator - WebSocket invites enabled, CallKit disabled")
+        #else
+        // On device: use CallKit for native call UI
+        print("📱 Running on device - CallKit enabled")
+        #endif
+        
         let vonageClient = VGVoiceClient(config)
+        
+        #if targetEnvironment(simulator)
+        VGVoiceClient.isUsingCallKit = false
+        #else
         VGVoiceClient.isUsingCallKit = true
+        #endif
         
         // Initialize push controller first (no dependencies)
         self.pushController = PushController()

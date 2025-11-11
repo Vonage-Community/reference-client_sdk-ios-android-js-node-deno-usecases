@@ -25,28 +25,36 @@ class VoiceClientManager: NSObject, ObservableObject {
     private weak var context: CoreContext?
     private var cancellables = Set<AnyCancellable>()
     
-    // CallKit
+    // CallKit (only on device)
+    #if !targetEnvironment(simulator)
     private let callProvider: CXProvider
     private let callController = CXCallController()
+    #endif
     
     // MARK: - Initialization
     init(client: VGVoiceClient, context: CoreContext? = nil) {
         self.client = client
         self.context = context
         
-        // Configure CallKit provider
+        #if !targetEnvironment(simulator)
+        // Configure CallKit provider (device only)
         let providerConfig = CXProviderConfiguration()
         providerConfig.supportsVideo = false
         providerConfig.maximumCallGroups = 1
         providerConfig.maximumCallsPerCallGroup = 1
         providerConfig.supportedHandleTypes = [.generic]
         self.callProvider = CXProvider(configuration: providerConfig)
+        self.callController = CXCallController()
+        #endif
         
         super.init()
         
         // Set delegates
         self.client.delegate = self
+        
+        #if !targetEnvironment(simulator)
         self.callProvider.setDelegate(self, queue: nil)
+        #endif
     }
     
     func setContext(_ context: CoreContext) {
@@ -290,8 +298,10 @@ class VoiceClientManager: NSObject, ObservableObject {
                 self.context?.lastActiveCall = call
             }
             
-            // Report to CallKit
+            #if !targetEnvironment(simulator)
+            // Report to CallKit (device only)
             self.reportOutgoingCall(callUUID: callUUID, callee: callee)
+            #endif
         }
     }
     
@@ -304,6 +314,12 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Answered call: \(call.callId)")
+            
+            // Update state to active for both simulator and device
+            // The delegate method is only called for the remote leg, not for our answer
+            DispatchQueue.main.async {
+                call.updateState(.active)
+            }
         }
     }
     
@@ -329,6 +345,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Hung up call: \(call.callId)")
+            // State will be updated via didReceiveHangupForCall delegate for both simulator and device
         }
     }
     
@@ -445,7 +462,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
         }
         
-        // Report to CallKit
+        #if !targetEnvironment(simulator)
+        // Report to CallKit (device only)
         let endCallAction = CXEndCallAction(call: call.id)
         let transaction = CXTransaction(action: endCallAction)
         callController.request(transaction) { error in
@@ -453,9 +471,11 @@ class VoiceClientManager: NSObject, ObservableObject {
                 print("❌ Failed to end call in CallKit: \(error)")
             }
         }
+        #endif
     }
     
     // MARK: - CallKit Integration
+    #if !targetEnvironment(simulator)
     private func reportOutgoingCall(callUUID: UUID, callee: String) {
         let handle = CXHandle(type: .generic, value: callee)
         let startCallAction = CXStartCallAction(call: callUUID, handle: handle)
@@ -479,6 +499,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
         }
     }
+    #endif
 }
 
 // MARK: - VGVoiceClientDelegate
@@ -535,8 +556,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             self?.context?.lastActiveCall = call
         }
         
-        // Report to CallKit
+        #if !targetEnvironment(simulator)
+        // Report to CallKit (device only)
         reportIncomingCall(callUUID: callUUID, caller: caller)
+        #endif
     }
     
     func voiceClient(_ client: VGVoiceClient, didReceiveHangupForCall callId: VGCallId, withQuality callQuality: VGRTCQuality, reason: VGHangupReason) {
@@ -565,6 +588,18 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         endCall(call, reason: cxReason)
     }
     
+    func voiceClient(_ client: VGVoiceClient, didReceiveLegStatusUpdateForCall callId: VGCallId, withLegId legId: String, andStatus status: VGLegStatus) {
+        print("🔄 Call status updated: \(callId), status: \(status)")
+        
+        guard let call = context?.activeCall, call.callId == callId else { return }
+        
+        if status == .answered {
+            DispatchQueue.main.async {
+                call.updateState(.active)
+            }
+        }
+    }
+    
     func voiceClient(_ client: VGVoiceClient, didReceiveInviteCancelForCall callId: VGCallId, with reason: VGVoiceInviteCancelReason) {
         print("📴 Call invite cancelled: \(callId), reason: \(reason)")
         
@@ -588,21 +623,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         
         endCall(call, reason: cxReason)
     }
-    
-    func voiceClient(_ client: VGVoiceClient, didUpdateCall callId: VGCallId, with legId: String, status: VGLegStatus) {
-        print("🔄 Call status updated: \(callId), status: \(status)")
-        
-        guard let call = context?.activeCall, call.callId == callId else { return }
-        
-        if status == .answered {
-            DispatchQueue.main.async {
-                call.updateState(.active)
-            }
-        }
-    }
 }
 
-// MARK: - CXProviderDelegate
+// MARK: - CXProviderDelegate (Device only)
+#if !targetEnvironment(simulator)
 extension VoiceClientManager: CXProviderDelegate {
     func providerDidReset(_ provider: CXProvider) {
         print("📞 CallKit provider reset")
@@ -623,6 +647,12 @@ extension VoiceClientManager: CXProviderDelegate {
             }
             
             print("✅ Answered call: \(call.callId)")
+            
+            // Update state to active - delegate is only called for remote leg
+            DispatchQueue.main.async {
+                call.updateState(.active)
+            }
+            
             action.fulfill()
         }
     }
@@ -694,6 +724,7 @@ extension VoiceClientManager: CXProviderDelegate {
         VGVoiceClient.disableAudio(audioSession)
     }
 }
+#endif
 
 // MARK: - Data Extension
 extension Data {
