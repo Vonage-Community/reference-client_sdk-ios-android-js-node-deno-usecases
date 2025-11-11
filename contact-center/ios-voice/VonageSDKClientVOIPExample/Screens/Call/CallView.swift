@@ -151,7 +151,7 @@ struct CallView: View {
                 
                 // Dialpad Button
                 CallActionButton(
-                    icon: "dial.fill",
+                    icon: "circle.grid.3x3.fill",
                     color: .white.opacity(0.3)
                 ) {
                     showDialer = true

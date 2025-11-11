@@ -81,7 +81,7 @@ struct MainView: View {
             Button(action: {
                 showDialer = true
             }) {
-                Image(systemName: "dial.fill")
+                Image(systemName: "circle.grid.3x3.fill")
                     .font(.system(size: 24, weight: .medium))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
