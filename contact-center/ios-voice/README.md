@@ -10,6 +10,8 @@ This app follows a modern SwiftUI architecture with clean separation of concerns
 - **`VonageVoiceApp`** - Main SwiftUI app entry point with NavigationStack-based routing
 - **`CoreContext`** - Singleton managing shared services and app-wide state
 - **`VoiceClientManager`** - Handles Vonage SDK integration, call lifecycle, and CallKit (device) / WebSocket (simulator)
+  - `+VGVoiceClientDelegate` - Extension implementing voice client delegate methods
+  - `+CXProviderDelegate` - Extension implementing CallKit provider delegate (device only)
 - **`PushService`** - Manages VoIP and user push notifications via PushKit
 - **`NetworkService`** - Generic Combine-based HTTP client for authentication APIs
 

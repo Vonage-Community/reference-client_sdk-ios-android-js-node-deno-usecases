@@ -34,7 +34,10 @@ class VoiceClientManager: NSObject, ObservableObject {
     // MARK: - Initialization
     override init() {
         // Initialize Vonage Client with configuration
-        let config = VGClientInitConfig(loggingLevel: .debug, region: .US)
+        let config = VGClientInitConfig(loggingLevel: .info)
+        
+        // Set other config vars here
+        // config.rtcStatsTelemetry = false
         
         #if targetEnvironment(simulator)
         // On simulator: disable CallKit and enable WebSocket invites
@@ -476,7 +479,16 @@ class VoiceClientManager: NSObject, ObservableObject {
         }
     }
     
-    private func endCall(_ call: VGCallWrapper, reason: CXCallEndedReason) {
+}
+
+// MARK: - Internal Helpers (For Extension Use Only)
+extension VoiceClientManager {
+    /// Internal helper to end a call and clean up state.
+    /// - Warning: This method is intended for internal use by VoiceClientManager extensions only.
+    /// - Parameters:
+    ///   - call: The call to end
+    ///   - reason: The reason the call ended (for CallKit reporting)
+    internal func endCall(_ call: VGCallWrapper, reason: CXCallEndedReason) {
         DispatchQueue.main.async { [weak self] in
             call.updateState(.disconnected)
             
@@ -500,9 +512,11 @@ class VoiceClientManager: NSObject, ObservableObject {
         #endif
     }
     
-    // MARK: - CallKit Integration
+    // MARK: - CallKit Integration Helpers
     #if !targetEnvironment(simulator)
-    private func reportOutgoingCall(callUUID: UUID, callee: String) {
+    /// Internal helper to report an outgoing call to CallKit.
+    /// - Warning: This method is intended for internal use by VoiceClientManager extensions only.
+    internal func reportOutgoingCall(callUUID: UUID, callee: String) {
         let handle = CXHandle(type: .generic, value: callee)
         let startCallAction = CXStartCallAction(call: callUUID, handle: handle)
         let transaction = CXTransaction(action: startCallAction)
@@ -514,7 +528,9 @@ class VoiceClientManager: NSObject, ObservableObject {
         }
     }
     
-    private func reportIncomingCall(callUUID: UUID, caller: String) {
+    /// Internal helper to report an incoming call to CallKit.
+    /// - Warning: This method is intended for internal use by VoiceClientManager extensions only.
+    internal func reportIncomingCall(callUUID: UUID, caller: String) {
         let update = CXCallUpdate()
         update.remoteHandle = CXHandle(type: .generic, value: caller)
         update.hasVideo = false
@@ -527,231 +543,3 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     #endif
 }
-
-// MARK: - VGVoiceClientDelegate
-extension VoiceClientManager: VGVoiceClientDelegate {
-    func client(_ client: VGBaseClient, didReceiveSessionErrorWith reason: VGSessionErrorReason) {
-        let message: String
-        switch reason {
-        case .tokenExpired:
-            message = "Token has expired"
-        case .transportClosed:
-            message = "Connection closed"
-        case .pingTimeout:
-            message = "Connection timeout"
-        case .unknown:
-            message = "Unknown session error"
-        @unknown default:
-            message = "Unknown session error"
-        }
-        
-        print("❌ Session error: \(message)")
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.errorMessage = "Session error: \(message)"
-            
-            // Try to reconnect if we have a valid token
-            if let token = self?.context.authToken {
-                self?.login(token: token)
-            } else {
-                // Clear session if no token available
-                self?.sessionId = nil
-                self?.currentUser = nil
-            }
-        }
-    }
-    
-    func voiceClient(_ client: VGVoiceClient, didReceiveInviteForCall callId: VGCallId, from caller: String, with type: VGVoiceChannelType) {
-        print("📞 Incoming call from: \(caller)")
-        
-        guard let callUUID = UUID(uuidString: callId) else {
-            print("❌ Invalid call ID: \(callId)")
-            return
-        }
-        
-        // Create call wrapper
-        let call = VGCallWrapper(
-            id: callUUID,
-            callId: callId,
-            callerDisplayName: caller,
-            isInbound: true
-        )
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.context.activeCall = call
-            self.context.lastActiveCall = call
-        }
-        
-        #if !targetEnvironment(simulator)
-        // Report to CallKit (device only)
-        reportIncomingCall(callUUID: callUUID, caller: caller)
-        #endif
-    }
-    
-    func voiceClient(_ client: VGVoiceClient, didReceiveHangupForCall callId: VGCallId, withQuality callQuality: VGRTCQuality, reason: VGHangupReason) {
-        print("📴 Call ended: \(callId), reason: \(reason)")
-        
-        guard let call = context.activeCall, call.callId == callId else { return }
-        
-        let cxReason: CXCallEndedReason = switch reason {
-        case .remoteReject:
-            .declinedElsewhere
-        case .remoteHangup:
-            .remoteEnded
-        case .localHangup:
-            .unanswered
-        case .mediaTimeout:
-            .failed
-        case .remoteNoAnswerTimeout:
-            .unanswered
-        case .unknown:
-            .failed
-        @unknown default:
-            .failed
-        }
-        
-        endCall(call, reason: cxReason)
-    }
-    
-    func voiceClient(_ client: VGVoiceClient, didReceiveLegStatusUpdateForCall callId: VGCallId, withLegId legId: String, andStatus status: VGLegStatus) {
-        print("🔄 Call status updated: \(callId), status: \(status)")
-        
-        guard let call = context.activeCall, call.callId == callId else { return }
-        
-        if status == .answered {
-            DispatchQueue.main.async {
-                call.updateState(.active)
-            }
-        }
-    }
-    
-    func voiceClient(_ client: VGVoiceClient, didReceiveInviteCancelForCall callId: VGCallId, with reason: VGVoiceInviteCancelReason) {
-        print("📴 Call invite cancelled: \(callId), reason: \(reason)")
-        
-        guard let call = context.activeCall, call.callId == callId else { return }
-        
-        let cxReason: CXCallEndedReason = switch reason {
-        case .answeredElsewhere:
-            .answeredElsewhere
-        case .rejectedElsewhere:
-            .declinedElsewhere
-        case .remoteCancel:
-            .remoteEnded
-        case .remoteTimeout:
-            .unanswered
-        case .unknown:
-            .failed
-        @unknown default:
-            .failed
-        }
-        
-        endCall(call, reason: cxReason)
-    }
-}
-
-// MARK: - CXProviderDelegate (Device only)
-#if !targetEnvironment(simulator)
-extension VoiceClientManager: CXProviderDelegate {
-    func providerDidReset(_ provider: CXProvider) {
-        print("📞 CallKit provider reset")
-    }
-    
-    func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
-        guard let call = context.activeCall, call.id == action.callUUID else {
-            action.fail()
-            return
-        }
-        
-        client.answer(call.callId) { [weak self] error in
-            if let error {
-                // Report failure to CallKit
-                provider.reportCall(with: action.callUUID, endedAt: Date.now, reason: .failed)
-                self?.endCall(call, reason: .failed)
-                action.fail()
-                return
-            }
-            
-            print("✅ Answered call: \(call.callId)")
-            
-            // Update state to active - delegate is only called for remote leg
-            DispatchQueue.main.async {
-                call.updateState(.active)
-            }
-            
-            action.fulfill()
-        }
-    }
-    
-    func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
-        guard let call = context.activeCall, call.id == action.callUUID else {
-            action.fail()
-            return
-        }
-        
-        if call.isInbound && call.state == .ringing {
-            client.reject(call.callId) { error in
-                action.fulfill()
-            }
-        } else {
-            client.hangup(call.callId) { error in
-                action.fulfill()
-            }
-        }
-    }
-    
-    func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
-        guard let call = context.activeCall, call.id == action.callUUID else {
-            action.fail()
-            return
-        }
-        
-        // Outbound call already started in startOutboundCall
-        action.fulfill()
-    }
-    
-    func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
-        guard let call = context.activeCall, call.id == action.callUUID else {
-            action.fail()
-            return
-        }
-        
-        // Execute mute/unmute asynchronously but fulfill action synchronously
-        // CallKit requires the action to be fulfilled immediately
-        if action.isMuted {
-            muteCall(call)
-        } else {
-            unmuteCall(call)
-        }
-        
-        action.fulfill()
-    }
-    
-    func provider(_ provider: CXProvider, perform action: CXSetHeldCallAction) {
-        guard let call = context.activeCall, call.id == action.callUUID else {
-            action.fail()
-            return
-        }
-        
-        // Execute hold/unhold asynchronously but fulfill action synchronously
-        // CallKit requires the action to be fulfilled immediately
-        if action.isOnHold {
-            holdCall(call)
-        } else {
-            unholdCall(call)
-        }
-        
-        action.fulfill()
-    }
-    
-    func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
-        print("🔊 CallKit activated audio session")
-        VGVoiceClient.enableAudio(audioSession)
-    }
-    
-    func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
-        print("🔇 CallKit deactivated audio session")
-        VGVoiceClient.disableAudio(audioSession)
-    }
-}
-#endif

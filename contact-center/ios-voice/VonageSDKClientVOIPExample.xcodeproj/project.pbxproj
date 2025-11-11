@@ -30,6 +30,8 @@
 		FED917FC2EC3857300F972F4 /* UUID+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F82EC3857300F972F4 /* UUID+Extensions.swift */; };
 		FED917FD2EC3857300F972F4 /* Publisher+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F72EC3857300F972F4 /* Publisher+Extensions.swift */; };
 		FED917FE2EC3857300F972F4 /* VonageSDK+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */; };
+		FED918012EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */; };
+		FED918022EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,6 +64,8 @@
 		FED917F72EC3857300F972F4 /* Publisher+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Publisher+Extensions.swift"; sourceTree = "<group>"; };
 		FED917F82EC3857300F972F4 /* UUID+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UUID+Extensions.swift"; sourceTree = "<group>"; };
 		FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VonageSDK+Extensions.swift"; sourceTree = "<group>"; };
+		FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+CXProviderDelegate.swift"; sourceTree = "<group>"; };
+		FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+VGVoiceClientDelegate.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +101,8 @@
 			children = (
 				39BFCF9809294A9EBCCAF716 /* CoreContext.swift */,
 				5C5B15A8D0004DAAA2679E65 /* VoiceClientManager.swift */,
+				FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */,
+				FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -419,6 +425,8 @@
 				FED917EC2EC3853F00F972F4 /* LoginViewModel.swift in Sources */,
 				60DC4418F2FD472C9DD4855F /* VoiceClientManager.swift in Sources */,
 				FED917F32EC3854D00F972F4 /* NetworkService.swift in Sources */,
+				FED918012EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift in Sources */,
+				FED918022EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift in Sources */,
 				FED917F42EC3854D00F972F4 /* AuthModels.swift in Sources */,
 				FED917F52EC3854D00F972F4 /* PushService.swift in Sources */,
 				1A0A6F2F44264EC88A66F52B /* AppTheme.swift in Sources */,
