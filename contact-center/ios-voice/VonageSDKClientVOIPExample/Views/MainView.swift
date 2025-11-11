@@ -68,7 +68,6 @@ struct MainView: View {
                                 Text("Call User")
                             }
                             .buttonStyle(PrimaryButtonStyle())
-                            .disabled(usernameToCall.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                         .padding(.horizontal, AppSpacing.extraLarge)
                         
@@ -166,8 +165,7 @@ struct MainView: View {
     // MARK: - Actions
     private func callUser() {
         let trimmedUsername = usernameToCall.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedUsername.isEmpty else { return }
-        
+        // Allow calling even with empty username - it's a valid use case
         coreContext.clientManager.startOutboundCall(to: trimmedUsername)
     }
     

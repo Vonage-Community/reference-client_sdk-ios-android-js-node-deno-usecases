@@ -438,6 +438,8 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             message = "Connection closed"
         case .pingTimeout:
             message = "Connection timeout"
+        case .unknown:
+            message = "Unknown session error"
         @unknown default:
             message = "Unknown session error"
         }
@@ -500,6 +502,8 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             cxReason = .failed
         case .remoteNoAnswerTimeout:
             cxReason = .unanswered
+        case .unknown:
+            cxReason = .failed
         @unknown default:
             cxReason = .failed
         }
@@ -522,6 +526,8 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             cxReason = .remoteEnded
         case .remoteTimeout:
             cxReason = .unanswered
+        case .unknown:
+            cxReason = .failed
         @unknown default:
             cxReason = .failed
         }

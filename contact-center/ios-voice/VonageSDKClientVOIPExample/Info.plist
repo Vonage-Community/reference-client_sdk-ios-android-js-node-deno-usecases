@@ -10,6 +10,10 @@
 	<string>$(API_REFRESH_URL)</string>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone to enable voice calls through the Vonage Voice API.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -30,14 +34,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
-		<string>external-accessory</string>
-		<string>processing</string>
-		<string>remote-notification</string>
 		<string>voip</string>
-	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.nexmo.nexmoclient-push-notifications-test-app-ios.refresh</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

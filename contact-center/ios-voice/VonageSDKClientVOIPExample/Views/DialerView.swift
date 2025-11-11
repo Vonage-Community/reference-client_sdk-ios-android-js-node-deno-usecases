@@ -18,6 +18,7 @@ struct DialerView: View {
     @EnvironmentObject private var coreContext: CoreContext
     @Environment(\.dismiss) private var dismiss
     @State private var dialedNumber: String = ""
+    @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 0) {
@@ -39,22 +40,49 @@ struct DialerView: View {
             Spacer()
                 .frame(height: AppSpacing.large)
             
-            // Number Display
-            Text(dialedNumber.isEmpty ? (dialerType == .phoneNumber ? "Enter number" : "Digits") : dialedNumber)
+            // Number Input Field
+            TextField(dialerType == .phoneNumber ? "Enter number" : "Enter digits", text: $dialedNumber)
                 .font(AppTypography.headlineMedium)
-                .foregroundColor(dialedNumber.isEmpty ? .textSecondary.opacity(0.5) : .textPrimary)
+                .foregroundColor(.textPrimary)
                 .tracking(2)
+                .multilineTextAlignment(.center)
+                .keyboardType(dialerType == .phoneNumber ? .phonePad : .numberPad)
+                .focused($isTextFieldFocused)
                 .frame(maxWidth: .infinity)
                 .frame(height: 60)
                 .background(Color.backgroundLight)
                 .cornerRadius(AppCornerRadius.large)
                 .padding(.horizontal, AppSpacing.large)
+                .onChange(of: dialedNumber) { newValue in
+                    // For DTMF mode, send each new digit as it's typed
+                    if dialerType == .dtmf, let activeCall = coreContext.activeCall {
+                        // Check if a new digit was added by comparing lengths
+                        if !newValue.isEmpty {
+                            let newDigit = String(newValue.last!)
+                            if isValidDTMFDigit(newDigit) {
+                                coreContext.clientManager.sendDTMF(activeCall, digit: newDigit)
+                                playDTMFTone(for: newDigit)
+                            }
+                        }
+                    }
+                }
+                .onAppear {
+                    // Auto-focus the text field when the view appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isTextFieldFocused = true
+                    }
+                }
             
             Spacer()
                 .frame(height: AppSpacing.large)
             
-            // Dialpad
-            dialpad
+            // Optional: Show dialpad for DTMF mode
+            if dialerType == .dtmf {
+                dialpad
+            } else {
+                // Add some spacing for phone number mode
+                Spacer()
+            }
             
             Spacer()
                 .frame(height: AppSpacing.large)
@@ -72,7 +100,6 @@ struct DialerView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(.horizontal, AppSpacing.large)
-                .disabled(dialedNumber.isEmpty)
             } else {
                 Button(action: {
                     dismiss()
@@ -141,7 +168,8 @@ struct DialerView: View {
     }
     
     private func makeCall() {
-        guard !dialedNumber.isEmpty else { return }
+        // Allow calling even with empty number - it's a valid use case
+        isTextFieldFocused = false // Dismiss keyboard
         
         coreContext.clientManager.startOutboundCall(
             to: dialedNumber,
@@ -149,6 +177,10 @@ struct DialerView: View {
         )
         
         dismiss()
+    }
+    
+    private func isValidDTMFDigit(_ digit: String) -> Bool {
+        return ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#"].contains(digit)
     }
     
     private func playDTMFTone(for digit: String) {
