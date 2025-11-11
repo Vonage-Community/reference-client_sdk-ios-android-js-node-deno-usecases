@@ -92,22 +92,6 @@ Follow these steps to log in using a login code:
 6. Un-tick the `Login with Vonage Token` option on the app login screen.
 7. Paste the code into the text field and log in.
 
-## App Structure
-
-This app is built with **Jetpack Compose** for UI and follows modern Android development patterns with **Kotlin StateFlow** for reactive state management.
-
-### Key Components
-
-- **`VoiceClientManager`** - Manages Vonage SDK initialization, authentication, and call operations
-- **`CoreContext`** - Singleton holding global app state including the active call
-- **`LoginActivity`** - Jetpack Compose UI for user authentication
-- **`MainActivity`** - Main screen with user calling interface using Compose
-- **`CallActivity`** - Active call screen with controls (mute, hold, DTMF, etc.)
-- **`CallConnection`** - Integrates with Android Telecom framework for native call experience
-- **`PushNotificationService`** - Handles incoming call push notifications via FCM
-
-The UI is entirely built with Compose, using `StateFlow` for state management and `repeatOnLifecycle` for lifecycle-aware flow collection. This ensures proper handling of configuration changes and background/foreground transitions.
-
 ## Migrate to Combined Client
 
 To migrate to the Vonage Combined Client from the Voice client, follow these steps:

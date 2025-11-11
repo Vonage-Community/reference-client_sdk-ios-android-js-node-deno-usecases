@@ -3,10 +3,9 @@ package com.example.vonage.chatsampleapp.view.ui.composables
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
@@ -23,7 +22,7 @@ import com.google.android.material.R
 @Composable
 fun ErrorItem(message: String = "Error Message"){
     Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = 2.dp,
         modifier = Modifier
             .padding(6.dp)
             .fillMaxWidth()

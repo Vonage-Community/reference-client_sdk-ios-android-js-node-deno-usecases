@@ -9,22 +9,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import android.content.ClipData
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -193,11 +191,10 @@ class ConversationDetailsActivity : ComponentActivity() {
         Text(
             text = conversationName,
             modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.h5
         )
 
-        val clipboard = LocalClipboard.current
-        val coroutineScope = rememberCoroutineScope()
+        val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
         Text(
             text = conversationId,
@@ -206,21 +203,18 @@ class ConversationDetailsActivity : ComponentActivity() {
                 .combinedClickable (
                     onClick = {},
                     onLongClick = {
-                        coroutineScope.launch {
-                            val clipData = ClipData.newPlainText("Conversation ID", conversationId)
-                            clipboard.setClipEntry(ClipEntry(clipData))
-                        }
+                        clipboardManager.setText(AnnotatedString(text = conversationId))
                         showToast("Conversation ID Copied")
                     }
                 )
                 .border(BorderStroke(1.dp, Color.Gray), shape = CircleShape)
                 .padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.body2
         )
         Text(
             text = "Created: $creationDate",
             modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.body2
         )
     }
 
@@ -234,7 +228,7 @@ class ConversationDetailsActivity : ComponentActivity() {
         Text(
             text = "Members (${membersList.itemCount})",
             modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.h6
         )
 
         CustomList(
@@ -260,8 +254,7 @@ class ConversationDetailsActivity : ComponentActivity() {
                 }
             }
 
-            val clipboard = LocalClipboard.current
-            val coroutineScope = rememberCoroutineScope()
+            val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
             MemberItem(
                 userImageUrl = imageUrl,
@@ -272,10 +265,7 @@ class ConversationDetailsActivity : ComponentActivity() {
                 memberState = member.state,
                 isYourMember = member.user?.name == username,
                 onLongClick = {
-                    coroutineScope.launch {
-                        val clipData = ClipData.newPlainText("Member ID", member.id)
-                        clipboard.setClipEntry(ClipEntry(clipData))
-                    }
+                    clipboardManager.setText(AnnotatedString(text = member.id))
                     showToast("Member ID Copied")
                 }
             )
@@ -329,7 +319,7 @@ class ConversationDetailsActivity : ComponentActivity() {
         if(hasJoinedConversation){
             Button(
                 onClick = { showDialog = true },
-                colors = ButtonDefaults.buttonColors(containerColor = DarkRed)
+                colors = ButtonDefaults.buttonColors(backgroundColor = DarkRed)
             ){
                 Text(
                     text = stringResource(R.string.leave_conversation_text),
@@ -355,7 +345,6 @@ class ConversationDetailsActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TopAppBar(){
         TopAppBar(
@@ -366,7 +355,7 @@ class ConversationDetailsActivity : ComponentActivity() {
             },
             navigationIcon = {
                 TopAppBarActionButton(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Icons.Filled.ArrowBack,
                     description = stringResource(R.string.arrow_back_description)
                 ) { finish() }
             }

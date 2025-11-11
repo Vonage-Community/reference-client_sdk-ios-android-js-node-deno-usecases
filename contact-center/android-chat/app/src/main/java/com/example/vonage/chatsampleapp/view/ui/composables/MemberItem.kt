@@ -4,10 +4,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,7 +33,7 @@ fun MemberItem(
     onLongClick: () -> Unit = {}
 ) {
     Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = 4.dp,
         modifier = Modifier
             .padding(6.dp)
             .combinedClickable (
@@ -65,17 +64,17 @@ fun MemberItem(
 
                 Text(
                     text = nameLabel,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.subtitle1
                 )
 
                 Text(
                     text = username,
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.subtitle2
                 )
 
                 Text(
                     text = memberId,
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.overline
                 )
 
                 Row(
@@ -89,7 +88,7 @@ fun MemberItem(
                     )
                     Text(
                         text = memberChannel?.let { "${it.name} CHANNEL" } ?: String(),
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.caption
                     )
                 }
             }

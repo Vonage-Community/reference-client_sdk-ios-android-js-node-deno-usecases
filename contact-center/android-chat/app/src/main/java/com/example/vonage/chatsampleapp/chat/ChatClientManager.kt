@@ -192,11 +192,6 @@ class ChatClientManager(
             is CustomConversationEvent -> "$sender has sent a custom event in the conversation ${event.conversationId}"
             is EphemeralConversationEvent -> "$sender has sent an ephemeral event in the conversation ${event.conversationId}"
             is EventDeleteConversationEvent -> "$sender has deleted event body ${event.body} in conversation ${event.conversationId}"
-            is MessageDeliveredEvent -> "$sender message delivered in conversation ${event.conversationId}"
-            is MessageRejectedEvent -> "$sender message rejected in conversation ${event.conversationId}"
-            is MessageSeenEvent -> "$sender message seen in conversation ${event.conversationId}"
-            is MessageSubmittedEvent -> "$sender message submitted in conversation ${event.conversationId}"
-            is MessageUndeliverableEvent -> "$sender message undeliverable in conversation ${event.conversationId}"
         }
 
         // TODO: Provide utility to parse Conversation?

@@ -7,7 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -47,7 +47,6 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun LoginScreen(showProgress: Boolean = false){
         Scaffold(
@@ -92,11 +91,11 @@ class LoginActivity : ComponentActivity() {
                         end.linkTo(parent.end)
                         top.linkTo(parent.top, margin = 40.dp)
                     },
-                colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
+                colorFilter = ColorFilter.tint(color = MaterialTheme.colors.primary)
             )
             OutlinedTextField(
                 value = textFieldValue,
-                textStyle = TextStyle(color = MaterialTheme.colorScheme.primary),
+                textStyle = TextStyle(color = MaterialTheme.colors.primary),
                 onValueChange = onTextFieldValueChange,
                 label = { Text(text = textFieldLabel) },
                 modifier = Modifier

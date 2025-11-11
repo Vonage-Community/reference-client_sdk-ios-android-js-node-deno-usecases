@@ -1,27 +1,27 @@
 package com.example.vonage.chatsampleapp.view.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.darkColors
+import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
+private val DarkColorPalette = darkColors(
     primary = Color.White,
-    primaryContainer = Color.DarkGray,
+    primaryVariant = Color.DarkGray,
     onPrimary = Color.Black,
     secondary = Purple500,
-    secondaryContainer = Purple700,
+    secondaryVariant = Purple700,
     onSecondary = Color.Black
 )
 
-private val LightColorScheme = lightColorScheme(
+private val LightColorPalette = lightColors(
     primary = Color.Black,
-    primaryContainer = Color.LightGray,
+    primaryVariant = Color.LightGray,
     onPrimary = Color.White,
     secondary = Purple200,
-    secondaryContainer = Purple700,
+    secondaryVariant = Purple700,
     onSecondary = Color.White
     /* Other default colors to override
     background = Color.White,
@@ -35,14 +35,14 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ChatSampleAppTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colorScheme = if (darkTheme) {
-        DarkColorScheme
+    val colors = if (darkTheme) {
+        DarkColorPalette
     } else {
-        LightColorScheme
+        LightColorPalette
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colors = colors,
         typography = Typography,
         shapes = Shapes,
         content = content

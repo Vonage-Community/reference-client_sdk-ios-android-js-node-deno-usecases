@@ -7,6 +7,9 @@ import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.services.PushNotificationService
 import com.example.vonage.voicesampleapp.telecom.CallConnection
 import com.example.vonage.voicesampleapp.utils.*
+import com.example.vonage.voicesampleapp.utils.notifyCallAnsweredToCallActivity
+import com.example.vonage.voicesampleapp.utils.notifyCallDisconnectedToCallActivity
+import com.example.vonage.voicesampleapp.utils.notifyIsMutedToCallActivity
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
 import com.vonage.android_core.VGClientInitConfig
@@ -16,9 +19,6 @@ import com.vonage.clientcore.core.conversation.VoiceChannelType
 import com.vonage.voice.api.VoiceClient
 import java.lang.Exception
 import androidx.core.net.toUri
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * This Class will act as an interface
@@ -28,13 +28,10 @@ class VoiceClientManager(private val context: Context) {
     private lateinit var client : VoiceClient
     private val coreContext = App.coreContext
     private val customRepository by lazy { CustomRepository() }
-    
-    private val _sessionId = MutableStateFlow<String?>(null)
-    val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
-    
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
-    
+    var sessionId: String? = null
+        private set
+    var currentUser: User? = null
+        private set
     init {
         initClient()
         setClientListeners()
@@ -42,7 +39,7 @@ class VoiceClientManager(private val context: Context) {
 
     private fun initClient(){
         val config = VGClientInitConfig(LoggingLevel.Info)
-        //config.rtcStatsTelemetry = false
+        config.rtcStatsTelemetry = false
         client = VoiceClient(context, config)
     }
 
@@ -57,24 +54,23 @@ class VoiceClientManager(private val context: Context) {
             showToast(context, "Session Error: $message")
             // When the Socket Connection is closed
             // Reset sessionId & current user
-            _sessionId.value = null
-            _currentUser.value = null
+            sessionId = null
+            currentUser = null
             // And try to log in again using last valid credentials
             val token = coreContext.authToken ?: return@setSessionErrorListener
             login(token,
                 onErrorCallback = {
                     // Cleanup any active call upon login failure
-                    coreContext.activeCall.value?.run {
-                        cleanUp(DisconnectCause(DisconnectCause.MISSED))
-                    }
-                    // Navigation to LoginActivity is handled by observeSessionId() in activities
+                    coreContext.activeCall?.run {
+                        cleanUp(DisconnectCause(DisconnectCause.MISSED), false)
+                    } ?: navigateToMainActivity(context)
                 }
             )
         }
 
         client.setCallInviteListener { callId, from, type ->
             // Reject incoming calls when there is already an active one
-            coreContext.activeCall.value?.let { return@setCallInviteListener }
+            coreContext.activeCall?.let { return@setCallInviteListener }
             placeIncomingCall(callId, from, type)
             // NOTE: a foreground service needs to be started to record the audio when app is in the background
             startForegroundService(context)
@@ -92,35 +88,35 @@ class VoiceClientManager(private val context: Context) {
         client.setOnCallHangupListener { callId, callQuality, reason ->
             println("Call $callId has been hung up with reason: ${reason.name} and quality: $callQuality")
             takeIfActive(callId)?.apply {
-                val cause = when(reason) {
-                    HangupReason.remoteReject -> DisconnectCause.REJECTED
-                    HangupReason.remoteHangup -> DisconnectCause.REMOTE
-                    HangupReason.localHangup -> DisconnectCause.LOCAL
-                    HangupReason.mediaTimeout -> DisconnectCause.BUSY
-                    HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED
+                val (cause, isRemote) = when(reason) {
+                    HangupReason.remoteReject -> DisconnectCause.REJECTED to true
+                    HangupReason.remoteHangup -> DisconnectCause.REMOTE to true
+                    HangupReason.localHangup -> DisconnectCause.LOCAL to false
+                    HangupReason.mediaTimeout -> DisconnectCause.BUSY to true
+                    HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED to true
                 }
-                cleanUp(DisconnectCause(cause))
+                cleanUp(DisconnectCause(cause), isRemote)
             }
         }
 
         client.setOnCallMediaDisconnectListener { callId, reason ->
             println("Call $callId has been disconnected with reason: ${reason.name}")
             takeIfActive(callId)?.apply {
-                cleanUp(DisconnectCause(DisconnectCause.ERROR))
+                cleanUp(DisconnectCause(DisconnectCause.ERROR), isRemote = false)
             }
         }
-        
+
         client.setOnCallMediaReconnectingListener { callId ->
             println("Call $callId is reconnecting")
             takeIfActive(callId)?.apply {
-                setInitializing()
+                notifyCallReconnectingToCallActivity(context)
             }
         }
 
         client.setOnCallMediaReconnectionListener { callId ->
             println("Call $callId has successfully reconnected")
             takeIfActive(callId)?.apply {
-                setActive()
+                notifyCallReconnectedToCallActivity(context)
             }
         }
 
@@ -133,7 +129,7 @@ class VoiceClientManager(private val context: Context) {
                     VoiceInviteCancelReason.RemoteCancel -> DisconnectCause(DisconnectCause.CANCELED)
                     VoiceInviteCancelReason.RemoteTimeout -> DisconnectCause(DisconnectCause.MISSED)
                 }
-                cleanUp(cause)
+                cleanUp(cause, true)
             } ?: stopForegroundService(context)
         }
 
@@ -147,8 +143,14 @@ class VoiceClientManager(private val context: Context) {
         client.setOnMutedListener { callId, legId, isMuted ->
             println("LegId $legId for Call $callId has been ${if(isMuted) "muted" else "unmuted"}")
             takeIf { callId == legId } ?: return@setOnMutedListener
-            // SDK confirms mute state change - no action needed
-            // onMuteStateChanged already handled the state update
+            takeIfActive(callId)?.run {
+                // Update Active Call Mute State
+                toggleMuteState(isMuted)
+                takeUnless { it.isOnHold }?.run {
+                    // Notify Call Activity
+                    notifyIsMutedToCallActivity(context, isMuted)
+                }
+            }
         }
 
         client.setOnDTMFListener { callId, legId, digits ->
@@ -157,15 +159,13 @@ class VoiceClientManager(private val context: Context) {
     }
     fun login(token: String, onErrorCallback: ((Exception) -> Unit)? = null, onSuccessCallback: ((String) -> Unit)? = null){
         client.createSession(token){ error, sessionId ->
-            sessionId?.let { sid ->
+            sessionId?.let {
                 registerDevicePushToken()
+                this.sessionId = it
                 coreContext.authToken = token
                 getCurrentUser {
                     reconnectCall()
-                    // Set sessionId AFTER user is fetched and callback is invoked
-                    // This ensures UI shows toast and username before navigation
-                    onSuccessCallback?.invoke(sid)
-                    _sessionId.value = sid
+                    onSuccessCallback?.invoke(it)
                 }
             } ?: error?.let {
                 onErrorCallback?.invoke(it)
@@ -175,7 +175,7 @@ class VoiceClientManager(private val context: Context) {
 
     private fun getCurrentUser(completionHandler: (() -> Unit)? = null){
         client.getUser("me"){ _, user ->
-            _currentUser.value = user
+            currentUser = user
             completionHandler?.invoke()
         }
     }
@@ -197,8 +197,8 @@ class VoiceClientManager(private val context: Context) {
             error?.let {
                 showToast(context, "Error Logging Out: ${error.message}")
             } ?: run {
-                _sessionId.value = null
-                _currentUser.value = null
+                sessionId = null
+                currentUser = null
                 coreContext.authToken = null
                 coreContext.refreshToken = null
                 onSuccessCallback?.invoke()
@@ -228,7 +228,7 @@ class VoiceClientManager(private val context: Context) {
                     showToast(context, "Error reconnecting call with $callerDisplayName: $it")
                 } ?: run {
                     showToast(context, "Call with $callerDisplayName successfully reconnected")
-                    coreContext.activeCall.value ?:
+                    coreContext.activeCall ?:
                     // Start a new Outgoing Call if there is not an active one
                     placeOutgoingCall(this.callId, this.callerDisplayName, isReconnected = true)
                 }
@@ -278,7 +278,7 @@ class VoiceClientManager(private val context: Context) {
             client.answer(callId) { err ->
                 if (err != null) {
                     println("Error Answering Call: $err")
-                    cleanUp(DisconnectCause(DisconnectCause.ERROR))
+                    cleanUp(DisconnectCause(DisconnectCause.ERROR), false)
                 } else {
                     println("Answered call with id: $callId")
                     setAnswered()
@@ -292,10 +292,10 @@ class VoiceClientManager(private val context: Context) {
             client.reject(callId){ err ->
                 if (err != null) {
                     println("Error Rejecting Call: $err")
-                    cleanUp(DisconnectCause(DisconnectCause.ERROR))
+                    cleanUp(DisconnectCause(DisconnectCause.ERROR), false)
                 } else {
                     println("Rejected call with id: $callId")
-                    cleanUp(DisconnectCause(DisconnectCause.REJECTED))
+                    cleanUp(DisconnectCause(DisconnectCause.REJECTED), false)
                 }
             }
         } ?: call.selfDestroy()
@@ -309,10 +309,9 @@ class VoiceClientManager(private val context: Context) {
                     // If there has been an error
                     // the onCallHangupListener will not be invoked,
                     // hence the Call needs to be explicitly disconnected
-                    cleanUp(DisconnectCause(DisconnectCause.LOCAL))
+                    cleanUp(DisconnectCause(DisconnectCause.LOCAL), false)
                 } else {
                     println("Hung up call with id: $callId")
-                    // The onCallHangupListener will be invoked with the reason
                 }
             }
         } ?: call.selfDestroy()
@@ -385,6 +384,8 @@ class VoiceClientManager(private val context: Context) {
                             println("Error enabling earmuff in holdCall with id: $callId")
                         } ?: run {
                             println("Call $callId successfully put on hold")
+                            toggleHoldState()
+                            notifyIsOnHoldToCallActivity(context, true)
                         }
                     }
                 }
@@ -403,6 +404,8 @@ class VoiceClientManager(private val context: Context) {
                             println("Error disabling earmuff in unholdCall with id: $callId")
                         } ?: run {
                             println("Call $callId successfully removed from hold")
+                            toggleHoldState()
+                            notifyIsOnHoldToCallActivity(context, false)
                         }
                     }
                 }
@@ -429,8 +432,6 @@ class VoiceClientManager(private val context: Context) {
     private fun placeIncomingCall(callId: CallId, caller: String, type: VoiceChannelType){
         try {
             coreContext.telecomHelper.startIncomingCall(callId, caller, type)
-            // Navigate to MainActivity - it will observe active call and navigate to CallActivity
-            navigateToMainActivity(context)
         } catch (e: Exception){
             abortInboundCall(callId, e.message)
         }
@@ -439,13 +440,13 @@ class VoiceClientManager(private val context: Context) {
     private fun abortOutboundCall(callId: CallId, message: String?){
         showToast(context, "Outgoing Call Error: $message")
         client.hangup(callId){}
-        // Disconnect state is handled automatically through CallConnection StateFlow
+        notifyCallDisconnectedToCallActivity(context, false)
     }
 
     private fun abortInboundCall(callId: CallId, message: String?){
         showToast(context, "Incoming Call Error: $message")
         client.reject(callId){}
-        // Disconnect state is handled automatically through CallConnection StateFlow
+        notifyCallDisconnectedToCallActivity(context, false)
     }
 
     /**
@@ -471,20 +472,20 @@ class VoiceClientManager(private val context: Context) {
      * Utilities to filter active calls
      */
     private fun takeIfActive(callId: CallId) : CallConnection? {
-        return coreContext.activeCall.value?.takeIf { it.callId == callId }
+        return coreContext.activeCall?.takeIf { it.callId == callId }
     }
     private fun CallConnection.takeIfActive() : CallConnection? {
         return takeIfActive(callId)
     }
 
     private fun CallConnection.setAnswered(){
-        // setActive() updates the connection state, which is observed via StateFlow
         this.setActive()
+        notifyCallAnsweredToCallActivity(context)
     }
 
-    private fun CallConnection.cleanUp(disconnectCause: DisconnectCause){
-        // disconnect() updates the connection state, which is observed via StateFlow
+    private fun CallConnection.cleanUp(disconnectCause: DisconnectCause, isRemote: Boolean){
         this.disconnect(disconnectCause)
+        notifyCallDisconnectedToCallActivity(context, isRemote)
         stopForegroundService(context)
     }
 }

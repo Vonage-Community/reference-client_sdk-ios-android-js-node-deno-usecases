@@ -130,12 +130,7 @@ fun ConversationEventItem(
             )
         is CustomConversationEvent,
         is EphemeralConversationEvent,
-        is EventDeleteConversationEvent,
-        is MessageDeliveredEvent,
-        is MessageRejectedEvent,
-        is MessageSeenEvent,
-        is MessageSubmittedEvent,
-        is MessageUndeliverableEvent -> {
+        is EventDeleteConversationEvent -> {
         //NOOP
         }
     }

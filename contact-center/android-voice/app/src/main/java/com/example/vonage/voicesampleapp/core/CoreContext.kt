@@ -6,9 +6,6 @@ import com.example.vonage.voicesampleapp.telecom.TelecomHelper
 import com.example.vonage.voicesampleapp.utils.CallInfo
 import com.example.vonage.voicesampleapp.utils.Constants
 import com.example.vonage.voicesampleapp.utils.PrivatePreferences
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * A singleton class for storing and accessing Core Application Data
@@ -17,15 +14,12 @@ class CoreContext private constructor(context: Context) {
     private val applicationContext: Context = context.applicationContext
     val telecomHelper: TelecomHelper by lazy { TelecomHelper(applicationContext) }
     val clientManager: VoiceClientManager by lazy { VoiceClientManager(applicationContext) }
-    
-    private val _activeCall = MutableStateFlow<CallConnection?>(null)
-    val activeCall: StateFlow<CallConnection?> = _activeCall.asStateFlow()
-    
-    fun setActiveCall(call: CallConnection?) {
-        PrivatePreferences.set(PrivatePreferences.CALL_ID, call?.callId, applicationContext)
-        PrivatePreferences.set(PrivatePreferences.CALLER_DISPLAY_NAME, call?.callerDisplayName, applicationContext)
-        _activeCall.value = call
-    }
+    var activeCall: CallConnection? = null
+        set(value) {
+            PrivatePreferences.set(PrivatePreferences.CALL_ID, value?.callId, applicationContext)
+            PrivatePreferences.set(PrivatePreferences.CALLER_DISPLAY_NAME, value?.callerDisplayName, applicationContext)
+            field = value
+        }
 
     /**
      * The Last Active Call's details.
