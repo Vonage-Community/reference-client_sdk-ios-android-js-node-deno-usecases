@@ -19,7 +19,7 @@ extension Publisher {
     }
 }
 
-extension VGSessionErrorReason: Error {}
+extension VGSessionErrorReason: @retroactive Error {}
 
 extension UUID {
     func toVGCallID() -> String {
