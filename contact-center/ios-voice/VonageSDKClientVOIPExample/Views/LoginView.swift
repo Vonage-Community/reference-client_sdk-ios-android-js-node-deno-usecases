@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject private var viewModel = LoginViewModelSwiftUI()
+    @StateObject private var viewModel = LoginViewModel()
     @EnvironmentObject private var coreContext: CoreContext
     @State private var isLoginSuccessful = false
     
@@ -51,7 +51,7 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: AppSpacing.small) {
                             TextField(
                                 viewModel.loginWithToken ? "Token" : "Login Code",
-                                text: $viewModel.tokenOrCode
+                                text: viewModel.loginWithToken ? $viewModel.token : $viewModel.code
                             )
                             .font(AppTypography.bodyMedium)
                             .padding()
@@ -91,7 +91,7 @@ struct LoginView: View {
                             }
                         }
                         .buttonStyle(PrimaryButtonStyle(isLoading: viewModel.isLoading))
-                        .disabled(viewModel.isLoading || viewModel.tokenOrCode.isEmpty)
+                        .disabled(viewModel.isLoading || viewModel.currentInput.isEmpty)
                         
                         Spacer()
                             .frame(height: AppSpacing.medium)
@@ -140,19 +140,25 @@ struct LoginView: View {
 }
 
 // MARK: - View Model
-class LoginViewModelSwiftUI: ObservableObject {
-    @Published var tokenOrCode: String = ""
+class LoginViewModel: ObservableObject {
+    @Published var token: String = ""
+    @Published var code: String = ""
     @Published var loginWithToken: Bool = true
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
     private var clientManager: VoiceClientManager?
     
+    /// Returns the current input based on login mode
+    var currentInput: String {
+        loginWithToken ? token : code
+    }
+    
     init() {
         // Set default token from configuration
         let defaultToken = Configuration.defaultToken
         if !defaultToken.isEmpty {
-            self.tokenOrCode = defaultToken
+            self.token = defaultToken
         }
     }
     
@@ -184,9 +190,9 @@ class LoginViewModelSwiftUI: ObservableObject {
         }
         
         if loginWithToken {
-            clientManager.login(token: tokenOrCode, onError: onError, onSuccess: onSuccess)
+            clientManager.login(token: token, onError: onError, onSuccess: onSuccess)
         } else {
-            clientManager.loginWithCode(code: tokenOrCode, onError: onError, onSuccess: onSuccess)
+            clientManager.loginWithCode(code: code, onError: onError, onSuccess: onSuccess)
         }
     }
 }
