@@ -2,7 +2,7 @@
 //  CallView.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
 import SwiftUI
@@ -65,11 +65,10 @@ struct CallView: View {
             DialerView(dialerType: .dtmf)
         }
         .onReceive(coreContext.$activeCall) { activeCall in
-            if activeCall == nil {
-                // Delay dismiss to show disconnected state
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    dismiss()
-                }
+            guard activeCall == nil else { return }
+            // Delay dismiss to show disconnected state
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                dismiss()
             }
         }
     }
@@ -112,7 +111,7 @@ struct CallView: View {
                 color: .errorRed,
                 size: 68
             ) {
-                coreContext.clientManager.rejectCall(call)
+                coreContext.voiceClientManager.rejectCall(call)
             }
             
             // Answer Button
@@ -121,7 +120,7 @@ struct CallView: View {
                 color: .successGreen,
                 size: 68
             ) {
-                coreContext.clientManager.answerCall(call)
+                coreContext.voiceClientManager.answerCall(call)
             }
         }
         .padding(.bottom, AppSpacing.large)
@@ -176,7 +175,7 @@ struct CallView: View {
                     color: .errorRed,
                     size: 64
                 ) {
-                    coreContext.clientManager.hangupCall(call)
+                    coreContext.voiceClientManager.hangupCall(call)
                 }
                 
                 // Spacer for balance
@@ -190,64 +189,26 @@ struct CallView: View {
     // MARK: - Actions
     private func toggleMute() {
         if call.isMuted {
-            coreContext.clientManager.unmuteCall(call)
+            coreContext.voiceClientManager.unmuteCall(call)
         } else {
-            coreContext.clientManager.muteCall(call)
+            coreContext.voiceClientManager.muteCall(call)
         }
     }
     
     private func toggleHold() {
         if call.isOnHold {
-            coreContext.clientManager.unholdCall(call)
+            coreContext.voiceClientManager.unholdCall(call)
         } else {
-            coreContext.clientManager.holdCall(call)
+            coreContext.voiceClientManager.holdCall(call)
         }
     }
     
     private func toggleNoiseSuppression() {
         if call.isNoiseSuppressionEnabled {
-            coreContext.clientManager.disableNoiseSuppression(call)
+            coreContext.voiceClientManager.disableNoiseSuppression(call)
         } else {
-            coreContext.clientManager.enableNoiseSuppression(call)
+            coreContext.voiceClientManager.enableNoiseSuppression(call)
         }
-    }
-}
-
-// MARK: - Call Action Button
-struct CallActionButton: View {
-    let icon: String
-    let color: Color
-    var iconColor: Color = .white
-    var size: CGFloat = 64
-    let action: () -> Void
-    
-    @State private var isPressed: Bool = false
-    
-    var body: some View {
-        Button(action: {
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = true
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isPressed = false
-                }
-            }
-            
-            action()
-        }) {
-            Image(systemName: icon)
-                .font(.system(size: size * 0.4, weight: .medium))
-                .foregroundColor(iconColor)
-                .frame(width: size, height: size)
-                .background(
-                    Circle()
-                        .fill(color)
-                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                )
-        }
-        .scaleEffect(isPressed ? 0.95 : 1.0)
     }
 }
 

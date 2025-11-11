@@ -2,7 +2,7 @@
 //  LoginView.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
 import SwiftUI
@@ -128,71 +128,11 @@ struct LoginView: View {
                     .navigationBarBackButtonHidden(true)
             }
         }
-        .onReceive(coreContext.clientManager.$sessionId) { sessionId in
-            if sessionId != nil {
-                isLoginSuccessful = true
-            }
+        .onReceive(coreContext.voiceClientManager.$sessionId) { sessionId in
+            isLoginSuccessful = sessionId != nil
         }
         .onAppear {
-            viewModel.setup(with: coreContext.clientManager)
-        }
-    }
-}
-
-// MARK: - View Model
-class LoginViewModel: ObservableObject {
-    @Published var token: String = ""
-    @Published var code: String = ""
-    @Published var loginWithToken: Bool = true
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String?
-    
-    private var clientManager: VoiceClientManager?
-    
-    /// Returns the current input based on login mode
-    var currentInput: String {
-        loginWithToken ? token : code
-    }
-    
-    init() {
-        // Set default token from configuration
-        let defaultToken = Configuration.defaultToken
-        if !defaultToken.isEmpty {
-            self.token = defaultToken
-        }
-    }
-    
-    func setup(with manager: VoiceClientManager) {
-        self.clientManager = manager
-    }
-    
-    func performLogin() {
-        guard let clientManager = clientManager else {
-            errorMessage = "Client manager not initialized"
-            return
-        }
-        
-        isLoading = true
-        errorMessage = nil
-        
-        let onError: (Error) -> Void = { [weak self] error in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                self?.errorMessage = "Login failed: \(error.localizedDescription)"
-            }
-        }
-        
-        let onSuccess: (String) -> Void = { [weak self] sessionId in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                print("✅ Logged in successfully with session ID: \(sessionId)")
-            }
-        }
-        
-        if loginWithToken {
-            clientManager.login(token: token, onError: onError, onSuccess: onSuccess)
-        } else {
-            clientManager.loginWithCode(code: code, onError: onError, onSuccess: onSuccess)
+            viewModel.setup(with: coreContext.voiceClientManager)
         }
     }
 }

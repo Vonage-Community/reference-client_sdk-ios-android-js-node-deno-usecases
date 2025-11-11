@@ -2,7 +2,7 @@
 //  VonageVoiceApp.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
 import SwiftUI
@@ -29,7 +29,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            if coreContext.clientManager.sessionId != nil {
+            if coreContext.voiceClientManager.sessionId != nil {
                 MainView()
             } else {
                 LoginView()

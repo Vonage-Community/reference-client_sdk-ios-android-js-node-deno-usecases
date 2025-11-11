@@ -2,6 +2,32 @@
 
 An iOS application powered by the Vonage Voice API to make and receive VOIP Calls.
 
+## Architecture Overview
+
+This app follows a modern SwiftUI architecture with clean separation of concerns:
+
+### Core Components
+- **`VonageVoiceApp`** - Main SwiftUI app entry point with NavigationStack-based routing
+- **`CoreContext`** - Singleton managing shared services and app-wide state
+- **`VoiceClientManager`** - Handles Vonage SDK integration, call lifecycle, and CallKit (device) / WebSocket (simulator)
+- **`PushService`** - Manages VoIP and user push notifications via PushKit
+- **`NetworkService`** - Generic Combine-based HTTP client for authentication APIs
+
+### Views & ViewModels
+- **`LoginView/LoginViewModel`** - Supports token-based and code-based authentication
+- **`MainView`** - Home screen with username calling and floating dialer button
+- **`DialerView`** - Phone number dialing and in-call DTMF input
+- **`CallView`** - In-call UI with adaptive controls (incoming vs active states)
+
+### Models
+- **`VGCallWrapper`** - Observable wrapper around Vonage calls with state management
+- **`CallState`** - Enum representing call lifecycle (ringing, active, holding, disconnected, reconnecting)
+
+### Services & Utilities
+- **`Configuration`** - Reads API URLs and tokens from xcconfig
+- **`AppTheme`** - Centralized design system (colors, typography, spacing, button styles)
+- **Extensions** - Data hex conversion, UUID utilities, Publisher helpers, Vonage SDK error conformance
+
 ## Getting Started
 Note: A minimum version of Xcode 14.x is required to build and run. 
 

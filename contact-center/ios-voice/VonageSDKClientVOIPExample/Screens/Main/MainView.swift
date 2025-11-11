@@ -2,7 +2,7 @@
 //  MainView.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
 import SwiftUI
@@ -108,16 +108,10 @@ struct MainView: View {
                 .navigationBarBackButtonHidden(true)
         }
         .onReceive(coreContext.$activeCall) { call in
-            if call != nil {
-                navigateToCall = true
-            } else {
-                navigateToCall = false
-            }
+            navigateToCall = call != nil
         }
-        .onReceive(coreContext.clientManager.$sessionId) { sessionId in
-            if sessionId == nil {
-                navigateToLogin = true
-            }
+        .onReceive(coreContext.voiceClientManager.$sessionId) { sessionId in
+            navigateToLogin = sessionId == nil
         }
     }
     
@@ -153,24 +147,26 @@ struct MainView: View {
     
     // MARK: - Computed Properties
     private var username: String {
-        if let displayName = coreContext.clientManager.currentUser?.displayName, !displayName.isEmpty {
-            return displayName
-        } else if let name = coreContext.clientManager.currentUser?.name {
-            return name
-        } else {
+        guard let user = coreContext.voiceClientManager.currentUser else {
             return "Guest User"
         }
+        
+        if let displayName = user.displayName, !displayName.isEmpty {
+            return displayName
+        }
+        
+        return user.name
     }
     
     // MARK: - Actions
     private func callUser() {
         let trimmedUsername = usernameToCall.trimmingCharacters(in: .whitespacesAndNewlines)
         // Allow calling even with empty username - it's a valid use case
-        coreContext.clientManager.startOutboundCall(to: trimmedUsername)
+        coreContext.voiceClientManager.startOutboundCall(to: trimmedUsername)
     }
     
     private func logout() {
-        coreContext.clientManager.logout()
+        coreContext.voiceClientManager.logout()
     }
 }
 

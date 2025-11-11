@@ -3,35 +3,31 @@
 //  VonageSDKClientVOIPExample
 //
 //  Created by Ashley Arthur on 25/01/2023.
-//  Refactored for SwiftUI by Copilot on 11/11/2025.
+//  Refactored for SwiftUI by Salvatore Di Cara on 11/11/2025.
 //
 
 import UIKit
-import VonageClientSDKVoice
-import CallKit
-import Combine
 import AVFoundation
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     var coreContext: CoreContext?
-    private var cancellables = Set<AnyCancellable>()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Core context is now managed by the SwiftUI App
-        // Just ensure we have microphone permissions
+        // Setup microphone permissions and audio session early
+        // This is critical for handling VoIP calls when app is not running
         requestMicrophonePermission()
+        setupAudioSession()
         
         return true
     }
     
     private func requestMicrophonePermission() {
-        let mediaType = AVMediaType.audio
-        let authorizationStatus = AVCaptureDevice.authorizationStatus(for: mediaType)
+        let authorizationStatus = AVCaptureDevice.authorizationStatus(for: .audio)
         
         switch authorizationStatus {
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: mediaType) { granted in
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
                 print("🎤 Microphone access \(granted ? "granted" : "denied")")
             }
         case .authorized:
@@ -40,6 +36,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("🎤 Microphone access denied or restricted")
         @unknown default:
             break
+        }
+    }
+    
+    private func setupAudioSession() {
+        // Configure audio session for VoIP
+        // This must be done early so we can handle incoming calls
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .voiceChat, options: [])
+            try AVAudioSession.sharedInstance().setActive(true)
+            print("✅ Audio session configured")
+        } catch {
+            print("❌ Failed to configure audio session: \(error)")
         }
     }
     
@@ -62,8 +70,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
-        // Logout on app termination
-        coreContext?.clientManager.logout()
+        // Don't unregister push tokens on app termination
+        // This allows the user to receive calls even after app is terminated
+        coreContext?.voiceClientManager.logout(unregisterPushToken: false)
     }
 }
 

@@ -2,7 +2,7 @@
 //  DialerView.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
 import SwiftUI
@@ -55,14 +55,13 @@ struct DialerView: View {
                 .padding(.horizontal, AppSpacing.large)
                 .onChange(of: dialedNumber) { newValue in
                     // For DTMF mode, send each new digit as it's typed
-                    if dialerType == .dtmf, let activeCall = coreContext.activeCall {
-                        // Check if a new digit was added by comparing lengths
-                        if !newValue.isEmpty {
-                            let newDigit = String(newValue.last!)
-                            if isValidDTMFDigit(newDigit) {
-                                coreContext.clientManager.sendDTMF(activeCall, digit: newDigit)
-                                playDTMFTone(for: newDigit)
-                            }
+                    if dialerType == .dtmf,
+                       let activeCall = coreContext.activeCall,
+                       let lastChar = newValue.last {
+                        let newDigit = String(lastChar)
+                        if isValidDTMFDigit(newDigit) {
+                            coreContext.voiceClientManager.sendDTMF(activeCall, digit: newDigit)
+                            playDTMFTone(for: newDigit)
                         }
                     }
                 }
@@ -163,7 +162,7 @@ struct DialerView: View {
         
         // Send DTMF if in DTMF mode
         if dialerType == .dtmf, let activeCall = coreContext.activeCall {
-            coreContext.clientManager.sendDTMF(activeCall, digit: digit)
+            coreContext.voiceClientManager.sendDTMF(activeCall, digit: digit)
         }
     }
     
@@ -171,7 +170,7 @@ struct DialerView: View {
         // Allow calling even with empty number - it's a valid use case
         isTextFieldFocused = false // Dismiss keyboard
         
-        coreContext.clientManager.startOutboundCall(
+        coreContext.voiceClientManager.startOutboundCall(
             to: dialedNumber,
             context: ["call_type": "phone"]
         )
@@ -185,23 +184,13 @@ struct DialerView: View {
     
     private func playDTMFTone(for digit: String) {
         let toneMap: [String: SystemSoundID] = [
-            "0": 1200,
-            "1": 1201,
-            "2": 1202,
-            "3": 1203,
-            "4": 1204,
-            "5": 1205,
-            "6": 1206,
-            "7": 1207,
-            "8": 1208,
-            "9": 1209,
-            "*": 1210,
-            "#": 1211
+            "0": 1200, "1": 1201, "2": 1202, "3": 1203,
+            "4": 1204, "5": 1205, "6": 1206, "7": 1207,
+            "8": 1208, "9": 1209, "*": 1210, "#": 1211
         ]
         
-        if let soundId = toneMap[digit] {
-            AudioServicesPlaySystemSound(soundId)
-        }
+        guard let soundId = toneMap[digit] else { return }
+        AudioServicesPlaySystemSound(soundId)
     }
 }
 

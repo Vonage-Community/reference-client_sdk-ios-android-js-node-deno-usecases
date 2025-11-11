@@ -2,14 +2,14 @@
 //  VoiceClientManager.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
-import Foundation
 import Combine
 import CallKit
 import PushKit
 import VonageClientSDKVoice
+import AVFoundation
 
 /// Modern VoiceClientManager using Combine for reactive state management
 /// This replaces the old UIKit-based CallController with a clean, SwiftUI-friendly architecture
@@ -22,7 +22,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     // MARK: - Properties
     private let client: VGVoiceClient
-    private weak var context: CoreContext?
+    weak var context: CoreContext!
     private var cancellables = Set<AnyCancellable>()
     
     // CallKit (only on device)
@@ -32,9 +32,26 @@ class VoiceClientManager: NSObject, ObservableObject {
     #endif
     
     // MARK: - Initialization
-    init(client: VGVoiceClient, context: CoreContext? = nil) {
-        self.client = client
-        self.context = context
+    override init() {
+        // Initialize Vonage Client with configuration
+        let config = VGClientInitConfig(loggingLevel: .debug, region: .US)
+        
+        #if targetEnvironment(simulator)
+        // On simulator: disable CallKit and enable WebSocket invites
+        config.enableWebsocketInvites = true
+        print("🖥️ Running on simulator - WebSocket invites enabled, CallKit disabled")
+        #else
+        // On device: use CallKit for native call UI
+        print("📱 Running on device - CallKit enabled")
+        #endif
+        
+        self.client = VGVoiceClient(config)
+        
+        #if targetEnvironment(simulator)
+        VGVoiceClient.isUsingCallKit = false
+        #else
+        VGVoiceClient.isUsingCallKit = true
+        #endif
         
         #if !targetEnvironment(simulator)
         // Configure CallKit provider (device only)
@@ -57,10 +74,6 @@ class VoiceClientManager: NSObject, ObservableObject {
         #endif
     }
     
-    func setContext(_ context: CoreContext) {
-        self.context = context
-    }
-    
     // MARK: - Authentication
     func login(token: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
         DispatchQueue.main.async {
@@ -69,18 +82,18 @@ class VoiceClientManager: NSObject, ObservableObject {
         }
         
         client.createSession(token) { [weak self] error, sessionId in
-            guard let self = self else { return }
+            guard let self else { return }
             
             DispatchQueue.main.async {
                 self.isLoading = false
                 
-                if let error = error {
+                if let error {
                     self.errorMessage = error.localizedDescription
                     onError?(error)
                     return
                 }
                 
-                guard let sessionId = sessionId else {
+                guard let sessionId else {
                     let error = NSError(domain: "VoiceClientManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No session ID received"])
                     self.errorMessage = error.localizedDescription
                     onError?(error)
@@ -88,7 +101,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                 }
                 
                 // Store auth token
-                self.context?.authToken = token
+                self.context.authToken = token
                 self.sessionId = sessionId
                 
                 // Fetch current user
@@ -105,8 +118,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             self.errorMessage = nil
         }
         
-        // Use NetworkController to exchange code for token
-        NetworkController()
+        // Use NetworkService to exchange code for token
+        context.networkService
             .sendRequest(apiType: CodeLoginAPI(body: LoginRequest(code: code)))
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -124,7 +137,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                     guard let self = self else { return }
                     
                     // Store refresh token
-                    self.context?.refreshToken = response.refreshToken
+                    self.context.refreshToken = response.refreshToken
                     
                     // Login with the received token
                     self.login(token: response.vonageToken, onError: onError, onSuccess: onSuccess)
@@ -133,32 +146,40 @@ class VoiceClientManager: NSObject, ObservableObject {
             .store(in: &cancellables)
     }
     
-    func logout(onSuccess: (() -> Void)? = nil) {
-        // Unregister push tokens - commented out as API may have changed
-        // if let deviceId = context?.deviceId {
-        //     client.unregisterDevicePushToken(deviceId) { error in
-        //         if let error = error {
-        //             print("❌ Failed to unregister push token: \(error)")
-        //         }
-        //     }
-        // }
+    func logout(unregisterPushToken: Bool = true, onSuccess: (() -> Void)? = nil) {
+        // Optionally unregister push tokens
+        // Set to true for user logout (they won't receive calls after logout)
+        // Set to false for app termination (allows receiving calls after app closes)
+        if unregisterPushToken, let deviceId = context.deviceId {
+            client.unregisterDeviceTokens(byDeviceId: deviceId) { [weak self] error in
+                if let error {
+                    print("❌ Failed to unregister push token: \(error)")
+                } else {
+                    print("✅ Push tokens unregistered")
+                    // Clear deviceId on successful unregistration
+                    guard let self else { return }
+                    DispatchQueue.main.async {
+                        self.context.deviceId = nil
+                    }
+                }
+            }
+        }
         
         // Delete session
         client.deleteSession { [weak self] error in
-            guard let self = self else { return }
+            guard let self else { return }
             
             DispatchQueue.main.async {
-                if let error = error {
+                if let error {
                     self.errorMessage = error.localizedDescription
                 } else {
                     // Clear state
                     self.sessionId = nil
                     self.currentUser = nil
-                    self.context?.authToken = nil
-                    self.context?.refreshToken = nil
-                    self.context?.deviceId = nil
-                    self.context?.activeCall = nil
-                    self.context?.lastActiveCall = nil
+                    self.context.authToken = nil
+                    self.context.refreshToken = nil
+                    self.context.activeCall = nil
+                    self.context.lastActiveCall = nil
                     
                     onSuccess?()
                 }
@@ -190,15 +211,17 @@ class VoiceClientManager: NSObject, ObservableObject {
         }
         
         client.registerVoipToken(voipData, isSandbox: true) { [weak self] error, deviceId in
-            if let error = error {
+            guard let self else { return }
+            
+            if let error {
                 print("❌ Failed to register VOIP token: \(error)")
                 return
             }
             
-            guard let deviceId = deviceId else { return }
+            guard let deviceId else { return }
             
             DispatchQueue.main.async {
-                self?.context?.deviceId = deviceId
+                self.context.deviceId = deviceId
                 print("✅ Registered VOIP token with device ID: \(deviceId)")
             }
         }
@@ -207,37 +230,36 @@ class VoiceClientManager: NSObject, ObservableObject {
     func processVoipPush(_ payload: PKPushPayload) {
         print("📨 Processing VoIP push notification")
         
-        // Check if we have an active session
+        // If no active session, attempt to restore it asynchronously
+        // This is async so won't block - execution continues immediately
         if sessionId == nil {
-            print("⚠️ No active session - attempting to restore session asynchronously")
+            print("⚠️ No active session - attempting restoration")
             
-            // Attempt to restore session asynchronously (don't wait for completion)
-            // By the time user answers/rejects, the session should be ready
-            if let token = context?.authToken {
+            if let token = context.authToken {
                 print("🔄 Restoring session with stored auth token")
                 login(token: token, onError: { error in
-                    print("❌ Failed to restore session from auth token: \(error)")
+                    print("❌ Failed to restore session: \(error)")
                 }, onSuccess: { sessionId in
-                    print("✅ Session restored successfully: \(sessionId)")
+                    print("✅ Session restored: \(sessionId)")
                 })
-            } else if let refreshToken = context?.refreshToken {
+            } else if let refreshToken = context.refreshToken {
                 print("🔄 Refreshing session with refresh token")
                 refreshSessionForPush(refreshToken: refreshToken)
             } else {
-                print("⚠️ No stored tokens - incoming call may fail if user answers immediately")
+                print("⚠️ No stored tokens available for session restoration")
             }
-        } else {
-            print("✅ Active session exists: \(sessionId!)")
+        } else if let sessionId {
+            print("✅ Active session exists: \(sessionId)")
         }
         
-        // Process the push data immediately (don't wait for session)
+        // Process push data immediately after triggering session restoration
         // The SDK will queue the call invite and deliver it when session is ready
         client.processCallInvitePushData(payload.dictionaryPayload)
     }
     
     private func refreshSessionForPush(refreshToken: String) {
-        // Use NetworkController to get a new token
-        NetworkController()
+        // Use NetworkService to get a new token
+        context.networkService
             .sendRequest(apiType: RefreshTokenAPI(refreshToken: refreshToken))
             .sink(
                 receiveCompletion: { completion in
@@ -249,7 +271,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                     guard let self = self else { return }
                     
                     // Store new tokens
-                    self.context?.refreshToken = response.refreshToken
+                    self.context.refreshToken = response.refreshToken
                     
                     // Create session with new token
                     self.login(token: response.vonageToken, onError: { error in
@@ -268,9 +290,9 @@ class VoiceClientManager: NSObject, ObservableObject {
         callContext["callee"] = callee
         
         client.serverCall(callContext) { [weak self] error, callId in
-            guard let self = self else { return }
+            guard let self else { return }
             
-            if let error = error {
+            if let error {
                 print("❌ Failed to start outbound call: \(error)")
                 DispatchQueue.main.async {
                     self.errorMessage = "Failed to start call: \(error.localizedDescription)"
@@ -278,7 +300,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                 return
             }
             
-            guard let callId = callId, let callUUID = UUID(uuidString: callId) else {
+            guard let callId, let callUUID = UUID(uuidString: callId) else {
                 print("❌ Invalid call ID received")
                 return
             }
@@ -294,8 +316,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             )
             
             DispatchQueue.main.async {
-                self.context?.activeCall = call
-                self.context?.lastActiveCall = call
+                self.context.activeCall = call
+                self.context.lastActiveCall = call
             }
             
             #if !targetEnvironment(simulator)
@@ -307,7 +329,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func answerCall(_ call: VGCallWrapper) {
         client.answer(call.callId) { [weak self] error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to answer call: \(error)")
                 self?.endCall(call, reason: .failed)
                 return
@@ -325,7 +347,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func rejectCall(_ call: VGCallWrapper) {
         client.reject(call.callId) { [weak self] error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to reject call: \(error)")
                 self?.endCall(call, reason: .failed)
                 return
@@ -338,7 +360,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func hangupCall(_ call: VGCallWrapper) {
         client.hangup(call.callId) { [weak self] error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to hangup call: \(error)")
                 self?.endCall(call, reason: .failed)
                 return
@@ -351,7 +373,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func muteCall(_ call: VGCallWrapper) {
         client.mute(call.callId) { error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to mute call: \(error)")
                 return
             }
@@ -363,7 +385,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func unmuteCall(_ call: VGCallWrapper) {
         client.unmute(call.callId) { error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to unmute call: \(error)")
                 return
             }
@@ -376,13 +398,15 @@ class VoiceClientManager: NSObject, ObservableObject {
     func holdCall(_ call: VGCallWrapper) {
         // Hold = mute + earmuff
         client.mute(call.callId) { [weak self] error in
-            if let error = error {
+            guard let self else { return }
+            
+            if let error {
                 print("❌ Failed to mute for hold: \(error)")
                 return
             }
             
-            self?.client.enableEarmuff(call.callId) { error in
-                if let error = error {
+            self.client.enableEarmuff(call.callId) { error in
+                if let error {
                     print("❌ Failed to enable earmuff: \(error)")
                     return
                 }
@@ -397,13 +421,15 @@ class VoiceClientManager: NSObject, ObservableObject {
     func unholdCall(_ call: VGCallWrapper) {
         // Unhold = unmute + disable earmuff
         client.unmute(call.callId) { [weak self] error in
-            if let error = error {
+            guard let self else { return }
+            
+            if let error {
                 print("❌ Failed to unmute for unhold: \(error)")
                 return
             }
             
-            self?.client.disableEarmuff(call.callId) { error in
-                if let error = error {
+            self.client.disableEarmuff(call.callId) { error in
+                if let error {
                     print("❌ Failed to disable earmuff: \(error)")
                     return
                 }
@@ -417,7 +443,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func enableNoiseSuppression(_ call: VGCallWrapper) {
         client.enableNoiseSuppression(call.callId) { error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to enable noise suppression: \(error)")
                 return
             }
@@ -429,7 +455,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func disableNoiseSuppression(_ call: VGCallWrapper) {
         client.disableNoiseSuppression(call.callId) { error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to disable noise suppression: \(error)")
                 return
             }
@@ -441,7 +467,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func sendDTMF(_ call: VGCallWrapper, digit: String) {
         client.sendDTMF(call.callId, withDigits: digit) { error in
-            if let error = error {
+            if let error {
                 print("❌ Failed to send DTMF: \(error)")
                 return
             }
@@ -456,8 +482,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             // Small delay to show disconnected state before clearing
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                if self?.context?.activeCall?.id == call.id {
-                    self?.context?.activeCall = nil
+                if self?.context.activeCall?.id == call.id {
+                    self?.context.activeCall = nil
                 }
             }
         }
@@ -525,7 +551,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             self?.errorMessage = "Session error: \(message)"
             
             // Try to reconnect if we have a valid token
-            if let token = self?.context?.authToken {
+            if let token = self?.context.authToken {
                 self?.login(token: token)
             } else {
                 // Clear session if no token available
@@ -552,8 +578,9 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         )
         
         DispatchQueue.main.async { [weak self] in
-            self?.context?.activeCall = call
-            self?.context?.lastActiveCall = call
+            guard let self else { return }
+            self.context.activeCall = call
+            self.context.lastActiveCall = call
         }
         
         #if !targetEnvironment(simulator)
@@ -565,24 +592,23 @@ extension VoiceClientManager: VGVoiceClientDelegate {
     func voiceClient(_ client: VGVoiceClient, didReceiveHangupForCall callId: VGCallId, withQuality callQuality: VGRTCQuality, reason: VGHangupReason) {
         print("📴 Call ended: \(callId), reason: \(reason)")
         
-        guard let call = context?.activeCall, call.callId == callId else { return }
+        guard let call = context.activeCall, call.callId == callId else { return }
         
-        let cxReason: CXCallEndedReason
-        switch reason {
+        let cxReason: CXCallEndedReason = switch reason {
         case .remoteReject:
-            cxReason = .declinedElsewhere
+            .declinedElsewhere
         case .remoteHangup:
-            cxReason = .remoteEnded
+            .remoteEnded
         case .localHangup:
-            cxReason = .unanswered
+            .unanswered
         case .mediaTimeout:
-            cxReason = .failed
+            .failed
         case .remoteNoAnswerTimeout:
-            cxReason = .unanswered
+            .unanswered
         case .unknown:
-            cxReason = .failed
+            .failed
         @unknown default:
-            cxReason = .failed
+            .failed
         }
         
         endCall(call, reason: cxReason)
@@ -591,7 +617,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
     func voiceClient(_ client: VGVoiceClient, didReceiveLegStatusUpdateForCall callId: VGCallId, withLegId legId: String, andStatus status: VGLegStatus) {
         print("🔄 Call status updated: \(callId), status: \(status)")
         
-        guard let call = context?.activeCall, call.callId == callId else { return }
+        guard let call = context.activeCall, call.callId == callId else { return }
         
         if status == .answered {
             DispatchQueue.main.async {
@@ -603,22 +629,21 @@ extension VoiceClientManager: VGVoiceClientDelegate {
     func voiceClient(_ client: VGVoiceClient, didReceiveInviteCancelForCall callId: VGCallId, with reason: VGVoiceInviteCancelReason) {
         print("📴 Call invite cancelled: \(callId), reason: \(reason)")
         
-        guard let call = context?.activeCall, call.callId == callId else { return }
+        guard let call = context.activeCall, call.callId == callId else { return }
         
-        let cxReason: CXCallEndedReason
-        switch reason {
+        let cxReason: CXCallEndedReason = switch reason {
         case .answeredElsewhere:
-            cxReason = .answeredElsewhere
+            .answeredElsewhere
         case .rejectedElsewhere:
-            cxReason = .declinedElsewhere
+            .declinedElsewhere
         case .remoteCancel:
-            cxReason = .remoteEnded
+            .remoteEnded
         case .remoteTimeout:
-            cxReason = .unanswered
+            .unanswered
         case .unknown:
-            cxReason = .failed
+            .failed
         @unknown default:
-            cxReason = .failed
+            .failed
         }
         
         endCall(call, reason: cxReason)
@@ -633,16 +658,17 @@ extension VoiceClientManager: CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
-        guard let call = context?.activeCall, call.id == action.callUUID else {
+        guard let call = context.activeCall, call.id == action.callUUID else {
             action.fail()
             return
         }
         
         client.answer(call.callId) { [weak self] error in
-            guard error == nil else {
+            if let error {
                 // Report failure to CallKit
                 provider.reportCall(with: action.callUUID, endedAt: Date.now, reason: .failed)
                 self?.endCall(call, reason: .failed)
+                action.fail()
                 return
             }
             
@@ -658,7 +684,7 @@ extension VoiceClientManager: CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
-        guard let call = context?.activeCall, call.id == action.callUUID else {
+        guard let call = context.activeCall, call.id == action.callUUID else {
             action.fail()
             return
         }
@@ -675,7 +701,7 @@ extension VoiceClientManager: CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
-        guard let call = context?.activeCall, call.id == action.callUUID else {
+        guard let call = context.activeCall, call.id == action.callUUID else {
             action.fail()
             return
         }
@@ -685,11 +711,13 @@ extension VoiceClientManager: CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
-        guard let call = context?.activeCall, call.id == action.callUUID else {
+        guard let call = context.activeCall, call.id == action.callUUID else {
             action.fail()
             return
         }
         
+        // Execute mute/unmute asynchronously but fulfill action synchronously
+        // CallKit requires the action to be fulfilled immediately
         if action.isMuted {
             muteCall(call)
         } else {
@@ -700,11 +728,13 @@ extension VoiceClientManager: CXProviderDelegate {
     }
     
     func provider(_ provider: CXProvider, perform action: CXSetHeldCallAction) {
-        guard let call = context?.activeCall, call.id == action.callUUID else {
+        guard let call = context.activeCall, call.id == action.callUUID else {
             action.fail()
             return
         }
         
+        // Execute hold/unhold asynchronously but fulfill action synchronously
+        // CallKit requires the action to be fulfilled immediately
         if action.isOnHold {
             holdCall(call)
         } else {
@@ -725,23 +755,3 @@ extension VoiceClientManager: CXProviderDelegate {
     }
 }
 #endif
-
-// MARK: - Data Extension
-extension Data {
-    init?(hexString: String) {
-        let len = hexString.count / 2
-        var data = Data(capacity: len)
-        var i = hexString.startIndex
-        for _ in 0..<len {
-            let j = hexString.index(i, offsetBy: 2)
-            let bytes = hexString[i..<j]
-            if var num = UInt8(bytes, radix: 16) {
-                data.append(&num, count: 1)
-            } else {
-                return nil
-            }
-            i = j
-        }
-        self = data
-    }
-}

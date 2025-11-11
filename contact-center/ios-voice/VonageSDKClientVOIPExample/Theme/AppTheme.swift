@@ -2,7 +2,7 @@
 //  AppTheme.swift
 //  VonageSDKClientVOIPExample
 //
-//  Created by Copilot on 11/11/2025.
+//  Created by Salvatore Di Cara on 11/11/2025.
 //
 
 import SwiftUI
@@ -177,13 +177,4 @@ struct GradientBackground {
             )
         }
     }
-}
-
-// MARK: - Call State Enum
-enum CallState {
-    case ringing
-    case active
-    case holding
-    case disconnected
-    case reconnecting
 }
