@@ -197,7 +197,61 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     func processVoipPush(_ payload: PKPushPayload) {
+        print("📨 Processing VoIP push notification")
+        
+        // Check if we have an active session
+        if sessionId == nil {
+            print("⚠️ No active session - attempting to restore session asynchronously")
+            
+            // Attempt to restore session asynchronously (don't wait for completion)
+            // By the time user answers/rejects, the session should be ready
+            if let token = context?.authToken {
+                print("🔄 Restoring session with stored auth token")
+                login(token: token, onError: { error in
+                    print("❌ Failed to restore session from auth token: \(error)")
+                }, onSuccess: { sessionId in
+                    print("✅ Session restored successfully: \(sessionId)")
+                })
+            } else if let refreshToken = context?.refreshToken {
+                print("🔄 Refreshing session with refresh token")
+                refreshSessionForPush(refreshToken: refreshToken)
+            } else {
+                print("⚠️ No stored tokens - incoming call may fail if user answers immediately")
+            }
+        } else {
+            print("✅ Active session exists: \(sessionId!)")
+        }
+        
+        // Process the push data immediately (don't wait for session)
+        // The SDK will queue the call invite and deliver it when session is ready
         client.processCallInvitePushData(payload.dictionaryPayload)
+    }
+    
+    private func refreshSessionForPush(refreshToken: String) {
+        // Use NetworkController to get a new token
+        NetworkController()
+            .sendRequest(apiType: RefreshTokenAPI(refreshToken: refreshToken))
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to refresh token for push: \(error)")
+                    }
+                },
+                receiveValue: { [weak self] (response: TokenResponse) in
+                    guard let self = self else { return }
+                    
+                    // Store new tokens
+                    self.context?.refreshToken = response.refreshToken
+                    
+                    // Create session with new token
+                    self.login(token: response.vonageToken, onError: { error in
+                        print("❌ Failed to login with refreshed token: \(error)")
+                    }, onSuccess: { sessionId in
+                        print("✅ Session created from refresh token: \(sessionId)")
+                    })
+                }
+            )
+            .store(in: &cancellables)
     }
     
     // MARK: - Call Operations
@@ -560,8 +614,17 @@ extension VoiceClientManager: CXProviderDelegate {
             return
         }
         
-        answerCall(call)
-        action.fulfill()
+        client.answer(call.callId) { [weak self] error in
+            guard error == nil else {
+                // Report failure to CallKit
+                provider.reportCall(with: action.callUUID, endedAt: Date.now, reason: .failed)
+                self?.endCall(call, reason: .failed)
+                return
+            }
+            
+            print("✅ Answered call: \(call.callId)")
+            action.fulfill()
+        }
     }
     
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
@@ -571,12 +634,14 @@ extension VoiceClientManager: CXProviderDelegate {
         }
         
         if call.isInbound && call.state == .ringing {
-            rejectCall(call)
+            client.reject(call.callId) { error in
+                action.fulfill()
+            }
         } else {
-            hangupCall(call)
+            client.hangup(call.callId) { error in
+                action.fulfill()
+            }
         }
-        
-        action.fulfill()
     }
     
     func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
@@ -617,6 +682,16 @@ extension VoiceClientManager: CXProviderDelegate {
         }
         
         action.fulfill()
+    }
+    
+    func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
+        print("🔊 CallKit activated audio session")
+        VGVoiceClient.enableAudio(audioSession)
+    }
+    
+    func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
+        print("🔇 CallKit deactivated audio session")
+        VGVoiceClient.disableAudio(audioSession)
     }
 }
 
