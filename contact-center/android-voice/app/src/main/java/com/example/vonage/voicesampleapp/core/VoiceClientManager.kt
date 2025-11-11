@@ -146,9 +146,11 @@ class VoiceClientManager(private val context: Context) {
 
         client.setOnMutedListener { callId, legId, isMuted ->
             println("LegId $legId for Call $callId has been ${if(isMuted) "muted" else "unmuted"}")
+            val call = takeIfActive(callId) ?: return@setOnMutedListener
             takeIf { callId == legId } ?: return@setOnMutedListener
-            // SDK confirms mute state change - no action needed
-            // onMuteStateChanged already handled the state update
+            if (call.isMuted.value != isMuted) {
+                call.toggleMute()
+            }
         }
 
         client.setOnDTMFListener { callId, legId, digits ->
@@ -320,11 +322,14 @@ class VoiceClientManager(private val context: Context) {
 
     fun muteCall(call: CallConnection){
         call.takeIfActive()?.apply {
-            client.mute(callId) { err ->
-                if (err != null) {
-                    println("Error Muting Call: $err")
-                } else {
-                    println("Muted call with id: $callId")
+            if (!isMuted.value) {
+                client.mute(callId) { err ->
+                    if (err != null) {
+                        println("Error Muting Call: $err")
+                    } else {
+                        println("Muted call with id: $callId")
+                        toggleMute()
+                    }
                 }
             }
         }
@@ -332,11 +337,14 @@ class VoiceClientManager(private val context: Context) {
 
     fun unmuteCall(call: CallConnection){
         call.takeIfActive()?.apply {
-            client.unmute(callId) { err ->
-                if (err != null) {
-                    println("Error Un-muting Call: $err")
-                } else {
-                    println("Un-muted call with id: $callId")
+            if (isMuted.value) {
+                client.unmute(callId) { err ->
+                    if (err != null) {
+                        println("Error Un-muting Call: $err")
+                    } else {
+                        println("Un-muted call with id: $callId")
+                        toggleMute()
+                    }
                 }
             }
         }
@@ -344,20 +352,30 @@ class VoiceClientManager(private val context: Context) {
 
     fun enableNoiseSuppression(call: CallConnection){
         call.takeIfActive()?.apply {
-            client.enableNoiseSuppression(callId) { err ->
-                err?.let {
-                    println("Error enabling noise suppression on Call: $it")
-                } ?: println("Enabled noise suppression on Call with id: $callId")
+            if (!isNoiseSuppressionEnabled.value) {
+                client.enableNoiseSuppression(callId) { err ->
+                    err?.let {
+                        println("Error enabling noise suppression on Call: $it")
+                    } ?: run {
+                        println("Enabled noise suppression on Call with id: $callId")
+                        toggleNoiseSuppression()
+                    }
+                }
             }
         }
     }
 
     fun disableNoiseSuppression(call: CallConnection){
         call.takeIfActive()?.apply {
-            client.disableNoiseSuppression(callId) { err ->
-                err?.let {
-                    println("Error disabling noise suppression on Call: $it")
-                } ?: println("Disabled noise suppression on Call with id: $callId")
+            if (isNoiseSuppressionEnabled.value) {
+                client.disableNoiseSuppression(callId) { err ->
+                    err?.let {
+                        println("Error disabling noise suppression on Call: $it")
+                    } ?: run {
+                        println("Disabled noise suppression on Call with id: $callId")
+                        toggleNoiseSuppression()
+                    }
+                }
             }
         }
     }
@@ -375,16 +393,19 @@ class VoiceClientManager(private val context: Context) {
     }
 
     fun holdCall(call: CallConnection){
-        call.takeIfActive()?.apply{
-            client.mute(callId){ error ->
-                error?.let {
-                    println("Error muting in holdCall with id: $callId")
-                } ?: run {
-                    client.enableEarmuff(callId){ error ->
-                        error?.let {
-                            println("Error enabling earmuff in holdCall with id: $callId")
-                        } ?: run {
-                            println("Call $callId successfully put on hold")
+        call.takeIfActive()?.apply {
+            if (!isOnHold.value) {
+                client.mute(callId) { error ->
+                    error?.let {
+                        println("Error muting in holdCall with id: $callId")
+                    } ?: run {
+                        client.enableEarmuff(callId) { error2 ->
+                            error2?.let {
+                                println("Error enabling earmuff in holdCall with id: $callId")
+                            } ?: run {
+                                println("Call $callId successfully put on hold")
+                                toggleHold()
+                            }
                         }
                     }
                 }
@@ -393,16 +414,19 @@ class VoiceClientManager(private val context: Context) {
     }
 
     fun unholdCall(call: CallConnection){
-        call.takeIfActive()?.apply{
-            client.unmute(callId){ error ->
-                error?.let {
-                    println("Error unmuting in unholdCall with id: $callId")
-                } ?: run {
-                    client.disableEarmuff(callId){ error ->
-                        error?.let {
-                            println("Error disabling earmuff in unholdCall with id: $callId")
-                        } ?: run {
-                            println("Call $callId successfully removed from hold")
+        call.takeIfActive()?.apply {
+            if (isOnHold.value) {
+                client.unmute(callId) { error ->
+                    error?.let {
+                        println("Error unmuting in unholdCall with id: $callId")
+                    } ?: run {
+                        client.disableEarmuff(callId) { error2 ->
+                            error2?.let {
+                                println("Error disabling earmuff in unholdCall with id: $callId")
+                            } ?: run {
+                                println("Call $callId successfully removed from hold")
+                                toggleHold()
+                            }
                         }
                     }
                 }

@@ -1,16 +1,11 @@
 package com.example.vonage.voicesampleapp.activities
 
-import android.content.Intent
 import android.os.Bundle
 import android.telecom.Connection
 import android.telecom.DisconnectCause
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,8 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,144 +29,49 @@ import androidx.compose.ui.unit.sp
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.R
 import com.example.vonage.voicesampleapp.ui.theme.*
-import com.example.vonage.voicesampleapp.utils.Constants
 import com.example.vonage.voicesampleapp.utils.showDialerFragment
 
 class CallActivity : FragmentActivity() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
-    
-    private var isMuteToggled by mutableStateOf(false)
-    private var isHoldToggled by mutableStateOf(false)
-    private var isNoiseSuppressionToggled by mutableStateOf(false)
-    private var callState by mutableStateOf<Int?>(null)
-    private var fallbackUsername by mutableStateOf<String?>(null)
-    private var disconnectCause by mutableStateOf<DisconnectCause?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        handleIntent(intent)
-        
-        // Observe call state changes
-        observeCallState()
-        
+
         setContent {
-            val activeCall by coreContext.activeCall.collectAsState()
-            
+            val call = coreContext.activeCall.collectAsState().value ?:
+            // If active call is null, finish the activity
+            run {
+                LaunchedEffect(Unit) { finish() }
+                return@setContent
+            }
+
+            val connectionState by call.connectionState.collectAsState()
+            val isMuted by call.isMuted.collectAsState()
+            val isOnHold by call.isOnHold.collectAsState()
+            val isNoiseSuppressionEnabled by call.isNoiseSuppressionEnabled.collectAsState()
+            val disconnectCause = if (connectionState == Connection.STATE_DISCONNECTED) call.disconnectCause else null
+            val username = call.callerDisplayName ?: stringResource(R.string.caller_display_name_default)
+
             VoiceSampleAppTheme {
                 CallScreen(
-                    username = activeCall?.callerDisplayName ?: fallbackUsername,
-                    callState = callState,
-                    isMuted = isMuteToggled,
-                    isOnHold = isHoldToggled,
-                    isNoiseSuppression = isNoiseSuppressionToggled,
+                    username = username,
+                    callState = connectionState,
+                    isMuted = isMuted,
+                    isOnHold = isOnHold,
+                    isNoiseSuppression = isNoiseSuppressionEnabled,
                     disconnectCause = disconnectCause,
-                    onAnswer = ::onAnswer,
-                    onReject = ::onReject,
-                    onHangup = ::onHangup,
-                    onMute = ::onMute,
-                    onHold = ::onHold,
-                    onNoiseSuppression = ::onNoiseSuppression,
-                    onKeypad = ::onKeypad
+                    onAnswer = { clientManager.answerCall(call) },
+                    onReject = { clientManager.rejectCall(call) },
+                    onHangup = { clientManager.hangupCall(call) },
+                    onMute = { if (!isMuted) clientManager.muteCall(call) else clientManager.unmuteCall(call) },
+                    onHold = { if (!isOnHold) clientManager.holdCall(call) else clientManager.unholdCall(call) },
+                    onNoiseSuppression = { if (!isNoiseSuppressionEnabled) clientManager.enableNoiseSuppression(call) else clientManager.disableNoiseSuppression(call) },
+                    onKeypad = { showDialerFragment() }
                 )
             }
         }
-    }
-    
-    private fun observeCallState() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                coreContext.activeCall.collect { call ->
-                    if (call == null) {
-                        // Give UI a moment to show disconnect reason before finishing
-                        kotlinx.coroutines.delay(1000)
-                        finish()
-                        return@collect
-                    }
-                    
-                    // Capture username before it might become null
-                    fallbackUsername = call.callerDisplayName
-                    
-                    // Initialize states
-                    callState = call.state
-                    isMuteToggled = call.isMuted.value
-                    isHoldToggled = call.isOnHold.value
-                    
-                    // Observe connection state
-                    launch {
-                        call.connectionState.collect { state ->
-                            callState = state
-                            if (state == Connection.STATE_DISCONNECTED) {
-                                disconnectCause = call.disconnectCause
-                            }
-                        }
-                    }
-                    
-                    // Observe mute state from CallConnection (single source of truth)
-                    launch {
-                        call.isMuted.collect { muted ->
-                            isMuteToggled = muted
-                        }
-                    }
-                    
-                    // Observe hold state
-                    launch {
-                        call.isOnHold.collect { onHold ->
-                            isHoldToggled = onHold
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun handleIntent(intent: Intent?) {
-        intent ?: return
-        val from = intent.getStringExtra(Constants.EXTRA_KEY_FROM) ?: return
-        fallbackUsername = from
-        callState = Connection.STATE_RINGING
-    }
-
-    private fun onAnswer() {
-        coreContext.activeCall.value?.let { call ->
-            clientManager.answerCall(call)
-        }
-    }
-
-    private fun onReject() {
-        coreContext.activeCall.value?.let { call ->
-            clientManager.rejectCall(call)
-        }
-    }
-
-    private fun onHangup() {
-        coreContext.activeCall.value?.let { call ->
-            clientManager.hangupCall(call)
-        }
-    }
-
-    private fun onMute() {
-        coreContext.activeCall.value?.toggleMuteState()
-    }
-
-    private fun onHold() {
-        coreContext.activeCall.value?.toggleHoldState()
-    }
-
-    private fun onNoiseSuppression() {
-        coreContext.activeCall.value?.let { call ->
-            isNoiseSuppressionToggled = !isNoiseSuppressionToggled
-            if (isNoiseSuppressionToggled) {
-                clientManager.enableNoiseSuppression(call)
-            } else {
-                clientManager.disableNoiseSuppression(call)
-            }
-        }
-    }
-
-    private fun onKeypad() {
-        showDialerFragment()
     }
 }
 
@@ -340,12 +238,13 @@ fun CallScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // When on hold, the mic button is neutral
                         CallActionButton(
-                            icon = if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                            icon = if(isOnHold) Icons.Default.Mic else if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
                             contentDescription = stringResource(R.string.mute_button_description),
-                            backgroundColor = if (isMuted) White else White.copy(alpha = 0.3f),
-                            iconTint = if (isMuted) Red else White,
-                            onClick = onMute
+                            backgroundColor = if(isOnHold) White.copy(alpha = 0.3f) else if (isMuted) White else White.copy(alpha = 0.3f),
+                            iconTint = if(isOnHold) White else if (isMuted) Red else White,
+                            onClick = if(isOnHold) {{}} else onMute
                         )
                         CallActionButton(
                             icon = if (isOnHold) Icons.Default.PlayArrow else Icons.Default.Pause,

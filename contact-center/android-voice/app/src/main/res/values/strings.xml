@@ -17,7 +17,8 @@
     <string name="mute_button_description">Mute</string>
     <string name="hold_button_description">Hold</string>
     <string name="hangup_button_description">Hangup</string>
-    <string name="logged_username_default">Logged Username</string>
+    <string name="logged_username_default">Unknown User</string>
+    <string name="caller_display_name_default">Unknown Caller</string>
     <string name="logout_label">Logout</string>
     <string name="edit_username_hint">Enter username here</string>
     <string name="button_call_user_label">Call</string>
