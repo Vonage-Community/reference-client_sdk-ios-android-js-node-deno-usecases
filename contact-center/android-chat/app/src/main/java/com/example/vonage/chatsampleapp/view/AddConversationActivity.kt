@@ -9,9 +9,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +57,7 @@ class AddConversationActivity : ComponentActivity() {
         )
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TopAppBar(){
         TopAppBar(
@@ -67,7 +68,7 @@ class AddConversationActivity : ComponentActivity() {
             },
             navigationIcon = {
                 TopAppBarActionButton(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     description = stringResource(R.string.arrow_back_description)
                 ){ finish() }
             }
@@ -137,7 +138,7 @@ class AddConversationActivity : ComponentActivity() {
         }
         Text(
             text = stringResource(R.string.new_conversation_label),
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(top = 10.dp, bottom = 10.dp)
@@ -215,7 +216,7 @@ class AddConversationActivity : ComponentActivity() {
 
         Text(
             text = stringResource(R.string.existing_conversation_label),
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(top = 10.dp, bottom = 10.dp)

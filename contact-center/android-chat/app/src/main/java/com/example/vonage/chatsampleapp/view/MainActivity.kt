@@ -10,10 +10,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -153,6 +153,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TopAppBar(username: Username){
         TopAppBar(
@@ -163,7 +164,7 @@ class MainActivity : ComponentActivity() {
             },
             actions = {
                 TopAppBarActionButton(
-                    imageVector = Icons.Outlined.ExitToApp,
+                    imageVector = Icons.AutoMirrored.Outlined.ExitToApp,
                     description = stringResource(R.string.logout_label)
                 ){
                     viewModel.logout()
