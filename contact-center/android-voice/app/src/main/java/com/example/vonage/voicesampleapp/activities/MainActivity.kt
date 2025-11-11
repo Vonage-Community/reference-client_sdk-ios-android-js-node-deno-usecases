@@ -6,6 +6,10 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -53,11 +57,19 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         checkPermissions()
         
+        // Observe session ID and navigate to LoginActivity if logged out
+        observeSessionId()
+        
+        // Observe active call and navigate to CallActivity when there's an incoming/outgoing call
+        observeActiveCall()
+        
         setContent {
+            val currentUser by clientManager.currentUser.collectAsState()
+            
             VoiceSampleAppTheme {
                 MainScreen(
-                    username = clientManager.currentUser?.displayName 
-                        ?: clientManager.currentUser?.name 
+                    username = currentUser?.displayName 
+                        ?: currentUser?.name 
                         ?: stringResource(R.string.logged_username_default),
                     onLogout = ::logout,
                     onCallUser = ::callUser,
@@ -66,12 +78,28 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+    
+    private fun observeActiveCall() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                coreContext.activeCall.collect { call ->
+                    if (call != null) {
+                        navigateToCallActivity()
+                    }
+                }
+            }
+        }
+    }
 
-    override fun onResume() {
-        super.onResume()
-        clientManager.sessionId ?: navigateToLoginActivity()
-        coreContext.activeCall?.let {
-            navigateToCallActivity()
+    private fun observeSessionId() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                clientManager.sessionId.collect { sessionId ->
+                    if (sessionId == null) {
+                        navigateToLoginActivity()
+                    }
+                }
+            }
         }
     }
 
@@ -95,9 +123,8 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun logout() {
-        clientManager.logout {
-            navigateToLoginActivity()
-        }
+        // Navigation handled by observeSessionId() observer
+        clientManager.logout()
     }
 
     private fun callUser(username: String) {

@@ -16,6 +16,9 @@ import com.vonage.clientcore.core.conversation.VoiceChannelType
 import com.vonage.voice.api.VoiceClient
 import java.lang.Exception
 import androidx.core.net.toUri
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * This Class will act as an interface
@@ -25,10 +28,13 @@ class VoiceClientManager(private val context: Context) {
     private lateinit var client : VoiceClient
     private val coreContext = App.coreContext
     private val customRepository by lazy { CustomRepository() }
-    var sessionId: String? = null
-        private set
-    var currentUser: User? = null
-        private set
+    
+    private val _sessionId = MutableStateFlow<String?>(null)
+    val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
+    
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
+    
     init {
         initClient()
         setClientListeners()
@@ -51,23 +57,24 @@ class VoiceClientManager(private val context: Context) {
             showToast(context, "Session Error: $message")
             // When the Socket Connection is closed
             // Reset sessionId & current user
-            sessionId = null
-            currentUser = null
+            _sessionId.value = null
+            _currentUser.value = null
             // And try to log in again using last valid credentials
             val token = coreContext.authToken ?: return@setSessionErrorListener
             login(token,
                 onErrorCallback = {
                     // Cleanup any active call upon login failure
-                    coreContext.activeCall?.run {
+                    coreContext.activeCall.value?.run {
                         cleanUp(DisconnectCause(DisconnectCause.MISSED))
-                    } ?: navigateToMainActivity(context)
+                    }
+                    // Navigation to LoginActivity is handled by observeSessionId() in activities
                 }
             )
         }
 
         client.setCallInviteListener { callId, from, type ->
             // Reject incoming calls when there is already an active one
-            coreContext.activeCall?.let { return@setCallInviteListener }
+            coreContext.activeCall.value?.let { return@setCallInviteListener }
             placeIncomingCall(callId, from, type)
             // NOTE: a foreground service needs to be started to record the audio when app is in the background
             startForegroundService(context)
@@ -150,13 +157,15 @@ class VoiceClientManager(private val context: Context) {
     }
     fun login(token: String, onErrorCallback: ((Exception) -> Unit)? = null, onSuccessCallback: ((String) -> Unit)? = null){
         client.createSession(token){ error, sessionId ->
-            sessionId?.let {
+            sessionId?.let { sid ->
                 registerDevicePushToken()
-                this.sessionId = it
                 coreContext.authToken = token
                 getCurrentUser {
                     reconnectCall()
-                    onSuccessCallback?.invoke(it)
+                    // Set sessionId AFTER user is fetched and callback is invoked
+                    // This ensures UI shows toast and username before navigation
+                    onSuccessCallback?.invoke(sid)
+                    _sessionId.value = sid
                 }
             } ?: error?.let {
                 onErrorCallback?.invoke(it)
@@ -166,7 +175,7 @@ class VoiceClientManager(private val context: Context) {
 
     private fun getCurrentUser(completionHandler: (() -> Unit)? = null){
         client.getUser("me"){ _, user ->
-            currentUser = user
+            _currentUser.value = user
             completionHandler?.invoke()
         }
     }
@@ -188,8 +197,8 @@ class VoiceClientManager(private val context: Context) {
             error?.let {
                 showToast(context, "Error Logging Out: ${error.message}")
             } ?: run {
-                sessionId = null
-                currentUser = null
+                _sessionId.value = null
+                _currentUser.value = null
                 coreContext.authToken = null
                 coreContext.refreshToken = null
                 onSuccessCallback?.invoke()
@@ -219,7 +228,7 @@ class VoiceClientManager(private val context: Context) {
                     showToast(context, "Error reconnecting call with $callerDisplayName: $it")
                 } ?: run {
                     showToast(context, "Call with $callerDisplayName successfully reconnected")
-                    coreContext.activeCall ?:
+                    coreContext.activeCall.value ?:
                     // Start a new Outgoing Call if there is not an active one
                     placeOutgoingCall(this.callId, this.callerDisplayName, isReconnected = true)
                 }
@@ -420,6 +429,8 @@ class VoiceClientManager(private val context: Context) {
     private fun placeIncomingCall(callId: CallId, caller: String, type: VoiceChannelType){
         try {
             coreContext.telecomHelper.startIncomingCall(callId, caller, type)
+            // Navigate to MainActivity - it will observe active call and navigate to CallActivity
+            navigateToMainActivity(context)
         } catch (e: Exception){
             abortInboundCall(callId, e.message)
         }
@@ -460,7 +471,7 @@ class VoiceClientManager(private val context: Context) {
      * Utilities to filter active calls
      */
     private fun takeIfActive(callId: CallId) : CallConnection? {
-        return coreContext.activeCall?.takeIf { it.callId == callId }
+        return coreContext.activeCall.value?.takeIf { it.callId == callId }
     }
     private fun CallConnection.takeIfActive() : CallConnection? {
         return takeIfActive(callId)

@@ -7,7 +7,9 @@ import android.telecom.DisconnectCause
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,12 +43,12 @@ class CallActivity : FragmentActivity() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
     
-    private var isMuteToggled = mutableStateOf(false)
-    private var isHoldToggled = mutableStateOf(false)
-    private var isNoiseSuppressionToggled = mutableStateOf(false)
-    private var callState = mutableStateOf<Int?>(null)
-    private var fallbackUsername = mutableStateOf<String?>(null)
-    private var disconnectCause = mutableStateOf<DisconnectCause?>(null)
+    private var isMuteToggled by mutableStateOf(false)
+    private var isHoldToggled by mutableStateOf(false)
+    private var isNoiseSuppressionToggled by mutableStateOf(false)
+    private var callState by mutableStateOf<Int?>(null)
+    private var fallbackUsername by mutableStateOf<String?>(null)
+    private var disconnectCause by mutableStateOf<DisconnectCause?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,14 +59,16 @@ class CallActivity : FragmentActivity() {
         observeCallState()
         
         setContent {
+            val activeCall by coreContext.activeCall.collectAsState()
+            
             VoiceSampleAppTheme {
                 CallScreen(
-                    username = coreContext.activeCall?.callerDisplayName ?: fallbackUsername.value,
-                    callState = callState.value,
-                    isMuted = isMuteToggled.value,
-                    isOnHold = isHoldToggled.value,
-                    isNoiseSuppression = isNoiseSuppressionToggled.value,
-                    disconnectCause = disconnectCause.value,
+                    username = activeCall?.callerDisplayName ?: fallbackUsername,
+                    callState = callState,
+                    isMuted = isMuteToggled,
+                    isOnHold = isHoldToggled,
+                    isNoiseSuppression = isNoiseSuppressionToggled,
+                    disconnectCause = disconnectCause,
                     onAnswer = ::onAnswer,
                     onReject = ::onReject,
                     onHangup = ::onHangup,
@@ -76,81 +82,89 @@ class CallActivity : FragmentActivity() {
     }
     
     private fun observeCallState() {
-        coreContext.activeCall?.let { call ->
-            // Capture username before it might become null
-            fallbackUsername.value = call.callerDisplayName
-            
-            // Observe connection state
-            lifecycleScope.launch {
-                call.connectionState.collect { state ->
-                    callState.value = state
-                    if (state == Connection.STATE_DISCONNECTED) {
-                        disconnectCause.value = call.disconnectCause
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                coreContext.activeCall.collect { call ->
+                    if (call == null) {
                         // Give UI a moment to show disconnect reason before finishing
                         kotlinx.coroutines.delay(1000)
                         finish()
+                        return@collect
+                    }
+                    
+                    // Capture username before it might become null
+                    fallbackUsername = call.callerDisplayName
+                    
+                    // Initialize states
+                    callState = call.state
+                    isMuteToggled = call.isMuted.value
+                    isHoldToggled = call.isOnHold.value
+                    
+                    // Observe connection state
+                    launch {
+                        call.connectionState.collect { state ->
+                            callState = state
+                            if (state == Connection.STATE_DISCONNECTED) {
+                                disconnectCause = call.disconnectCause
+                            }
+                        }
+                    }
+                    
+                    // Observe mute state from CallConnection (single source of truth)
+                    launch {
+                        call.isMuted.collect { muted ->
+                            isMuteToggled = muted
+                        }
+                    }
+                    
+                    // Observe hold state
+                    launch {
+                        call.isOnHold.collect { onHold ->
+                            isHoldToggled = onHold
+                        }
                     }
                 }
             }
-            
-            // Observe mute state from CallConnection (single source of truth)
-            lifecycleScope.launch {
-                call.isMuted.collect { muted ->
-                    isMuteToggled.value = muted
-                }
-            }
-            
-            // Observe hold state
-            lifecycleScope.launch {
-                call.isOnHold.collect { onHold ->
-                    isHoldToggled.value = onHold
-                }
-            }
-            
-            // Initialize states
-            callState.value = call.state
-            isMuteToggled.value = call.isMuted.value
-            isHoldToggled.value = call.isOnHold.value
         }
     }
 
     private fun handleIntent(intent: Intent?) {
         intent ?: return
         val from = intent.getStringExtra(Constants.EXTRA_KEY_FROM) ?: return
-        fallbackUsername.value = from
-        callState.value = Connection.STATE_RINGING
+        fallbackUsername = from
+        callState = Connection.STATE_RINGING
     }
 
     private fun onAnswer() {
-        coreContext.activeCall?.let { call ->
+        coreContext.activeCall.value?.let { call ->
             clientManager.answerCall(call)
         }
     }
 
     private fun onReject() {
-        coreContext.activeCall?.let { call ->
+        coreContext.activeCall.value?.let { call ->
             clientManager.rejectCall(call)
         }
     }
 
     private fun onHangup() {
-        coreContext.activeCall?.let { call ->
+        coreContext.activeCall.value?.let { call ->
             clientManager.hangupCall(call)
         }
     }
 
     private fun onMute() {
-        coreContext.activeCall?.toggleMuteState()
+        coreContext.activeCall.value?.toggleMuteState()
     }
 
     private fun onHold() {
-        coreContext.activeCall?.toggleHoldState()
+        coreContext.activeCall.value?.toggleHoldState()
     }
 
     private fun onNoiseSuppression() {
-        coreContext.activeCall?.let { call ->
-            isNoiseSuppressionToggled.value = !isNoiseSuppressionToggled.value
-            if (isNoiseSuppressionToggled.value) {
+        coreContext.activeCall.value?.let { call ->
+            isNoiseSuppressionToggled = !isNoiseSuppressionToggled
+            if (isNoiseSuppressionToggled) {
                 clientManager.enableNoiseSuppression(call)
             } else {
                 clientManager.disableNoiseSuppression(call)

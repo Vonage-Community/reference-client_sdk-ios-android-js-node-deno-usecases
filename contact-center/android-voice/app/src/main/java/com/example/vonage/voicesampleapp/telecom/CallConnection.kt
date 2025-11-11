@@ -105,7 +105,8 @@ class CallConnection(val callId: CallId) : Connection() {
 
     private fun setActiveCall(){
         // Update active call only if current is null
-        coreContext.activeCall = coreContext.activeCall ?: this
+        coreContext.activeCall.value
+            ?: coreContext.setActiveCall(this)
     }
 
     fun toggleHoldState(){
@@ -126,6 +127,8 @@ class CallConnection(val callId: CallId) : Connection() {
 
     private fun clearActiveCall(){
         // Reset active call only if it was the current one
-        coreContext.activeCall?.takeIf { it == this }?.let { coreContext.activeCall = null }
+        coreContext.activeCall.value?.takeIf { it == this }?.let {
+            coreContext.setActiveCall(null)
+        }
     }
 }

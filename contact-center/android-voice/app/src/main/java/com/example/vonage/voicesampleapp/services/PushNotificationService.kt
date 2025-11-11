@@ -32,11 +32,18 @@ class PushNotificationService : FirebaseMessagingService() {
         // Create one using the latest valid Auth Token and notify the ClientManager
         // Else notify the ClientManager directly
         App.coreContext.run {
-            if (clientManager.sessionId == null) {
+            if (clientManager.sessionId.value == null) {
                 val token = authToken ?: return@run
-                clientManager.login(token) {
-                    clientManager.processIncomingPush(remoteMessage)
-                }
+                clientManager.login(
+                    token = token,
+                    onErrorCallback = { error ->
+                        println("Failed to login on push notification: ${error.message}")
+                    },
+                    onSuccessCallback = { sessionId ->
+                        println("Successfully logged in on push notification: $sessionId")
+                        clientManager.processIncomingPush(remoteMessage)
+                    }
+                )
             } else {
                 clientManager.processIncomingPush(remoteMessage)
             }

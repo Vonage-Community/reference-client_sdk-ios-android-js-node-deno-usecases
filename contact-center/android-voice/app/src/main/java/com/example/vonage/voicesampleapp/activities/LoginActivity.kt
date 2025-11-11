@@ -5,6 +5,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -34,34 +38,41 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Observe session ID and navigate to MainActivity when logged in
+        observeSessionId()
+        
         setContent {
             VoiceSampleAppTheme {
                 LoginScreen(
                     defaultToken = defaultToken,
-                    onLogin = { token, isToken, callback ->
-                        performLogin(token, isToken, callback)
-                    }
+                    onLogin = ::performLogin
                 )
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        clientManager.sessionId?.let {
-            navigateToMainActivity()
+    private fun observeSessionId() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                clientManager.sessionId.collect { sessionId ->
+                    if (sessionId != null) {
+                        navigateToMainActivity()
+                    }
+                }
+            }
         }
     }
 
-    private fun performLogin(tokenOrCode: String, isToken: Boolean, callback: (Boolean) -> Unit) {
+    private fun performLogin(tokenOrCode: String, isToken: Boolean, onComplete: () -> Unit) {
         val onErrorCallback = { error: Exception ->
             showToast(this, "Login Failed: ${error.message}")
-            callback(false)
+            onComplete()
         }
         val onSuccessCallback = { sessionId: String ->
             showToast(this, "Logged in with session ID: $sessionId", Toast.LENGTH_SHORT)
-            callback(true)
-            navigateToMainActivity()
+            onComplete()
+            // Navigation handled by observeSessionId() observer
         }
         if (isToken) {
             clientManager.login(token = tokenOrCode, onErrorCallback, onSuccessCallback)
@@ -74,7 +85,7 @@ class LoginActivity : ComponentActivity() {
 @Composable
 fun LoginScreen(
     defaultToken: String,
-    onLogin: (String, Boolean, (Boolean) -> Unit) -> Unit
+    onLogin: (String, Boolean, () -> Unit) -> Unit
 ) {
     var tokenOrCode by remember { mutableStateOf(defaultToken) }
     var loginWithToken by remember { mutableStateOf(true) }
@@ -153,7 +164,7 @@ fun LoginScreen(
                 Button(
                     onClick = {
                         isLoading = true
-                        onLogin(tokenOrCode, loginWithToken) { success ->
+                        onLogin(tokenOrCode, loginWithToken) {
                             isLoading = false
                         }
                     },
