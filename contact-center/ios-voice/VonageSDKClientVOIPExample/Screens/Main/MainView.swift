@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import VonageClientSDKVoice
+import VonageClientSDKCore
 
 struct MainView: View {
     @EnvironmentObject private var coreContext: CoreContext

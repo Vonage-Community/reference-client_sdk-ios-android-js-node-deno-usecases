@@ -22,11 +22,12 @@ struct LoginView: View {
                         Spacer()
                             .frame(height: AppSpacing.xxLarge)
                         
-                        // Logo
-                        Image(systemName: "phone.circle.fill")
+                        // Vonage Logo
+                        Image("VonageLogo")
                             .resizable()
+                            .renderingMode(.template)
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 120, height: 120)
+                            .frame(width: 150, height: 150)
                             .foregroundColor(.primaryPurple)
                         
                         Spacer()
