@@ -395,13 +395,13 @@ class VoiceClientManager(private val context: Context) {
     fun holdCall(call: CallConnection){
         call.takeIfActive()?.apply {
             if (!isOnHold.value) {
-                client.mute(callId) { error ->
+                client.enableEarmuff(callId) { error ->
                     error?.let {
-                        println("Error muting in holdCall with id: $callId")
+                        println("Error enabling earmuff in holdCall with id: $callId")
                     } ?: run {
-                        client.enableEarmuff(callId) { error2 ->
+                        client.mute(callId) { error2 ->
                             error2?.let {
-                                println("Error enabling earmuff in holdCall with id: $callId")
+                                println("Error muting in holdCall with id: $callId")
                             } ?: run {
                                 println("Call $callId successfully put on hold")
                                 toggleHold()
