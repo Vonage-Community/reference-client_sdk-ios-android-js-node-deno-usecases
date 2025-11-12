@@ -21,14 +21,15 @@ class VoiceClientManager: NSObject, ObservableObject {
     @Published var errorMessage: String?
     
     // MARK: - Properties
-    private let client: VGVoiceClient
+    /// Voice client - internal access for extensions only (do not access from other classes)
+    internal let client: VGVoiceClient
     weak var context: CoreContext!
     private var cancellables = Set<AnyCancellable>()
     
     // CallKit (only on device)
     #if !targetEnvironment(simulator)
     private let callProvider: CXProvider
-    private let callController = CXCallController()
+    private let callController: CXCallController
     #endif
     
     // MARK: - Initialization
