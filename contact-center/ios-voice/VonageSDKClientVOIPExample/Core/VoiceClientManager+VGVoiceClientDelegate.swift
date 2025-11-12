@@ -61,7 +61,6 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.context.activeCall = call
-            self.context.lastActiveCall = call
         }
         
         #if !targetEnvironment(simulator)

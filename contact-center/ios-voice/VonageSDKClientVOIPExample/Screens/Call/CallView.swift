@@ -132,11 +132,13 @@ struct CallView: View {
             // First Row - Main Controls
             HStack(spacing: AppSpacing.medium) {
                 // Mute Button
+                // When the call is on hold, the Mute Button is neutral
                 CallActionButton(
-                    icon: call.isMuted ? "mic.slash.fill" : "mic.fill",
-                    color: call.isMuted ? .white : .white.opacity(0.3),
-                    iconColor: call.isMuted ? .errorRed : .white
+                    icon: call.isOnHold ? "mic.fill" : (call.isMuted ? "mic.slash.fill" : "mic.fill"),
+                    color: call.isOnHold ? .white.opacity(0.3) : (call.isMuted ? .white : .white.opacity(0.3)),
+                    iconColor: call.isOnHold ? .white : (call.isMuted ? .errorRed : .white)
                 ) {
+                    if(call.isOnHold) { return }
                     toggleMute()
                 }
                 

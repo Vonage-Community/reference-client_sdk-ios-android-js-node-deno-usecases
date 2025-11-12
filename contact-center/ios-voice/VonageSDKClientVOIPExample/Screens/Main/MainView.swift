@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
+import VonageClientSDKVoice
 
 struct MainView: View {
     @EnvironmentObject private var coreContext: CoreContext
     @State private var usernameToCall: String = ""
     @State private var showDialer: Bool = false
     @State private var navigateToCall: Bool = false
-    @State private var navigateToLogin: Bool = false
+    @State private var currentUser: VGUser?
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -103,15 +104,11 @@ struct MainView: View {
                     .navigationBarBackButtonHidden(true)
             }
         }
-        .navigationDestination(isPresented: $navigateToLogin) {
-            LoginView()
-                .navigationBarBackButtonHidden(true)
-        }
         .onReceive(coreContext.$activeCall) { call in
             navigateToCall = call != nil
         }
-        .onReceive(coreContext.voiceClientManager.$sessionId) { sessionId in
-            navigateToLogin = sessionId == nil
+        .onReceive(coreContext.voiceClientManager.$currentUser) { user in
+            currentUser = user
         }
     }
     
@@ -147,7 +144,7 @@ struct MainView: View {
     
     // MARK: - Computed Properties
     private var username: String {
-        guard let user = coreContext.voiceClientManager.currentUser else {
+        guard let user = currentUser else {
             return "Guest User"
         }
         

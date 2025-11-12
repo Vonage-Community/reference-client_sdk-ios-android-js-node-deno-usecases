@@ -10,7 +10,6 @@ import SwiftUI
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
     @EnvironmentObject private var coreContext: CoreContext
-    @State private var isLoginSuccessful = false
     
     var body: some View {
         NavigationStack {
@@ -123,13 +122,6 @@ struct LoginView: View {
                     .padding(.horizontal, AppSpacing.extraLarge)
                 }
             }
-            .navigationDestination(isPresented: $isLoginSuccessful) {
-                MainView()
-                    .navigationBarBackButtonHidden(true)
-            }
-        }
-        .onReceive(coreContext.voiceClientManager.$sessionId) { sessionId in
-            isLoginSuccessful = sessionId != nil
         }
         .onAppear {
             viewModel.setup(with: coreContext.voiceClientManager)

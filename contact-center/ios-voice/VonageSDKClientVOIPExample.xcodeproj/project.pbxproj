@@ -32,6 +32,7 @@
 		FED917FE2EC3857300F972F4 /* VonageSDK+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */; };
 		FED918012EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */; };
 		FED918022EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */; };
+		FED918042EC40F8B00F972F4 /* PrivatePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +67,7 @@
 		FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VonageSDK+Extensions.swift"; sourceTree = "<group>"; };
 		FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+CXProviderDelegate.swift"; sourceTree = "<group>"; };
 		FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+VGVoiceClientDelegate.swift"; sourceTree = "<group>"; };
+		FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivatePreferences.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +159,7 @@
 			children = (
 				FED917FA2EC3857300F972F4 /* Extensions */,
 				FEB9E7702A4CA64C003C2B62 /* Configuration.swift */,
+				FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -432,6 +435,7 @@
 				1A0A6F2F44264EC88A66F52B /* AppTheme.swift in Sources */,
 				FED917D32EC3843700F972F4 /* AppDelegate.swift in Sources */,
 				FED917D42EC3843700F972F4 /* VonageVoiceApp.swift in Sources */,
+				FED918042EC40F8B00F972F4 /* PrivatePreferences.swift in Sources */,
 				FEB9E7712A4CA64C003C2B62 /* Configuration.swift in Sources */,
 				FED917D92EC3852F00F972F4 /* VGCallWrapper.swift in Sources */,
 				FED917DA2EC3852F00F972F4 /* CallState.swift in Sources */,

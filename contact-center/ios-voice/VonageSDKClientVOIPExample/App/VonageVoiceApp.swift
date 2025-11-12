@@ -26,14 +26,18 @@ struct VonageVoiceApp: App {
 
 struct ContentView: View {
     @EnvironmentObject private var coreContext: CoreContext
+    @State private var isLoggedIn = false
     
     var body: some View {
         NavigationStack {
-            if coreContext.voiceClientManager.sessionId != nil {
+            if isLoggedIn {
                 MainView()
             } else {
                 LoginView()
             }
+        }
+        .onReceive(coreContext.voiceClientManager.$sessionId) { sessionId in
+            isLoggedIn = sessionId != nil
         }
     }
 }

@@ -182,8 +182,6 @@ class VoiceClientManager: NSObject, ObservableObject {
                     self.context.authToken = nil
                     self.context.refreshToken = nil
                     self.context.activeCall = nil
-                    self.context.lastActiveCall = nil
-                    
                     onSuccess?()
                 }
             }
@@ -320,7 +318,6 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             DispatchQueue.main.async {
                 self.context.activeCall = call
-                self.context.lastActiveCall = call
             }
             
             #if !targetEnvironment(simulator)
@@ -399,18 +396,18 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     func holdCall(_ call: VGCallWrapper) {
-        // Hold = mute + earmuff
-        client.mute(call.callId) { [weak self] error in
+        // Hold = earmuff + mute
+        client.enableEarmuff(call.callId) { [weak self] error in
             guard let self else { return }
             
             if let error {
-                print("❌ Failed to mute for hold: \(error)")
+                print("❌ Failed to enable earmuff: \(error)")
                 return
             }
             
-            self.client.enableEarmuff(call.callId) { error in
+            self.client.mute(call.callId) { error in
                 if let error {
-                    print("❌ Failed to enable earmuff: \(error)")
+                    print("❌ Failed to mute for hold: \(error)")
                     return
                 }
                 
