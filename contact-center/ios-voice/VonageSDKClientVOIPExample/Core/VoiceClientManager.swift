@@ -232,55 +232,72 @@ class VoiceClientManager: NSObject, ObservableObject {
     func processVoipPush(_ payload: PKPushPayload) {
         print("📨 Processing VoIP push notification")
         
-        // If no active session, attempt to restore it asynchronously
-        // This is async so won't block - execution continues immediately
-        if sessionId == nil {
-            print("⚠️ No active session - attempting restoration")
-            
-            if let token = context.authToken {
-                print("🔄 Restoring session with stored auth token")
-                login(token: token, onError: { error in
-                    print("❌ Failed to restore session: \(error)")
-                }, onSuccess: { sessionId in
-                    print("✅ Session restored: \(sessionId)")
-                })
-            } else if let refreshToken = context.refreshToken {
-                print("🔄 Refreshing session with refresh token")
-                refreshSessionForPush(refreshToken: refreshToken)
-            } else {
-                print("⚠️ No stored tokens available for session restoration")
-            }
-        } else if let sessionId {
-            print("✅ Active session exists: \(sessionId)")
+        // iOS requires ALL VoIP pushes to be reported to CallKit: https://developer.apple.com/documentation/pushkit/pkpushregistrydelegate/pushregistry(_:didreceiveincomingpushwith:for:completion:)
+        
+        // Only process Vonage pushes for incoming call invites
+        let pushType = VGVoiceClient.vonagePushType(payload.dictionaryPayload)
+        guard pushType == .incomingCall else {
+            print("⚠️ Ignoring non-incoming call push type: \(pushType)")
+            return
         }
         
-        // Process push data immediately after triggering session restoration
-        // The SDK will queue the call invite and deliver it when session is ready
+        // Restore session if needed (async - won't block)
+        // This will be needed to answer/reject the call
+        restoreSessionIfNeeded()
+        
+        // This will trigger the invite delegate, which will then report the call to CallKit
         client.processCallInvitePushData(payload.dictionaryPayload)
     }
     
-    private func refreshSessionForPush(refreshToken: String) {
-        // Use NetworkService to get a new token
+    /// Restores session using stored credentials if no active session exists
+    private func restoreSessionIfNeeded() {
+        guard sessionId == nil else {
+            print("✅ Active session exists: \(sessionId!)")
+            return
+        }
+        
+        print("⚠️ No active session - attempting restoration")
+        
+        // Try auth token first, then refresh token
+        if let token = context.authToken {
+            restoreSessionWithToken(token)
+        } else if let refreshToken = context.refreshToken {
+            restoreSessionWithRefreshToken(refreshToken)
+        } else {
+            print("⚠️ No stored credentials for session restoration")
+        }
+    }
+    
+    /// Restores session using stored auth token
+    private func restoreSessionWithToken(_ token: String) {
+        print("🔄 Restoring session with auth token")
+        login(token: token, onError: { error in
+            print("❌ Failed to restore session: \(error)")
+        }, onSuccess: { sessionId in
+            print("✅ Session restored: \(sessionId)")
+        })
+    }
+    
+    /// Restores session by refreshing expired token
+    private func restoreSessionWithRefreshToken(_ refreshToken: String) {
+        print("🔄 Refreshing expired token")
+        
         context.networkService
             .sendRequest(apiType: RefreshTokenAPI(refreshToken: refreshToken))
             .sink(
                 receiveCompletion: { completion in
                     if case .failure(let error) = completion {
-                        print("❌ Failed to refresh token for push: \(error)")
+                        print("❌ Token refresh failed: \(error)")
                     }
                 },
                 receiveValue: { [weak self] (response: TokenResponse) in
-                    guard let self = self else { return }
+                    guard let self else { return }
                     
-                    // Store new tokens
+                    // Update stored tokens
                     self.context.refreshToken = response.refreshToken
                     
-                    // Create session with new token
-                    self.login(token: response.vonageToken, onError: { error in
-                        print("❌ Failed to login with refreshed token: \(error)")
-                    }, onSuccess: { sessionId in
-                        print("✅ Session created from refresh token: \(sessionId)")
-                    })
+                    // Restore session with new token
+                    self.restoreSessionWithToken(response.vonageToken)
                 }
             )
             .store(in: &cancellables)
