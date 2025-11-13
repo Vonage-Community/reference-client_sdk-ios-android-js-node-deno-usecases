@@ -8,106 +8,72 @@
 import SwiftUI
 import AVFoundation
 
-enum DialerType {
-    case phoneNumber
-    case dtmf
-}
-
 struct DialerView: View {
-    let dialerType: DialerType
     @EnvironmentObject private var coreContext: CoreContext
     @Environment(\.dismiss) private var dismiss
-    @State private var dialedNumber: String = ""
+    @State private var dialedDigits: String = ""
     @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 0) {
             // Drag Handle
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color.gray.opacity(0.4))
-                .frame(width: 32, height: 4)
-                .padding(.top, AppSpacing.small)
+            Capsule()
+                .fill(Color.gray.opacity(0.3))
+                .frame(width: 36, height: 5)
+                .padding(.top, 12)
             
-            Spacer()
-                .frame(height: AppSpacing.large)
-            
-            // Title
-            Text(dialerType == .phoneNumber ? "Dial Number" : "Send DTMF")
-                .font(AppTypography.titleLarge)
-                .fontWeight(.semibold)
-                .foregroundColor(.textPrimary)
-            
-            Spacer()
-                .frame(height: AppSpacing.large)
-            
-            // Number Input Field
-            TextField(dialerType == .phoneNumber ? "Enter number" : "Enter digits", text: $dialedNumber)
-                .font(AppTypography.headlineMedium)
-                .foregroundColor(.textPrimary)
-                .tracking(2)
-                .multilineTextAlignment(.center)
-                .keyboardType(dialerType == .phoneNumber ? .phonePad : .numberPad)
-                .focused($isTextFieldFocused)
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
-                .background(Color.backgroundLight)
-                .cornerRadius(AppCornerRadius.large)
-                .padding(.horizontal, AppSpacing.large)
-                .onChange(of: dialedNumber) { newValue in
-                    // For DTMF mode, send each new digit as it's typed
-                    if dialerType == .dtmf,
-                       let activeCall = coreContext.activeCall,
-                       let lastChar = newValue.last {
-                        let newDigit = String(lastChar)
-                        if isValidDTMFDigit(newDigit) {
-                            coreContext.voiceClientManager.sendDTMF(activeCall, digit: newDigit)
-                            playDTMFTone(for: newDigit)
-                        }
-                    }
-                }
-                .onAppear {
-                    // Auto-focus the text field when the view appears
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isTextFieldFocused = true
-                    }
-                }
-            
-            Spacer()
-                .frame(height: AppSpacing.large)
-            
-            // Optional: Show dialpad for DTMF mode
-            if dialerType == .dtmf {
-                dialpad
-            } else {
-                // Add some spacing for phone number mode
-                Spacer()
+            // Header
+            VStack(spacing: AppSpacing.small) {
+                Text("Send DTMF")
+                    .font(AppTypography.titleLarge)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.textPrimary)
+                
+                Text("Enter digits to send during call")
+                    .font(AppTypography.bodySmall)
+                    .foregroundColor(.textSecondary)
             }
+            .padding(.top, AppSpacing.large)
+            
+            // Display Field
+            Text(dialedDigits.isEmpty ? "—" : dialedDigits)
+                .font(.system(size: 48, weight: .light, design: .rounded))
+                .foregroundColor(.textPrimary)
+                .tracking(8)
+                .frame(maxWidth: .infinity)
+                .frame(height: 80)
+                .padding(.horizontal, AppSpacing.large)
+                .padding(.top, AppSpacing.large)
+            
+            Spacer()
+                .frame(height: AppSpacing.extraLarge)
+            
+            // Dialpad
+            dialpad
+                .padding(.horizontal, AppSpacing.large)
             
             Spacer()
                 .frame(height: AppSpacing.large)
             
             // Action Buttons
-            if dialerType == .phoneNumber {
-                Button(action: {
-                    makeCall()
-                }) {
+            HStack(spacing: AppSpacing.medium) {
+                // Clear Button
+                Button(action: clearDigits) {
                     HStack(spacing: AppSpacing.small) {
-                        Image(systemName: "phone.fill")
-                            .font(.system(size: 20))
-                        Text("Call")
+                        Image(systemName: "xmark")
+                        Text("Clear")
                     }
                 }
-                .buttonStyle(PrimaryButtonStyle())
-                .padding(.horizontal, AppSpacing.large)
-            } else {
-                Button(action: {
-                    dismiss()
-                }) {
+                .buttonStyle(SecondaryButtonStyle())
+                .disabled(dialedDigits.isEmpty)
+                
+                // Done Button
+                Button(action: { dismiss() }) {
                     Text("Done")
                 }
-                .buttonStyle(SecondaryButtonStyle())
-                .padding(.horizontal, AppSpacing.large)
+                .buttonStyle(PrimaryButtonStyle())
             }
+            .padding(.horizontal, AppSpacing.large)
             
             Spacer()
                 .frame(height: AppSpacing.large)
@@ -119,17 +85,16 @@ struct DialerView: View {
     
     // MARK: - Dialpad
     private var dialpad: some View {
-        VStack(spacing: AppSpacing.medium) {
+        VStack(spacing: 16) {
             dialpadRow(["1", "2", "3"])
             dialpadRow(["4", "5", "6"])
             dialpadRow(["7", "8", "9"])
             dialpadRow(["*", "0", "#"])
         }
-        .padding(.horizontal, AppSpacing.large)
     }
     
     private func dialpadRow(_ digits: [String]) -> some View {
-        HStack(spacing: AppSpacing.medium) {
+        HStack(spacing: 16) {
             ForEach(digits, id: \.self) { digit in
                 dialpadButton(digit)
             }
@@ -137,49 +102,39 @@ struct DialerView: View {
     }
     
     private func dialpadButton(_ digit: String) -> some View {
-        Button(action: {
+        Button {
             handleDialpadTap(digit)
-        }) {
+        } label: {
             Text(digit)
-                .font(.system(size: 32, weight: .medium))
+                .font(.system(size: 36, weight: .regular, design: .rounded))
                 .foregroundColor(.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 64)
+                .frame(height: 72)
                 .background(
                     Circle()
                         .fill(Color.backgroundLight)
+                        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
                 )
+                .contentShape(Circle())
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(DialpadButtonStyle())
     }
     
     // MARK: - Actions
     private func handleDialpadTap(_ digit: String) {
-        dialedNumber.append(digit)
+        // Add digit to display
+        dialedDigits.append(digit)
         
-        // Play DTMF tone
+        // Play DTMF tone for immediate feedback
         playDTMFTone(for: digit)
         
-        // Send DTMF if in DTMF mode
-        if dialerType == .dtmf, let activeCall = coreContext.activeCall {
-            coreContext.voiceClientManager.sendDTMF(activeCall, digit: digit)
-        }
+        // Send DTMF to active call
+        guard let activeCall = coreContext.activeCall else { return }
+        coreContext.voiceClientManager.sendDTMF(activeCall, digit: digit)
     }
     
-    private func makeCall() {
-        // Allow calling even with empty number - it's a valid use case
-        isTextFieldFocused = false // Dismiss keyboard
-        
-        coreContext.voiceClientManager.startOutboundCall(
-            to: dialedNumber,
-            context: ["call_type": "phone"]
-        )
-        
-        dismiss()
-    }
-    
-    private func isValidDTMFDigit(_ digit: String) -> Bool {
-        return ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#"].contains(digit)
+    private func clearDigits() {
+        dialedDigits = ""
     }
     
     private func playDTMFTone(for digit: String) {
@@ -194,10 +149,20 @@ struct DialerView: View {
     }
 }
 
+// MARK: - Dialpad Button Style
+private struct DialpadButtonStyle: ButtonStyle {
+    func makeBody(configuration: Self.Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Preview
 struct DialerView_Previews: PreviewProvider {
     static var previews: some View {
-        DialerView(dialerType: .phoneNumber)
+        DialerView()
             .environmentObject(CoreContext.shared)
     }
 }

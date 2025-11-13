@@ -53,7 +53,7 @@ class PushService: NSObject {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard let self, granted else { return }
             
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 // Register for user notifications
                 UIApplication.shared.registerForRemoteNotifications()
                 

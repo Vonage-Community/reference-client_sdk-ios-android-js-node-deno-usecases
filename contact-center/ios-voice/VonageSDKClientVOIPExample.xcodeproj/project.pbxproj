@@ -29,7 +29,6 @@
 		FED917FB2EC3857300F972F4 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F62EC3857300F972F4 /* Data+Extensions.swift */; };
 		FED917FC2EC3857300F972F4 /* UUID+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F82EC3857300F972F4 /* UUID+Extensions.swift */; };
 		FED917FD2EC3857300F972F4 /* Publisher+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F72EC3857300F972F4 /* Publisher+Extensions.swift */; };
-		FED917FE2EC3857300F972F4 /* VonageSDK+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */; };
 		FED918012EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */; };
 		FED918022EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */; };
 		FED918042EC40F8B00F972F4 /* PrivatePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */; };
@@ -64,7 +63,6 @@
 		FED917F62EC3857300F972F4 /* Data+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extensions.swift"; sourceTree = "<group>"; };
 		FED917F72EC3857300F972F4 /* Publisher+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Publisher+Extensions.swift"; sourceTree = "<group>"; };
 		FED917F82EC3857300F972F4 /* UUID+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UUID+Extensions.swift"; sourceTree = "<group>"; };
-		FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VonageSDK+Extensions.swift"; sourceTree = "<group>"; };
 		FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+CXProviderDelegate.swift"; sourceTree = "<group>"; };
 		FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+VGVoiceClientDelegate.swift"; sourceTree = "<group>"; };
 		FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivatePreferences.swift; sourceTree = "<group>"; };
@@ -275,7 +273,6 @@
 				FED917F62EC3857300F972F4 /* Data+Extensions.swift */,
 				FED917F72EC3857300F972F4 /* Publisher+Extensions.swift */,
 				FED917F82EC3857300F972F4 /* UUID+Extensions.swift */,
-				FED917F92EC3857300F972F4 /* VonageSDK+Extensions.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -442,7 +439,6 @@
 				FED917FB2EC3857300F972F4 /* Data+Extensions.swift in Sources */,
 				FED917FC2EC3857300F972F4 /* UUID+Extensions.swift in Sources */,
 				FED917FD2EC3857300F972F4 /* Publisher+Extensions.swift in Sources */,
-				FED917FE2EC3857300F972F4 /* VonageSDK+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

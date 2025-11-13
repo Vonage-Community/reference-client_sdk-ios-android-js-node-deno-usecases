@@ -16,22 +16,8 @@ struct CallActionButton: View {
     var size: CGFloat = 64
     let action: () -> Void
     
-    @State private var isPressed: Bool = false
-    
     var body: some View {
-        Button(action: {
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = true
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isPressed = false
-                }
-            }
-            
-            action()
-        }) {
+        Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: size * 0.4, weight: .medium))
                 .foregroundColor(iconColor)
@@ -41,7 +27,17 @@ struct CallActionButton: View {
                         .fill(color)
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 )
+                .contentShape(Circle())
         }
-        .scaleEffect(isPressed ? 0.95 : 1.0)
+        .buttonStyle(CallActionButtonStyle())
+    }
+}
+
+/// Custom button style for call action buttons with proper press animation
+private struct CallActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Self.Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }

@@ -19,35 +19,15 @@ struct CallView: View {
             GradientBackground.forCallState(call.state)
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
+            VStack(spacing: AppSpacing.extraLarge) {
                 Spacer()
-                    .frame(height: 60)
+                    .frame(minHeight: 60)
                 
                 // User Info Section
-                VStack(spacing: AppSpacing.large) {
-                    // Avatar
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.25))
-                            .frame(width: 100, height: 100)
-                        
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(.white)
-                    }
-                    
-                    // Username
-                    Text(call.callerDisplayName)
-                        .font(AppTypography.headlineMedium)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    // Call State Badge
-                    callStateBadge
-                }
-                .padding(.top, AppSpacing.extraLarge)
+                userInfoSection
                 
                 Spacer()
+                    .frame(minHeight: 0)
                 
                 // Controls Section
                 if call.isInbound && call.state == .ringing {
@@ -57,19 +37,43 @@ struct CallView: View {
                 }
                 
                 Spacer()
-                    .frame(height: AppSpacing.xxLarge)
+                    .frame(minHeight: AppSpacing.xxLarge)
             }
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showDialer) {
-            DialerView(dialerType: .dtmf)
+            DialerView()
         }
         .onReceive(coreContext.$activeCall) { activeCall in
-            guard activeCall == nil else { return }
-            // Delay dismiss to show disconnected state
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            // Dismiss immediately when call ends
+            if activeCall == nil {
                 dismiss()
             }
+        }
+    }
+    
+    // MARK: - User Info Section
+    private var userInfoSection: some View {
+        VStack(spacing: AppSpacing.large) {
+            // Avatar
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.25))
+                    .frame(width: 100, height: 100)
+                
+                Image(systemName: "person.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.white)
+            }
+            
+            // Username
+            Text(call.callerDisplayName)
+                .font(AppTypography.headlineMedium)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            // Call State Badge
+            callStateBadge
         }
     }
     

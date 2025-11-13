@@ -28,7 +28,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         
         print("❌ Session error: \(message)")
         
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             self?.errorMessage = "Session error: \(message)"
             
             // Try to reconnect if we have a valid token
@@ -50,17 +50,15 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             return
         }
         
-        // Create call wrapper
-        let call = VGCallWrapper(
-            id: callUUID,
-            callId: callId,
-            callerDisplayName: caller,
-            isInbound: true
-        )
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.context.activeCall = call
+        // Create call wrapper on MainActor
+        Task { @MainActor in
+            let call = VGCallWrapper(
+                id: callUUID,
+                callId: callId,
+                callerDisplayName: caller,
+                isInbound: true
+            )
+            context.activeCall = call
         }
         
         #if !targetEnvironment(simulator)
@@ -100,7 +98,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         if status == .answered {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 call.updateState(.active)
             }
         }
@@ -144,8 +142,8 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Update the mute state if it doesn't match
-        if call.isMuted != isMuted {
-            DispatchQueue.main.async {
+        Task { @MainActor in
+            if call.isMuted != isMuted {
                 call.toggleMute()
             }
         }
@@ -157,7 +155,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Set call to active state after transfer
-        DispatchQueue.main.async {
+        Task { @MainActor in
             call.updateState(.active)
         }
     }
@@ -177,7 +175,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Transition to reconnecting state
-        DispatchQueue.main.async {
+        Task { @MainActor in
             call.updateState(.reconnecting)
         }
     }
@@ -188,7 +186,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Transition back to active state
-        DispatchQueue.main.async {
+        Task { @MainActor in
             call.updateState(.active)
         }
     }

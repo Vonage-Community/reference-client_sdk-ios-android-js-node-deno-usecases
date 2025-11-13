@@ -35,7 +35,7 @@ extension VoiceClientManager: CXProviderDelegate {
             print("✅ Answered call: \(call.callId)")
             
             // Update state to active - delegate is only called for remote leg
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 call.updateState(.active)
             }
             

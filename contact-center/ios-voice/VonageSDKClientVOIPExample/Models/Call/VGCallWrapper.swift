@@ -27,27 +27,23 @@ class VGCallWrapper: ObservableObject, Identifiable {
         self.isInbound = isInbound
     }
     
+    @MainActor
     func updateState(_ newState: CallState) {
-        DispatchQueue.main.async {
-            self.state = newState
-        }
+        state = newState
     }
     
+    @MainActor
     func toggleMute() {
-        DispatchQueue.main.async {
-            self.isMuted.toggle()
-        }
+        isMuted.toggle()
     }
     
+    @MainActor
     func toggleHold() {
-        DispatchQueue.main.async {
-            self.isOnHold.toggle()
-        }
+        isOnHold.toggle()
     }
     
+    @MainActor
     func toggleNoiseSuppression() {
-        DispatchQueue.main.async {
-            self.isNoiseSuppressionEnabled.toggle()
-        }
+        isNoiseSuppressionEnabled.toggle()
     }
 }

@@ -80,7 +80,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     // MARK: - Authentication
     func login(token: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.isLoading = true
             self.errorMessage = nil
         }
@@ -88,7 +88,7 @@ class VoiceClientManager: NSObject, ObservableObject {
         client.createSession(token) { [weak self] error, sessionId in
             guard let self else { return }
             
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.isLoading = false
                 
                 if let error {
@@ -117,7 +117,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     func loginWithCode(code: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.isLoading = true
             self.errorMessage = nil
         }
@@ -130,7 +130,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                     guard let self = self else { return }
                     
                     if case .failure(let error) = completion {
-                        DispatchQueue.main.async {
+                        Task { @MainActor in
                             self.isLoading = false
                             self.errorMessage = error.localizedDescription
                             onError?(error)
@@ -161,9 +161,8 @@ class VoiceClientManager: NSObject, ObservableObject {
                 } else {
                     print("✅ Push tokens unregistered")
                     // Clear deviceId on successful unregistration
-                    guard let self else { return }
-                    DispatchQueue.main.async {
-                        self.context.deviceId = nil
+                    Task { @MainActor [weak self] in
+                        self?.context.deviceId = nil
                     }
                 }
             }
@@ -173,7 +172,7 @@ class VoiceClientManager: NSObject, ObservableObject {
         client.deleteSession { [weak self] error in
             guard let self else { return }
             
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 if let error {
                     self.errorMessage = error.localizedDescription
                 } else {
@@ -193,7 +192,7 @@ class VoiceClientManager: NSObject, ObservableObject {
         client.getUser("me") { [weak self] error, user in
             guard let self = self else { return }
             
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 if let error = error {
                     print("❌ Failed to fetch current user: \(error)")
                     return
@@ -222,7 +221,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             guard let deviceId else { return }
             
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.context.deviceId = deviceId
                 print("✅ Registered VOIP token with device ID: \(deviceId)")
             }
@@ -313,7 +312,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             if let error {
                 print("❌ Failed to start outbound call: \(error)")
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self.errorMessage = "Failed to start call: \(error.localizedDescription)"
                 }
                 return
@@ -326,15 +325,14 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             print("✅ Outbound call started with ID: \(callId)")
             
-            // Create call wrapper
-            let call = VGCallWrapper(
-                id: callUUID,
-                callId: callId,
-                callerDisplayName: callee,
-                isInbound: false
-            )
-            
-            DispatchQueue.main.async {
+            // Create call wrapper on MainActor
+            Task { @MainActor in
+                let call = VGCallWrapper(
+                    id: callUUID,
+                    callId: callId,
+                    callerDisplayName: callee,
+                    isInbound: false
+                )
                 self.context.activeCall = call
             }
             
@@ -357,7 +355,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             // Update state to active for both simulator and device
             // The delegate method is only called for the remote leg, not for our answer
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 call.updateState(.active)
             }
         }
@@ -397,7 +395,9 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Muted call: \(call.callId)")
-            call.toggleMute()
+            Task { @MainActor in
+                call.toggleMute()
+            }
         }
     }
     
@@ -409,7 +409,9 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Unmuted call: \(call.callId)")
-            call.toggleMute()
+            Task { @MainActor in
+                call.toggleMute()
+            }
         }
     }
     
@@ -430,8 +432,10 @@ class VoiceClientManager: NSObject, ObservableObject {
                 }
                 
                 print("✅ Call on hold: \(call.callId)")
-                call.toggleHold()
-                call.updateState(.holding)
+                Task { @MainActor in
+                    call.toggleHold()
+                    call.updateState(.holding)
+                }
             }
         }
     }
@@ -453,8 +457,10 @@ class VoiceClientManager: NSObject, ObservableObject {
                 }
                 
                 print("✅ Call resumed: \(call.callId)")
-                call.toggleHold()
-                call.updateState(.active)
+                Task { @MainActor in
+                    call.toggleHold()
+                    call.updateState(.active)
+                }
             }
         }
     }
@@ -467,7 +473,9 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Noise suppression enabled: \(call.callId)")
-            call.toggleNoiseSuppression()
+            Task { @MainActor in
+                call.toggleNoiseSuppression()
+            }
         }
     }
     
@@ -479,7 +487,9 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Noise suppression disabled: \(call.callId)")
-            call.toggleNoiseSuppression()
+            Task { @MainActor in
+                call.toggleNoiseSuppression()
+            }
         }
     }
     
@@ -504,14 +514,13 @@ extension VoiceClientManager {
     ///   - call: The call to end
     ///   - reason: The reason the call ended (for CallKit reporting)
     internal func endCall(_ call: VGCallWrapper, reason: CXCallEndedReason) {
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor in
             call.updateState(.disconnected)
             
             // Small delay to show disconnected state before clearing
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                if self?.context.activeCall?.id == call.id {
-                    self?.context.activeCall = nil
-                }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if self.context.activeCall?.id == call.id {
+                self.context.activeCall = nil
             }
         }
         

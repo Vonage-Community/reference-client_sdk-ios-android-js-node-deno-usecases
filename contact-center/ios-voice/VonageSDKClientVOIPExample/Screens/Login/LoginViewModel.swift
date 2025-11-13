@@ -48,14 +48,14 @@ class LoginViewModel: ObservableObject {
         errorMessage = nil
         
         let onError: (Error) -> Void = { [weak self] error in
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 self?.isLoading = false
                 self?.errorMessage = "Login failed: \(error.localizedDescription)"
             }
         }
         
         let onSuccess: (String) -> Void = { [weak self] sessionId in
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 self?.isLoading = false
                 print("✅ Logged in successfully with session ID: \(sessionId)")
             }
