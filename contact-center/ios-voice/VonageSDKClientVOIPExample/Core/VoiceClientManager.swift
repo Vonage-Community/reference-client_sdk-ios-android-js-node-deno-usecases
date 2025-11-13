@@ -80,7 +80,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     // MARK: - Authentication
     func login(token: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             self.isLoading = true
             self.errorMessage = nil
         }
@@ -88,7 +89,8 @@ class VoiceClientManager: NSObject, ObservableObject {
         client.createSession(token) { [weak self] error, sessionId in
             guard let self else { return }
             
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 self.isLoading = false
                 
                 if let error {
@@ -117,7 +119,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     func loginWithCode(code: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             self.isLoading = true
             self.errorMessage = nil
         }
@@ -130,7 +133,8 @@ class VoiceClientManager: NSObject, ObservableObject {
                     guard let self = self else { return }
                     
                     if case .failure(let error) = completion {
-                        Task { @MainActor in
+                        Task { @MainActor [weak self] in
+                            guard let self = self else { return }
                             self.isLoading = false
                             self.errorMessage = error.localizedDescription
                             onError?(error)
@@ -162,7 +166,8 @@ class VoiceClientManager: NSObject, ObservableObject {
                     print("✅ Push tokens unregistered")
                     // Clear deviceId on successful unregistration
                     Task { @MainActor [weak self] in
-                        self?.context.deviceId = nil
+                        guard let self = self else { return }
+                        self.context.deviceId = nil
                     }
                 }
             }
@@ -172,7 +177,8 @@ class VoiceClientManager: NSObject, ObservableObject {
         client.deleteSession { [weak self] error in
             guard let self else { return }
             
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 if let error {
                     self.errorMessage = error.localizedDescription
                 } else {
@@ -182,6 +188,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                     self.context.authToken = nil
                     self.context.refreshToken = nil
                     self.context.activeCall = nil
+                    
                     onSuccess?()
                 }
             }
@@ -192,7 +199,8 @@ class VoiceClientManager: NSObject, ObservableObject {
         client.getUser("me") { [weak self] error, user in
             guard let self = self else { return }
             
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 if let error = error {
                     print("❌ Failed to fetch current user: \(error)")
                     return
@@ -221,7 +229,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             guard let deviceId else { return }
             
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 self.context.deviceId = deviceId
                 print("✅ Registered VOIP token with device ID: \(deviceId)")
             }
@@ -312,7 +321,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             
             if let error {
                 print("❌ Failed to start outbound call: \(error)")
-                Task { @MainActor in
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
                     self.errorMessage = "Failed to start call: \(error.localizedDescription)"
                 }
                 return
@@ -326,7 +336,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             print("✅ Outbound call started with ID: \(callId)")
             
             // Create call wrapper on MainActor
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 let call = VGCallWrapper(
                     id: callUUID,
                     callId: callId,
@@ -344,72 +355,100 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     func answerCall(_ call: VGCallWrapper) {
-        client.answer(call.callId) { [weak self] error in
+        let callId = call.callId
+        client.answer(callId) { [weak self] error in
+            guard let self = self else { return }
+            
             if let error {
                 print("❌ Failed to answer call: \(error)")
-                self?.endCall(call, reason: .failed)
+                if let call = self.context.activeCall, call.callId == callId {
+                    self.endCall(call, reason: .failed)
+                }
                 return
             }
             
-            print("✅ Answered call: \(call.callId)")
+            print("✅ Answered call: \(callId)")
             
             // Update state to active for both simulator and device
             // The delegate method is only called for the remote leg, not for our answer
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
                 call.updateState(.active)
             }
         }
     }
     
     func rejectCall(_ call: VGCallWrapper) {
-        client.reject(call.callId) { [weak self] error in
+        let callId = call.callId
+        client.reject(callId) { [weak self] error in
+            guard let self = self else { return }
+            
             if let error {
                 print("❌ Failed to reject call: \(error)")
-                self?.endCall(call, reason: .failed)
+                if let call = self.context.activeCall, call.callId == callId {
+                    self.endCall(call, reason: .failed)
+                }
                 return
             }
             
-            print("✅ Rejected call: \(call.callId)")
-            self?.endCall(call, reason: .remoteEnded)
+            print("✅ Rejected call: \(callId)")
+            if let call = self.context.activeCall, call.callId == callId {
+                self.endCall(call, reason: .remoteEnded)
+            }
         }
     }
     
     func hangupCall(_ call: VGCallWrapper) {
-        client.hangup(call.callId) { [weak self] error in
+        let callId = call.callId
+        client.hangup(callId) { [weak self] error in
+            guard let self = self else { return }
+            
             if let error {
                 print("❌ Failed to hangup call: \(error)")
-                self?.endCall(call, reason: .failed)
+                if let call = self.context.activeCall, call.callId == callId {
+                    self.endCall(call, reason: .failed)
+                }
                 return
             }
             
-            print("✅ Hung up call: \(call.callId)")
+            print("✅ Hung up call: \(callId)")
             // State will be updated via didReceiveHangupForCall delegate for both simulator and device
         }
     }
     
     func muteCall(_ call: VGCallWrapper) {
-        client.mute(call.callId) { error in
+        let callId = call.callId
+        client.mute(callId) { [weak self] error in
             if let error {
                 print("❌ Failed to mute call: \(error)")
                 return
             }
             
-            print("✅ Muted call: \(call.callId)")
-            Task { @MainActor in
+            print("✅ Muted call: \(callId)")
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
                 call.toggleMute()
             }
         }
     }
     
     func unmuteCall(_ call: VGCallWrapper) {
-        client.unmute(call.callId) { error in
+        let callId = call.callId
+        client.unmute(callId) { [weak self] error in
             if let error {
                 print("❌ Failed to unmute call: \(error)")
                 return
             }
             
-            print("✅ Unmuted call: \(call.callId)")
-            Task { @MainActor in
+            print("✅ Unmuted call: \(callId)")
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
                 call.toggleMute()
             }
         }
@@ -417,7 +456,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func holdCall(_ call: VGCallWrapper) {
         // Hold = earmuff + mute
-        client.enableEarmuff(call.callId) { [weak self] error in
+        let callId = call.callId
+        client.enableEarmuff(callId) { [weak self] error in
             guard let self else { return }
             
             if let error {
@@ -425,14 +465,17 @@ class VoiceClientManager: NSObject, ObservableObject {
                 return
             }
             
-            self.client.mute(call.callId) { error in
+            self.client.mute(callId) { [weak self] error in
                 if let error {
                     print("❌ Failed to mute for hold: \(error)")
                     return
                 }
                 
-                print("✅ Call on hold: \(call.callId)")
-                Task { @MainActor in
+                print("✅ Call on hold: \(callId)")
+                Task { @MainActor [weak self] in
+                    guard let self = self,
+                          let call = self.context.activeCall,
+                          call.callId == callId else { return }
                     call.toggleHold()
                     call.updateState(.holding)
                 }
@@ -442,7 +485,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func unholdCall(_ call: VGCallWrapper) {
         // Unhold = unmute + disable earmuff
-        client.unmute(call.callId) { [weak self] error in
+        let callId = call.callId
+        client.unmute(callId) { [weak self] error in
             guard let self else { return }
             
             if let error {
@@ -450,14 +494,17 @@ class VoiceClientManager: NSObject, ObservableObject {
                 return
             }
             
-            self.client.disableEarmuff(call.callId) { error in
+            self.client.disableEarmuff(callId) { [weak self] error in
                 if let error {
                     print("❌ Failed to disable earmuff: \(error)")
                     return
                 }
                 
-                print("✅ Call resumed: \(call.callId)")
-                Task { @MainActor in
+                print("✅ Call resumed: \(callId)")
+                Task { @MainActor [weak self] in
+                    guard let self = self,
+                          let call = self.context.activeCall,
+                          call.callId == callId else { return }
                     call.toggleHold()
                     call.updateState(.active)
                 }
@@ -466,41 +513,50 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     func enableNoiseSuppression(_ call: VGCallWrapper) {
-        client.enableNoiseSuppression(call.callId) { error in
+        let callId = call.callId
+        client.enableNoiseSuppression(callId) { [weak self] error in
             if let error {
                 print("❌ Failed to enable noise suppression: \(error)")
                 return
             }
             
-            print("✅ Noise suppression enabled: \(call.callId)")
-            Task { @MainActor in
+            print("✅ Noise suppression enabled: \(callId)")
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
                 call.toggleNoiseSuppression()
             }
         }
     }
     
     func disableNoiseSuppression(_ call: VGCallWrapper) {
-        client.disableNoiseSuppression(call.callId) { error in
+        let callId = call.callId
+        client.disableNoiseSuppression(callId) { [weak self] error in
             if let error {
                 print("❌ Failed to disable noise suppression: \(error)")
                 return
             }
             
-            print("✅ Noise suppression disabled: \(call.callId)")
-            Task { @MainActor in
+            print("✅ Noise suppression disabled: \(callId)")
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
                 call.toggleNoiseSuppression()
             }
         }
     }
     
     func sendDTMF(_ call: VGCallWrapper, digit: String) {
-        client.sendDTMF(call.callId, withDigits: digit) { error in
+        let callId = call.callId
+        client.sendDTMF(callId, withDigits: digit) { error in
             if let error {
                 print("❌ Failed to send DTMF: \(error)")
                 return
             }
             
-            print("✅ Sent DTMF '\(digit)' on call: \(call.callId)")
+            print("✅ Sent DTMF '\(digit)' on call: \(callId)")
         }
     }
     
@@ -514,7 +570,10 @@ extension VoiceClientManager {
     ///   - call: The call to end
     ///   - reason: The reason the call ended (for CallKit reporting)
     internal func endCall(_ call: VGCallWrapper, reason: CXCallEndedReason) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self,
+                  let call = self.context.activeCall else { return }
+            
             call.updateState(.disconnected)
             
             // Small delay to show disconnected state before clearing

@@ -51,14 +51,15 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         }
         
         // Create call wrapper on MainActor
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             let call = VGCallWrapper(
                 id: callUUID,
                 callId: callId,
                 callerDisplayName: caller,
                 isInbound: true
             )
-            context.activeCall = call
+            self.context.activeCall = call
         }
         
         #if !targetEnvironment(simulator)
@@ -98,7 +99,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         if status == .answered {
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
                 call.updateState(.active)
             }
         }
@@ -142,7 +146,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Update the mute state if it doesn't match
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self,
+                  let call = self.context.activeCall,
+                  call.callId == callId else { return }
             if call.isMuted != isMuted {
                 call.toggleMute()
             }
@@ -155,7 +162,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Set call to active state after transfer
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self,
+                  let call = self.context.activeCall,
+                  call.callId == callId else { return }
             call.updateState(.active)
         }
     }
@@ -175,7 +185,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Transition to reconnecting state
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self,
+                  let call = self.context.activeCall,
+                  call.callId == callId else { return }
             call.updateState(.reconnecting)
         }
     }
@@ -186,7 +199,10 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Transition back to active state
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self,
+                  let call = self.context.activeCall,
+                  call.callId == callId else { return }
             call.updateState(.active)
         }
     }

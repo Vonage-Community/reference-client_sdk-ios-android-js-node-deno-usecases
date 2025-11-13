@@ -27,6 +27,10 @@ class VGCallWrapper: ObservableObject, Identifiable {
         self.isInbound = isInbound
     }
     
+    deinit {
+        print("🗑️ VGCallWrapper deallocated for call: \(callId)")
+    }
+    
     @MainActor
     func updateState(_ newState: CallState) {
         state = newState

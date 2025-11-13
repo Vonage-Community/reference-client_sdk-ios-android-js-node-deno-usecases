@@ -8,10 +8,28 @@
 import SwiftUI
 
 struct CallView: View {
-    @ObservedObject var call: VGCallWrapper
     @EnvironmentObject private var coreContext: CoreContext
-    @Environment(\.dismiss) private var dismiss
     @State private var showDialer: Bool = false
+    
+    var body: some View {
+        ZStack {
+            if let call = coreContext.activeCall {
+                CallContentView(call: call, showDialer: $showDialer)
+            }
+        }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showDialer) {
+            DialerView()
+        }
+    }
+}
+
+// MARK: - Call Content View
+/// Separate view that observes the VGCallWrapper to react to its property changes
+private struct CallContentView: View {
+    @ObservedObject var call: VGCallWrapper
+    @Binding var showDialer: Bool
+    @EnvironmentObject private var coreContext: CoreContext
     
     var body: some View {
         ZStack {
@@ -24,36 +42,25 @@ struct CallView: View {
                     .frame(minHeight: 60)
                 
                 // User Info Section
-                userInfoSection
+                userInfoSection()
                 
                 Spacer()
                     .frame(minHeight: 0)
                 
                 // Controls Section
                 if call.isInbound && call.state == .ringing {
-                    incomingCallControls
+                    incomingCallControls()
                 } else {
-                    activeCallControls
+                    activeCallControls()
                 }
                 
                 Spacer()
                     .frame(minHeight: AppSpacing.xxLarge)
             }
         }
-        .navigationBarHidden(true)
-        .sheet(isPresented: $showDialer) {
-            DialerView()
-        }
-        .onReceive(coreContext.$activeCall) { activeCall in
-            // Dismiss immediately when call ends
-            if activeCall == nil {
-                dismiss()
-            }
-        }
     }
-    
     // MARK: - User Info Section
-    private var userInfoSection: some View {
+    private func userInfoSection() -> some View {
         VStack(spacing: AppSpacing.large) {
             // Avatar
             ZStack {
@@ -73,13 +80,13 @@ struct CallView: View {
                 .foregroundColor(.white)
             
             // Call State Badge
-            callStateBadge
+            callStateBadge()
         }
     }
     
     // MARK: - Call State Badge
-    private var callStateBadge: some View {
-        Text(callStateText)
+    private func callStateBadge() -> some View {
+        Text(callStateText())
             .font(AppTypography.bodyLarge)
             .fontWeight(.medium)
             .foregroundColor(.white)
@@ -91,7 +98,7 @@ struct CallView: View {
             )
     }
     
-    private var callStateText: String {
+    private func callStateText() -> String {
         switch call.state {
         case .ringing:
             return call.isInbound ? "Incoming Call..." : "Ringing..."
@@ -107,7 +114,7 @@ struct CallView: View {
     }
     
     // MARK: - Incoming Call Controls
-    private var incomingCallControls: some View {
+    private func incomingCallControls() -> some View {
         HStack(spacing: AppSpacing.xxLarge) {
             // Reject Button
             CallActionButton(
@@ -131,7 +138,7 @@ struct CallView: View {
     }
     
     // MARK: - Active Call Controls
-    private var activeCallControls: some View {
+    private func activeCallControls() -> some View {
         VStack(spacing: AppSpacing.medium) {
             // First Row - Main Controls
             HStack(spacing: AppSpacing.medium) {
@@ -142,7 +149,7 @@ struct CallView: View {
                     color: call.isOnHold ? .white.opacity(0.3) : (call.isMuted ? .white : .white.opacity(0.3)),
                     iconColor: call.isOnHold ? .white : (call.isMuted ? .errorRed : .white)
                 ) {
-                    if(call.isOnHold) { return }
+                    if call.isOnHold { return }
                     toggleMute()
                 }
                 
@@ -221,16 +228,19 @@ struct CallView: View {
 // MARK: - Preview
 struct CallView_Previews: PreviewProvider {
     static var previews: some View {
+        // Setup mock call in CoreContext for preview
+        let context = CoreContext.shared
         let call = VGCallWrapper(
             id: UUID(),
             callId: "test-call-id",
             callerDisplayName: "John Doe",
             isInbound: true
         )
+        context.activeCall = call
         
         return NavigationStack {
-            CallView(call: call)
-                .environmentObject(CoreContext.shared)
+            CallView()
+                .environmentObject(context)
         }
     }
 }
