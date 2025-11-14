@@ -13,8 +13,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dialpad
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,8 +70,7 @@ class MainActivity : FragmentActivity() {
                         ?: currentUser?.name 
                         ?: stringResource(R.string.logged_username_default),
                     onLogout = ::logout,
-                    onCallUser = ::callUser,
-                    onShowDialer = ::showDialerFragment
+                    onCallUser = ::callUser
                 )
             }
         }
@@ -127,13 +124,19 @@ class MainActivity : FragmentActivity() {
         clientManager.logout()
     }
 
-    private fun callUser(username: String) {
-        val callContext = username.trim().takeIf { it.isNotEmpty() }?.let {
+    private fun callUser(input: String) {
+        val trimmedInput = input.trim()
+        
+        val callContext = trimmedInput.takeIf { it.isNotEmpty() }?.let {
+            // Determine if input is a phone number (contains only digits, +, -, spaces, parentheses)
+            val isPhoneNumber = it.matches(Regex("^[+\\d\\s\\-()]+$"))
+            
             mapOf(
                 Constants.CONTEXT_KEY_CALLEE to it,
-                Constants.CONTEXT_KEY_CALL_TYPE to Constants.APP_TYPE
+                Constants.CONTEXT_KEY_CALL_TYPE to if (isPhoneNumber) Constants.PHONE_TYPE else Constants.APP_TYPE
             )
         }
+        
         clientManager.startOutboundCall(callContext)
     }
 }
@@ -143,10 +146,9 @@ class MainActivity : FragmentActivity() {
 fun MainScreen(
     username: String,
     onLogout: () -> Unit,
-    onCallUser: (String) -> Unit,
-    onShowDialer: () -> Unit
+    onCallUser: (String) -> Unit
 ) {
-    var usernameToCall by remember { mutableStateOf("") }
+    var callInput by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -179,18 +181,6 @@ fun MainScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onShowDialer,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Dialpad,
-                    contentDescription = stringResource(R.string.keypad_button_description),
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
         }
     ) { innerPadding ->
         Box(
@@ -208,7 +198,7 @@ fun MainScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Make a Call",
+                    text = stringResource(R.string.make_call_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -216,24 +206,16 @@ fun MainScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Enter username to start a voice call",
+                    text = stringResource(R.string.make_call_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = "or tap the dialer button to call a phone number",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 OutlinedTextField(
-                    value = usernameToCall,
-                    onValueChange = { usernameToCall = it },
+                    value = callInput,
+                    onValueChange = { callInput = it },
                     label = { Text(stringResource(R.string.edit_username_hint)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -243,7 +225,7 @@ fun MainScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = { onCallUser(usernameToCall) },
+                    onClick = { onCallUser(callInput) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

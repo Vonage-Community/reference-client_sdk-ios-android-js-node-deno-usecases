@@ -9,11 +9,7 @@ import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,26 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.DialogFragment
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.R
-import com.example.vonage.voicesampleapp.ui.theme.Gray
-import com.example.vonage.voicesampleapp.ui.theme.Green
-import com.example.vonage.voicesampleapp.ui.theme.Red
 import com.example.vonage.voicesampleapp.ui.theme.VoiceSampleAppTheme
-import com.example.vonage.voicesampleapp.utils.Constants
-import com.example.vonage.voicesampleapp.utils.DialerType
-
-private const val ARG_TYPE = "dialer_type"
 
 class DialerFragment : DialogFragment() {
     private val clientManager = App.coreContext.clientManager
-    private var type: DialerType = DialerType.PHONE_NUMBER
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_DTMF, DTMF_VOLUME)
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            type = DialerType.valueOf(it.getString(ARG_TYPE)!!)
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,24 +40,11 @@ class DialerFragment : DialogFragment() {
             setContent {
                 VoiceSampleAppTheme {
                     DialerDialog(
-                        dialerType = type,
-                        onDismiss = { dismiss() },
-                        onMakeCall = ::makeCall,
                         onSendDtmf = ::sendDtmf
                     )
                 }
             }
         }
-    }
-
-    private fun makeCall(number: String) {
-        val callContext = number.takeUnless { it.isEmpty() }?.let {
-            mapOf(
-                Constants.CONTEXT_KEY_CALLEE to it,
-                Constants.CONTEXT_KEY_CALL_TYPE to Constants.PHONE_TYPE
-            )
-        }
-        clientManager.startOutboundCall(callContext)
     }
 
     private fun sendDtmf(digit: String) {
@@ -102,37 +69,34 @@ class DialerFragment : DialogFragment() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        toneGenerator.release()
+    }
+
     companion object {
         private const val DTMF_VOLUME = 100
         private const val DTMF_DURATION = 100
 
         @JvmStatic
-        fun newInstance(type: DialerType) =
-            DialerFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_TYPE, type.name)
-                }
-            }
+        fun newInstance() = DialerFragment()
     }
 }
 
 @Composable
 fun DialerDialog(
-    dialerType: DialerType,
-    onDismiss: () -> Unit,
-    onMakeCall: (String) -> Unit,
     onSendDtmf: (String) -> Unit
 ) {
-    var dialedNumber by remember { mutableStateOf("") }
-    var lastDialedLength by remember { mutableStateOf(0) }
+    var dialedDigits by remember { mutableStateOf("") }
+    var lastDialedLength by remember { mutableIntStateOf(0) }
 
-    // Detect when a new digit is added for DTMF
-    LaunchedEffect(dialedNumber) {
-        if (dialerType == DialerType.DTMF && dialedNumber.length > lastDialedLength) {
-            val newDigit = dialedNumber.last().toString()
+    // Detect when a new digit is added and send DTMF
+    LaunchedEffect(dialedDigits) {
+        if (dialedDigits.length > lastDialedLength) {
+            val newDigit = dialedDigits.last().toString()
             onSendDtmf(newDigit)
         }
-        lastDialedLength = dialedNumber.length
+        lastDialedLength = dialedDigits.length
     }
 
     Surface(
@@ -162,18 +126,27 @@ fun DialerDialog(
 
             // Title
             Text(
-                text = if (dialerType == DialerType.PHONE_NUMBER) "Dial Number" else "Send DTMF",
+                text = stringResource(R.string.send_dtmf_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Description
+            Text(
+                text = stringResource(R.string.send_dtmf_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Compact phone number input field
+            // Input Field with Phone Keyboard
             OutlinedTextField(
-                value = dialedNumber,
-                onValueChange = { dialedNumber = it },
+                value = dialedDigits,
+                onValueChange = { dialedDigits = it },
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = MaterialTheme.typography.headlineMedium.copy(
                     textAlign = TextAlign.Center,
@@ -181,8 +154,8 @@ fun DialerDialog(
                 ),
                 placeholder = {
                     Text(
-                        text = if (dialerType == DialerType.PHONE_NUMBER) "Enter number" else "Digits",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = stringResource(R.string.dtmf_placeholder),
+                        style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
@@ -190,16 +163,7 @@ fun DialerDialog(
                 },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = if (dialerType == DialerType.PHONE_NUMBER) ImeAction.Done else ImeAction.Default
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        if (dialerType == DialerType.PHONE_NUMBER) {
-                            onMakeCall(dialedNumber)
-                            onDismiss()
-                        }
-                    }
+                    keyboardType = KeyboardType.Phone
                 ),
                 shape = MaterialTheme.shapes.large,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -207,48 +171,6 @@ fun DialerDialog(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Call button (only for PHONE_NUMBER type)
-            if (dialerType == DialerType.PHONE_NUMBER) {
-                Button(
-                    onClick = { 
-                        onMakeCall(dialedNumber)
-                        onDismiss()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Call,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.dialer_btn_call),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-            } else {
-                // For DTMF, just show a dismiss button
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Done")
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-            }
         }
     }
 }

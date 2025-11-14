@@ -23,12 +23,7 @@ internal fun ComponentActivity.navigateToMainActivity(extras: Bundle? = null){
 internal fun ComponentActivity.showDialerFragment(){
     // Show the fragment dialog
     if (this is FragmentActivity) {
-        val dialerType = if (this is MainActivity) {
-            DialerType.PHONE_NUMBER
-        } else {
-            DialerType.DTMF
-        }
-        DialerFragment.newInstance(dialerType)
+        DialerFragment.newInstance()
             .show(supportFragmentManager, "DialerFragment")
     }
 }

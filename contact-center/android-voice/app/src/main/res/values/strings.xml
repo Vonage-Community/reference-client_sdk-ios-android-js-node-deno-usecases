@@ -20,8 +20,15 @@
     <string name="logged_username_default">Unknown User</string>
     <string name="caller_display_name_default">Unknown Caller</string>
     <string name="logout_label">Logout</string>
-    <string name="edit_username_hint">Enter username here</string>
+    <string name="edit_username_hint">Username or phone number</string>
     <string name="button_call_user_label">Call</string>
+    <string name="make_call_title">Make a Call</string>
+    <string name="make_call_description">Enter a username or phone number</string>
+    <string name="send_dtmf_title">Send DTMF</string>
+    <string name="send_dtmf_description">Enter digits to send during call</string>
+    <string name="clear_button_label">Clear</string>
+    <string name="done_button_label">Done</string>
+    <string name="dtmf_placeholder">—</string>
     <string name="answer_button_description">Answer</string>
     <string name="reject_button_description">Reject</string>
     <string name="login_with_token_label">Login with Vonage Token</string>
