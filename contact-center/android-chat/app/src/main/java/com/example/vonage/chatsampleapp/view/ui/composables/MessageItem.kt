@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +57,7 @@ fun MessageItem(
             Column(
                 modifier = Modifier
                     .background(
-                        color = if(isSentByMe) MaterialTheme.colors.secondary else MaterialTheme.colors.primaryVariant,
+                        color = if(isSentByMe) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primaryContainer,
                         shape = if(isSentByMe) sentMessageBubbleShape else receivedMessageBubbleShape
                     )
                     .padding(
@@ -84,7 +86,7 @@ fun MessageItem(
                         ) {
                             Text(
                                 text = title,
-                                style = MaterialTheme.typography.caption
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
