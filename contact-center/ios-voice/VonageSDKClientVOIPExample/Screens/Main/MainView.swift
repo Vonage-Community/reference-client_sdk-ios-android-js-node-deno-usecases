@@ -74,8 +74,10 @@ struct MainView: View {
         }
         .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToCall) {
-            CallView()
-                .navigationBarBackButtonHidden(true)
+            if let call = coreContext.activeCall {
+                CallView(call: call)
+                    .navigationBarBackButtonHidden(true)
+            }
         }
         .onReceive(coreContext.$activeCall) { call in
             navigateToCall = call != nil

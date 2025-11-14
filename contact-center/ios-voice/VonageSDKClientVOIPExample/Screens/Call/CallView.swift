@@ -8,28 +8,9 @@
 import SwiftUI
 
 struct CallView: View {
+    @ObservedObject var call: VGCallWrapper
     @EnvironmentObject private var coreContext: CoreContext
     @State private var showDialer: Bool = false
-    
-    var body: some View {
-        ZStack {
-            if let call = coreContext.activeCall {
-                CallContentView(call: call, showDialer: $showDialer)
-            }
-        }
-        .navigationBarHidden(true)
-        .sheet(isPresented: $showDialer) {
-            DialerView()
-        }
-    }
-}
-
-// MARK: - Call Content View
-/// Separate view that observes the VGCallWrapper to react to its property changes
-private struct CallContentView: View {
-    @ObservedObject var call: VGCallWrapper
-    @Binding var showDialer: Bool
-    @EnvironmentObject private var coreContext: CoreContext
     
     var body: some View {
         ZStack {
@@ -42,25 +23,30 @@ private struct CallContentView: View {
                     .frame(minHeight: 60)
                 
                 // User Info Section
-                userInfoSection()
+                userInfoSection
                 
                 Spacer()
                     .frame(minHeight: 0)
                 
                 // Controls Section
                 if call.isInbound && call.state == .ringing {
-                    incomingCallControls()
+                    incomingCallControls
                 } else {
-                    activeCallControls()
+                    activeCallControls
                 }
                 
                 Spacer()
                     .frame(minHeight: AppSpacing.xxLarge)
             }
         }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showDialer) {
+            DialerView()
+        }
     }
+    
     // MARK: - User Info Section
-    private func userInfoSection() -> some View {
+    private var userInfoSection: some View {
         VStack(spacing: AppSpacing.large) {
             // Avatar
             ZStack {
@@ -80,13 +66,13 @@ private struct CallContentView: View {
                 .foregroundColor(.white)
             
             // Call State Badge
-            callStateBadge()
+            callStateBadge
         }
     }
     
     // MARK: - Call State Badge
-    private func callStateBadge() -> some View {
-        Text(callStateText())
+    private var callStateBadge: some View {
+        Text(callStateText)
             .font(AppTypography.bodyLarge)
             .fontWeight(.medium)
             .foregroundColor(.white)
@@ -98,7 +84,7 @@ private struct CallContentView: View {
             )
     }
     
-    private func callStateText() -> String {
+    private var callStateText: String {
         switch call.state {
         case .ringing:
             return call.isInbound ? "Incoming Call..." : "Ringing..."
@@ -114,7 +100,7 @@ private struct CallContentView: View {
     }
     
     // MARK: - Incoming Call Controls
-    private func incomingCallControls() -> some View {
+    private var incomingCallControls: some View {
         HStack(spacing: AppSpacing.xxLarge) {
             // Reject Button
             CallActionButton(
@@ -138,7 +124,7 @@ private struct CallContentView: View {
     }
     
     // MARK: - Active Call Controls
-    private func activeCallControls() -> some View {
+    private var activeCallControls: some View {
         VStack(spacing: AppSpacing.medium) {
             // First Row - Main Controls
             HStack(spacing: AppSpacing.medium) {
@@ -228,19 +214,17 @@ private struct CallContentView: View {
 // MARK: - Preview
 struct CallView_Previews: PreviewProvider {
     static var previews: some View {
-        // Setup mock call in CoreContext for preview
-        let context = CoreContext.shared
+        // Setup mock call for preview
         let call = VGCallWrapper(
             id: UUID(),
             callId: "test-call-id",
             callerDisplayName: "John Doe",
             isInbound: true
         )
-        context.activeCall = call
         
         return NavigationStack {
-            CallView()
-                .environmentObject(context)
+            CallView(call: call)
+                .environmentObject(CoreContext.shared)
         }
     }
 }
