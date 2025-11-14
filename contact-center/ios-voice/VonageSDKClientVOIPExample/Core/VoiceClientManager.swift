@@ -80,73 +80,69 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     // MARK: - Authentication
     func login(token: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            self.isLoading = true
-            self.errorMessage = nil
-        }
+        self.isLoading = true
+        self.errorMessage = nil
         
         client.createSession(token) { [weak self] error, sessionId in
             guard let self else { return }
             
-            Task { @MainActor [weak self] in
-                guard let self = self else { return }
-                self.isLoading = false
-                
-                if let error {
+            // Only update published vars and context on main actor
+            if let error {
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.isLoading = false
                     self.errorMessage = error.localizedDescription
-                    onError?(error)
-                    return
                 }
-                
-                guard let sessionId else {
-                    let error = NSError(domain: "VoiceClientManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No session ID received"])
-                    self.errorMessage = error.localizedDescription
-                    onError?(error)
-                    return
-                }
-                
-                // Store auth token
-                self.context.authToken = token
-                self.sessionId = sessionId
-                
-                // Fetch current user
-                self.fetchCurrentUser()
-                
-                onSuccess?(sessionId)
+                onError?(error)
+                return
             }
+            guard let sessionId else {
+                let error = NSError(domain: "VoiceClientManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No session ID received"])
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.isLoading = false
+                    self.errorMessage = error.localizedDescription
+                }
+                onError?(error)
+                return
+            }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isLoading = false
+                self.sessionId = sessionId
+                // Store Auth Token
+                self.context.authToken = token
+            }
+            self.fetchCurrentUser()
+            onSuccess?(sessionId)
         }
     }
     
     func loginWithCode(code: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            self.isLoading = true
-            self.errorMessage = nil
-        }
+        self.isLoading = true
+        self.errorMessage = nil
         
         // Use NetworkService to exchange code for token
         context.networkService
             .sendRequest(apiType: CodeLoginAPI(body: LoginRequest(code: code)))
             .sink(
                 receiveCompletion: { [weak self] completion in
-                    guard let self = self else { return }
-                    
                     if case .failure(let error) = completion {
                         Task { @MainActor [weak self] in
-                            guard let self = self else { return }
+                            guard let self else { return }
                             self.isLoading = false
                             self.errorMessage = error.localizedDescription
-                            onError?(error)
                         }
+                        onError?(error)
                     }
                 },
                 receiveValue: { [weak self] (response: TokenResponse) in
-                    guard let self = self else { return }
-                    
-                    // Store refresh token
-                    self.context.refreshToken = response.refreshToken
-                    
+                    guard let self else { return }
+                    // Store refresh token on main actor
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        self.context.refreshToken = response.refreshToken
+                    }
                     // Login with the received token
                     self.login(token: response.vonageToken, onError: onError, onSuccess: onSuccess)
                 }
@@ -175,37 +171,35 @@ class VoiceClientManager: NSObject, ObservableObject {
         
         // Delete session
         client.deleteSession { [weak self] error in
-            guard let self else { return }
             
-            Task { @MainActor [weak self] in
-                guard let self = self else { return }
-                if let error {
+            if let error {
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
                     self.errorMessage = error.localizedDescription
-                } else {
-                    // Clear state
+                }
+            } else {
+                // Clear state
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
                     self.sessionId = nil
                     self.currentUser = nil
                     self.context.authToken = nil
                     self.context.refreshToken = nil
                     self.context.activeCall = nil
-                    
-                    onSuccess?()
                 }
+                onSuccess?()
             }
         }
     }
     
     private func fetchCurrentUser() {
         client.getUser("me") { [weak self] error, user in
-            guard let self = self else { return }
-            
+            if let error = error {
+                print("❌ Failed to fetch current user: \(error)")
+                return
+            }
             Task { @MainActor [weak self] in
-                guard let self = self else { return }
-                if let error = error {
-                    print("❌ Failed to fetch current user: \(error)")
-                    return
-                }
-                
+                guard let self else { return }
                 self.currentUser = user
             }
         }
@@ -232,8 +226,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 self.context.deviceId = deviceId
-                print("✅ Registered VOIP token with device ID: \(deviceId)")
             }
+            print("✅ Registered VOIP token with device ID: \(deviceId)")
         }
     }
     
@@ -312,8 +306,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     // MARK: - Call Operations
-    func startOutboundCall(to callee: String, context: [String: String]? = nil) {
-        var callContext = context ?? [:]
+    func startOutboundCall(to callee: String, context: [String: String] = [:]) {
+        var callContext = context
         callContext["callee"] = callee
         
         client.serverCall(callContext) { [weak self] error, callId in
@@ -322,7 +316,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             if let error {
                 print("❌ Failed to start outbound call: \(error)")
                 Task { @MainActor [weak self] in
-                    guard let self = self else { return }
+                    guard let self else { return }
                     self.errorMessage = "Failed to start call: \(error.localizedDescription)"
                 }
                 return
@@ -334,16 +328,14 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             print("✅ Outbound call started with ID: \(callId)")
-            
-            // Create call wrapper on MainActor
+            let call = VGCallWrapper(
+                id: callUUID,
+                callId: callId,
+                callerDisplayName: callee,
+                isInbound: false
+            )
             Task { @MainActor [weak self] in
-                guard let self = self else { return }
-                let call = VGCallWrapper(
-                    id: callUUID,
-                    callId: callId,
-                    callerDisplayName: callee,
-                    isInbound: false
-                )
+                guard let self else { return }
                 self.context.activeCall = call
             }
             
@@ -577,7 +569,7 @@ extension VoiceClientManager {
             call.updateState(.disconnected)
             
             // Small delay to show disconnected state before clearing
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await Task.sleep(for: .seconds(1))
             if self.context.activeCall?.id == call.id {
                 self.context.activeCall = nil
             }

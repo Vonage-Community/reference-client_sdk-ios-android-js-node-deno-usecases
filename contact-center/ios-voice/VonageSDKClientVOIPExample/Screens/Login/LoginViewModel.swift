@@ -55,9 +55,9 @@ class LoginViewModel: ObservableObject {
         }
         
         let onSuccess: (String) -> Void = { [weak self] sessionId in
+            print("✅ Logged in successfully with session ID: \(sessionId)")
             Task { @MainActor [weak self] in
                 self?.isLoading = false
-                print("✅ Logged in successfully with session ID: \(sessionId)")
             }
         }
         

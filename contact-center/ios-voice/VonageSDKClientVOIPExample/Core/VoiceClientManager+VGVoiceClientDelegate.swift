@@ -30,12 +30,13 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         
         Task { @MainActor [weak self] in
             self?.errorMessage = "Session error: \(message)"
-            
-            // Try to reconnect if we have a valid token
-            if let token = self?.context.authToken {
-                self?.login(token: token)
-            } else {
-                // Clear session if no token available
+        }
+        // Try to reconnect if we have a valid token
+        if let token = self.context.authToken {
+            self.login(token: token)
+        } else {
+            // Clear session if no token available
+            Task { @MainActor [weak self] in
                 self?.sessionId = nil
                 self?.currentUser = nil
             }
@@ -49,16 +50,16 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             print("❌ Invalid call ID: \(callId)")
             return
         }
+
+        let call = VGCallWrapper(
+            id: callUUID,
+            callId: callId,
+            callerDisplayName: caller,
+            isInbound: true
+        )
         
-        // Create call wrapper on MainActor
         Task { @MainActor [weak self] in
             guard let self = self else { return }
-            let call = VGCallWrapper(
-                id: callUUID,
-                callId: callId,
-                callerDisplayName: caller,
-                isInbound: true
-            )
             self.context.activeCall = call
         }
         
