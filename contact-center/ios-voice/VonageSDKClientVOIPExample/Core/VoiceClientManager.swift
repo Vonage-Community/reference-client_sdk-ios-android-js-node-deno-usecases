@@ -79,14 +79,27 @@ class VoiceClientManager: NSObject, ObservableObject {
     }
     
     // MARK: - Authentication
-    func login(token: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
+    func login(token: String, isUserInitiated: Bool = true, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
         self.isLoading = true
         self.errorMessage = nil
         
+        if isUserInitiated {
+            // Clean up any existing device registration before logging in (user-initiated login)
+            unregisterExistingDeviceIfNeeded { [weak self] in
+                guard let self else { return }
+                self.createSession(token: token, onError: onError, onSuccess: onSuccess)
+            }
+        } else {
+            // Skip cleanup for session restoration (same user, just reconnecting)
+            createSession(token: token, onError: onError, onSuccess: onSuccess)
+        }
+    }
+    
+    /// Creates a new session with the given token
+    private func createSession(token: String, onError: ((Error) -> Void)? = nil, onSuccess: ((String) -> Void)? = nil) {
         client.createSession(token) { [weak self] error, sessionId in
             guard let self else { return }
             
-            // Only update published vars and context on main actor
             if let error {
                 Task { @MainActor [weak self] in
                     guard let self else { return }
@@ -96,6 +109,7 @@ class VoiceClientManager: NSObject, ObservableObject {
                 onError?(error)
                 return
             }
+            
             guard let sessionId else {
                 let error = NSError(domain: "VoiceClientManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No session ID received"])
                 Task { @MainActor [weak self] in
@@ -106,13 +120,14 @@ class VoiceClientManager: NSObject, ObservableObject {
                 onError?(error)
                 return
             }
+            
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.isLoading = false
                 self.sessionId = sessionId
-                // Store Auth Token
                 self.context.authToken = token
             }
+            
             self.fetchCurrentUser()
             onSuccess?(sessionId)
         }
@@ -150,44 +165,120 @@ class VoiceClientManager: NSObject, ObservableObject {
             .store(in: &cancellables)
     }
     
-    func logout(unregisterPushToken: Bool = true, onSuccess: (() -> Void)? = nil) {
-        // Optionally unregister push tokens
-        // Set to true for user logout (they won't receive calls after logout)
-        // Set to false for app termination (allows receiving calls after app closes)
-        if unregisterPushToken, let deviceId = context.deviceId {
-            client.unregisterDeviceTokens(byDeviceId: deviceId) { [weak self] error in
+    func logout(onSuccess: (() -> Void)? = nil) {
+        // Always unregister push tokens on explicit logout
+        // User won't receive calls after logging out
+        unregisterDeviceTokens { [weak self] in
+            guard let self else { return }
+            
+            // Delete session
+            self.client.deleteSession { [weak self] error in
+                guard let self else { return }
+                
                 if let error {
-                    print("❌ Failed to unregister push token: \(error)")
-                } else {
-                    print("✅ Push tokens unregistered")
-                    // Clear deviceId on successful unregistration
                     Task { @MainActor [weak self] in
-                        guard let self = self else { return }
-                        self.context.deviceId = nil
+                        guard let self else { return }
+                        self.errorMessage = error.localizedDescription
                     }
+                } else {
+                    // Clear state
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        self.sessionId = nil
+                        self.currentUser = nil
+                        self.context.authToken = nil
+                        self.context.refreshToken = nil
+                        self.context.activeCall = nil
+                    }
+                    onSuccess?()
                 }
             }
         }
+    }
+    
+    // MARK: - Push Token Management
+    
+    /// Unregisters the current device tokens if a device ID exists
+    private func unregisterDeviceTokens(completion: @escaping () -> Void) {
+        guard let deviceId = context.deviceId else {
+            completion()
+            return
+        }
         
-        // Delete session
-        client.deleteSession { [weak self] error in
+        client.unregisterDeviceTokens(byDeviceId: deviceId) { [weak self] error in
+            if let error {
+                print("❌ Failed to unregister push token: \(error)")
+            } else {
+                print("✅ Push tokens unregistered for device: \(deviceId)")
+            }
+            
+            // Clear deviceId regardless of success/failure
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.context.deviceId = nil
+            }
+            
+            completion()
+        }
+    }
+    
+    /// Unregisters any existing device before login to prevent token accumulation
+    /// This creates a temporary session with stored credentials if needed
+    private func unregisterExistingDeviceIfNeeded(completion: @escaping () -> Void) {
+        // Check if we have a previously registered device
+        guard let existingDeviceId = context.deviceId else {
+            print("✅ No existing device ID - skipping cleanup")
+            completion()
+            return
+        }
+        
+        // Check if we have a valid auth token to perform cleanup
+        guard let authToken = context.authToken else {
+            print("⚠️ No auth token for cleanup - clearing stale device ID")
+            context.deviceId = nil
+            completion()
+            return
+        }
+        
+        print("🧹 Cleaning up existing device: \(existingDeviceId)")
+        
+        // Create temporary session to unregister the old device
+        client.createSession(authToken) { [weak self] error, sessionId in
+            guard let self else {
+                completion()
+                return
+            }
             
             if let error {
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    self.errorMessage = error.localizedDescription
+                print("⚠️ Cleanup session failed: \(error.localizedDescription)")
+                // Clear stale device ID and continue
+                self.context.deviceId = nil
+                completion()
+                return
+            }
+            
+            guard let sessionId = sessionId else {
+                print("⚠️ No session ID for cleanup")
+                self.context.deviceId = nil
+                completion()
+                return
+            }
+            
+            print("✅ Cleanup session created: \(sessionId)")
+            
+            // Unregister the old device using the reusable method
+            self.unregisterDeviceTokens { [weak self] in
+                guard let self else { return }
+                
+                // Delete the cleanup session
+                self.client.deleteSession { error in
+                    if let error {
+                        print("⚠️ Failed to delete cleanup session: \(error.localizedDescription)")
+                    } else {
+                        print("✅ Cleanup session deleted")
+                    }
+                    completion()
                 }
-            } else {
-                // Clear state
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    self.sessionId = nil
-                    self.currentUser = nil
-                    self.context.authToken = nil
-                    self.context.refreshToken = nil
-                    self.context.activeCall = nil
-                }
-                onSuccess?()
             }
         }
     }
@@ -224,7 +315,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             guard let deviceId else { return }
             
             Task { @MainActor [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.context.deviceId = deviceId
             }
             print("✅ Registered VOIP token with device ID: \(deviceId)")
@@ -273,7 +364,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     /// Restores session using stored auth token
     private func restoreSessionWithToken(_ token: String) {
         print("🔄 Restoring session with auth token")
-        login(token: token, onError: { error in
+        // Skip device cleanup - this is session restoration, not user switching
+        login(token: token, isUserInitiated: false, onError: { error in
             print("❌ Failed to restore session: \(error)")
         }, onSuccess: { sessionId in
             print("✅ Session restored: \(sessionId)")
@@ -349,7 +441,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     func answerCall(_ call: VGCallWrapper) {
         let callId = call.callId
         client.answer(callId) { [weak self] error in
-            guard let self = self else { return }
+            guard let self else { return }
             
             if let error {
                 print("❌ Failed to answer call: \(error)")
@@ -375,7 +467,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     func rejectCall(_ call: VGCallWrapper) {
         let callId = call.callId
         client.reject(callId) { [weak self] error in
-            guard let self = self else { return }
+            guard let self else { return }
             
             if let error {
                 print("❌ Failed to reject call: \(error)")
@@ -395,7 +487,7 @@ class VoiceClientManager: NSObject, ObservableObject {
     func hangupCall(_ call: VGCallWrapper) {
         let callId = call.callId
         client.hangup(callId) { [weak self] error in
-            guard let self = self else { return }
+            guard let self else { return }
             
             if let error {
                 print("❌ Failed to hangup call: \(error)")

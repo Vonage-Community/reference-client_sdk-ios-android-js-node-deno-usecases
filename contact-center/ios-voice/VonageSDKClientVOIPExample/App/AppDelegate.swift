@@ -68,12 +68,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             userInfo: ["error": error]
         )
     }
-    
-    func applicationWillTerminate(_ application: UIApplication) {
-        // Don't unregister push tokens on app termination
-        // This allows the user to receive calls even after app is terminated
-        coreContext?.voiceClientManager.logout(unregisterPushToken: false)
-    }
 }
 
 
