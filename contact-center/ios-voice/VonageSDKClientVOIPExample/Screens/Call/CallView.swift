@@ -108,7 +108,7 @@ struct CallView: View {
                 color: .errorRed,
                 size: 68
             ) {
-                coreContext.voiceClientManager.rejectCall(call)
+                onReject()
             }
             
             // Answer Button
@@ -117,7 +117,7 @@ struct CallView: View {
                 color: .successGreen,
                 size: 68
             ) {
-                coreContext.voiceClientManager.answerCall(call)
+                onAnswer()
             }
         }
         .padding(.bottom, AppSpacing.large)
@@ -174,7 +174,7 @@ struct CallView: View {
                     color: .errorRed,
                     size: 64
                 ) {
-                    coreContext.voiceClientManager.hangupCall(call)
+                    onHangup()
                 }
                 
                 // Spacer for balance
@@ -187,19 +187,27 @@ struct CallView: View {
     
     // MARK: - Actions
     private func toggleMute() {
+        #if targetEnvironment(simulator)
         if call.isMuted {
             coreContext.voiceClientManager.unmuteCall(call)
         } else {
             coreContext.voiceClientManager.muteCall(call)
         }
+        #else
+        coreContext.voiceClientManager.requestMuteCallTransaction(call, isMuted: !call.isMuted)
+        #endif
     }
     
     private func toggleHold() {
+        #if targetEnvironment(simulator)
         if call.isOnHold {
             coreContext.voiceClientManager.unholdCall(call)
         } else {
             coreContext.voiceClientManager.holdCall(call)
         }
+        #else
+        coreContext.voiceClientManager.requestHoldCallTransaction(call, isOnHold: !call.isOnHold)
+        #endif
     }
     
     private func toggleNoiseSuppression() {
@@ -208,6 +216,31 @@ struct CallView: View {
         } else {
             coreContext.voiceClientManager.enableNoiseSuppression(call)
         }
+    }
+    
+    private func onHangup() {
+        #if targetEnvironment(simulator)
+        coreContext.voiceClientManager.hangupCall(call)
+        #else
+        coreContext.voiceClientManager.requestEndCallTransaction(call)
+        #endif
+        
+    }
+    
+    private func onAnswer() {
+        #if targetEnvironment(simulator)
+        coreContext.voiceClientManager.answerCall(call)
+        #else
+        coreContext.voiceClientManager.requestAnswerCallTransaction(call)
+        #endif
+    }
+    
+    private func onReject() {
+        #if targetEnvironment(simulator)
+        coreContext.voiceClientManager.rejectCall(call)
+        #else
+        coreContext.voiceClientManager.requestEndCallTransaction(call)
+        #endif
     }
 }
 

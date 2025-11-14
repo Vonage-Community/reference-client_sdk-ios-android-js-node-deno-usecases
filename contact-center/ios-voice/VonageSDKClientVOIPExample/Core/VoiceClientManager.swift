@@ -22,9 +22,12 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     // MARK: - Properties
     /// Voice client - internal access for extensions only (do not access from other classes)
-    internal let client: VGVoiceClient
+    private let client: VGVoiceClient
     weak var context: CoreContext!
     private var cancellables = Set<AnyCancellable>()
+    
+    /// Store PushKit completion handler to call after CallKit reports the call
+    internal var ongoingPushKitCompletion: () -> Void = { }
     
     // CallKit (only on device)
     #if !targetEnvironment(simulator)
@@ -322,7 +325,7 @@ class VoiceClientManager: NSObject, ObservableObject {
         }
     }
     
-    func processVoipPush(_ payload: PKPushPayload) {
+    func processVoipPush(_ payload: PKPushPayload, completion: @escaping () -> Void) {
         print("📨 Processing VoIP push notification")
         
         // iOS requires ALL VoIP pushes to be reported to CallKit: https://developer.apple.com/documentation/pushkit/pkpushregistrydelegate/pushregistry(_:didreceiveincomingpushwith:for:completion:)
@@ -331,8 +334,12 @@ class VoiceClientManager: NSObject, ObservableObject {
         let pushType = VGVoiceClient.vonagePushType(payload.dictionaryPayload)
         guard pushType == .incomingCall else {
             print("⚠️ Ignoring non-incoming call push type: \(pushType)")
+            completion()
             return
         }
+        
+        // Store the completion handler to be called after CallKit reports the call
+        self.ongoingPushKitCompletion = completion
         
         // Restore session if needed (async - won't block)
         // This will be needed to answer/reject the call
@@ -432,22 +439,27 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             #if !targetEnvironment(simulator)
-            // Report to CallKit (device only)
-            self.reportOutgoingCall(callUUID: callUUID, callee: callee)
+            // Request to CallKit (device only)
+            // We call it after the call's been established to ensure the call ID is valid
+            self.requestStartCallTransaction(callUUID: callUUID, callee: callee)
             #endif
         }
     }
     
-    func answerCall(_ call: VGCallWrapper) {
+    func answerCall(_ call: VGCallWrapper, completion: (() -> Void)? = nil) {
         let callId = call.callId
         client.answer(callId) { [weak self] error in
-            guard let self else { return }
+            guard let self else { 
+                completion?()
+                return 
+            }
             
             if let error {
                 print("❌ Failed to answer call: \(error)")
                 if let call = self.context.activeCall, call.callId == callId {
-                    self.endCall(call, reason: .failed)
+                    self.cleanUpCall(call, reason: .failed)
                 }
+                completion?()
                 return
             }
             
@@ -458,47 +470,61 @@ class VoiceClientManager: NSObject, ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self = self,
                       let call = self.context.activeCall,
-                      call.callId == callId else { return }
+                      call.callId == callId else { 
+                    completion?()
+                    return 
+                }
                 call.updateState(.active)
+                completion?()
             }
         }
     }
     
-    func rejectCall(_ call: VGCallWrapper) {
+    func rejectCall(_ call: VGCallWrapper, completion: (() -> Void)? = nil) {
         let callId = call.callId
         client.reject(callId) { [weak self] error in
-            guard let self else { return }
+            guard let self else { 
+                completion?()
+                return 
+            }
             
             if let error {
                 print("❌ Failed to reject call: \(error)")
                 if let call = self.context.activeCall, call.callId == callId {
-                    self.endCall(call, reason: .failed)
+                    self.cleanUpCall(call, reason: .failed)
                 }
+                completion?()
                 return
             }
             
             print("✅ Rejected call: \(callId)")
             if let call = self.context.activeCall, call.callId == callId {
-                self.endCall(call, reason: .remoteEnded)
+                self.cleanUpCall(call, reason: .remoteEnded)
             }
+            completion?()
         }
     }
     
-    func hangupCall(_ call: VGCallWrapper) {
+    func hangupCall(_ call: VGCallWrapper, completion: (() -> Void)? = nil) {
         let callId = call.callId
         client.hangup(callId) { [weak self] error in
-            guard let self else { return }
+            guard let self else { 
+                completion?()
+                return 
+            }
             
             if let error {
                 print("❌ Failed to hangup call: \(error)")
                 if let call = self.context.activeCall, call.callId == callId {
-                    self.endCall(call, reason: .failed)
+                    self.cleanUpCall(call, reason: .failed)
                 }
+                completion?()
                 return
             }
             
             print("✅ Hung up call: \(callId)")
             // State will be updated via didReceiveHangupForCall delegate for both simulator and device
+            completion?()
         }
     }
     
@@ -648,12 +674,19 @@ class VoiceClientManager: NSObject, ObservableObject {
 
 // MARK: - Internal Helpers (For Extension Use Only)
 extension VoiceClientManager {
-    /// Internal helper to end a call and clean up state.
+    /// Internal helper to clean up a call from the state.
     /// - Warning: This method is intended for internal use by VoiceClientManager extensions only.
     /// - Parameters:
-    ///   - call: The call to end
+    ///   - call: The call to clean up
     ///   - reason: The reason the call ended (for CallKit reporting)
-    internal func endCall(_ call: VGCallWrapper, reason: CXCallEndedReason) {
+    internal func cleanUpCall(_ call: VGCallWrapper, reason: CXCallEndedReason) {
+        
+        #if !targetEnvironment(simulator)
+        // Report to CallKit that call has ended
+        callProvider.reportCall(with: call.id, endedAt: Date.now, reason: reason)
+        #endif
+        
+        // Clean up call state
         Task { @MainActor [weak self] in
             guard let self = self,
                   let call = self.context.activeCall else { return }
@@ -666,47 +699,101 @@ extension VoiceClientManager {
                 self.context.activeCall = nil
             }
         }
-        
-        #if !targetEnvironment(simulator)
-        // Report to CallKit (device only)
-        let endCallAction = CXEndCallAction(call: call.id)
-        let transaction = CXTransaction(action: endCallAction)
-        callController.request(transaction) { error in
-            if let error = error {
-                print("❌ Failed to end call in CallKit: \(error)")
-            }
-        }
-        #endif
     }
-    
-    // MARK: - CallKit Integration Helpers
-    #if !targetEnvironment(simulator)
-    /// Internal helper to report an outgoing call to CallKit.
-    /// - Warning: This method is intended for internal use by VoiceClientManager extensions only.
-    internal func reportOutgoingCall(callUUID: UUID, callee: String) {
-        let handle = CXHandle(type: .generic, value: callee)
-        let startCallAction = CXStartCallAction(call: callUUID, handle: handle)
-        let transaction = CXTransaction(action: startCallAction)
-        
-        callController.request(transaction) { error in
-            if let error = error {
-                print("❌ Failed to report outgoing call to CallKit: \(error)")
-            }
-        }
-    }
-    
-    /// Internal helper to report an incoming call to CallKit.
-    /// - Warning: This method is intended for internal use by VoiceClientManager extensions only.
-    internal func reportIncomingCall(callUUID: UUID, caller: String) {
+}
+
+
+#if !targetEnvironment(simulator)
+// MARK: - CallKit Integration Helpers (Device only)
+//// These methods are used to request CallKit actions from app UI
+/// Or to report call state changes to CallKit
+extension VoiceClientManager {
+    func reportIncomingCall(callUUID: UUID, caller: String, type: VGVoiceChannelType, completion: @escaping () -> Void) {
         let update = CXCallUpdate()
-        update.remoteHandle = CXHandle(type: .generic, value: caller)
+        update.remoteHandle = CXHandle(type: type == .phone ? .phoneNumber : .generic, value: caller)
         update.hasVideo = false
+        update.supportsDTMF = true
+        update.supportsHolding = true
         
         callProvider.reportNewIncomingCall(with: callUUID, update: update) { error in
             if let error = error {
                 print("❌ Failed to report incoming call to CallKit: \(error)")
+            } else {
+                print("✅ Incoming call reported successfully to CallKit")
+            }
+            // This is where we finally invoke completion handler for PushKit
+            completion()
+        }
+    }
+    
+    func reportOutgoingCallConnected(callUUID: UUID) {
+        callProvider.reportOutgoingCall(with: callUUID, connectedAt: Date.now)
+        print("✅ Outgoing call connected reported to CallKit")
+    }
+    
+    func requestStartCallTransaction(callUUID: UUID, callee: String) {
+        let handle = CXHandle(type: .generic, value: callee)
+        let startCallAction = CXStartCallAction(call: callUUID, handle: handle)
+        let transaction = CXTransaction(action: startCallAction)
+        
+        callController.request(transaction) { [weak self] error in
+            guard let self else { return }
+            if let error = error {
+                print("❌ Error requesting start call transaction: \(error)")
+            } else {
+                print("✅ Start Call transaction requested succesfully")
+                self.callProvider.reportOutgoingCall(with: callUUID, startedConnectingAt: Date.now)
+                print("✅ Outgoing call started connecting reported to CallKit")
             }
         }
     }
-    #endif
+
+    func requestEndCallTransaction(_ call: VGCallWrapper) {
+        let endCallAction = CXEndCallAction(call: call.id)
+        let transaction = CXTransaction(action: endCallAction)
+        callController.request(transaction) { error in
+            if let error {
+                print("❌ Error requesting end call transaction: \(error)")
+            } else {
+                print("✅ End call transaction requested successfully")
+            }
+        }
+    }
+
+    func requestAnswerCallTransaction(_ call: VGCallWrapper) {
+        let answerCallAction = CXAnswerCallAction(call: call.id)
+        let transaction = CXTransaction(action: answerCallAction)
+        callController.request(transaction) { error in
+            if let error {
+                print("❌ Error requesting answer call transaction: \(error)")
+            } else {
+                print("✅ Answer call transaction requested successfully")
+            }
+        }
+    }
+    
+    func requestMuteCallTransaction(_ call: VGCallWrapper, isMuted: Bool) {
+        let muteAction = CXSetMutedCallAction(call: call.id, muted: isMuted)
+        let transaction = CXTransaction(action: muteAction)
+        callController.request(transaction) { error in
+            if let error {
+                print("❌ Error requesting mute call transaction: \(error)")
+            } else {
+                print("✅ Mute call transaction requested successfully (muted: \(isMuted))")
+            }
+        }
+    }
+    
+    func requestHoldCallTransaction(_ call: VGCallWrapper, isOnHold: Bool) {
+        let holdAction = CXSetHeldCallAction(call: call.id, onHold: isOnHold)
+        let transaction = CXTransaction(action: holdAction)
+        callController.request(transaction) { error in
+            if let error {
+                print("❌ Error requesting hold call transaction: \(error)")
+            } else {
+                print("✅ Hold call transaction requested successfully (onHold: \(isOnHold))")
+            }
+        }
+    }
 }
+#endif

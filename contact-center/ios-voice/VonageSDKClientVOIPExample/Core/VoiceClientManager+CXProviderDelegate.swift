@@ -23,29 +23,7 @@ extension VoiceClientManager: CXProviderDelegate {
             return
         }
         
-        let callId = call.callId
-        let callUUID = action.callUUID
-        client.answer(callId) { [weak self] error in
-            if let error {
-                // Report failure to CallKit
-                provider.reportCall(with: callUUID, endedAt: Date.now, reason: .failed)
-                if let call = self?.context.activeCall, call.callId == callId {
-                    self?.endCall(call, reason: .failed)
-                }
-                action.fail()
-                return
-            }
-            
-            print("✅ Answered call: \(callId)")
-            
-            // Update state to active - delegate is only called for remote leg
-            Task { @MainActor [weak self] in
-                guard let self = self,
-                      let call = self.context.activeCall,
-                      call.callId == callId else { return }
-                call.updateState(.active)
-            }
-            
+        answerCall(call) {
             action.fulfill()
         }
     }
@@ -57,11 +35,11 @@ extension VoiceClientManager: CXProviderDelegate {
         }
         
         if call.isInbound && call.state == .ringing {
-            client.reject(call.callId) { error in
+            rejectCall(call) {
                 action.fulfill()
             }
         } else {
-            client.hangup(call.callId) { error in
+            hangupCall(call) {
                 action.fulfill()
             }
         }

@@ -72,8 +72,8 @@ class CoreContext: ObservableObject {
 
         // Handle VOIP push notifications
         pushService.voipPush
-            .sink { [weak self] payload in
-                self?.voiceClientManager.processVoipPush(payload)
+            .sink { [weak self] (payload, completion) in
+                self?.voiceClientManager.processVoipPush(payload, completion: completion)
             }
             .store(in: &cancellables)
 

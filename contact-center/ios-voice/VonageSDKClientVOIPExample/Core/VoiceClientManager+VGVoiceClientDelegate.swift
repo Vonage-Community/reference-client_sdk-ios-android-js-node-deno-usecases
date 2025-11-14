@@ -65,7 +65,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         
         #if !targetEnvironment(simulator)
         // Report to CallKit (device only)
-        reportIncomingCall(callUUID: callUUID, caller: caller)
+        reportIncomingCall(callUUID: callUUID, caller: caller, type: type, completion: ongoingPushKitCompletion)
         #endif
     }
     
@@ -80,7 +80,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         case .remoteHangup:
             .remoteEnded
         case .localHangup:
-            .unanswered
+            .remoteEnded
         case .mediaTimeout:
             .failed
         case .remoteNoAnswerTimeout:
@@ -91,7 +91,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             .failed
         }
         
-        endCall(call, reason: cxReason)
+        cleanUpCall(call, reason: cxReason)
     }
     
     func voiceClient(_ client: VGVoiceClient, didReceiveLegStatusUpdateForCall callId: VGCallId, withLegId legId: String, andStatus status: VGLegStatus) {
@@ -106,6 +106,11 @@ extension VoiceClientManager: VGVoiceClientDelegate {
                       call.callId == callId else { return }
                 call.updateState(.active)
             }
+            
+            #if !targetEnvironment(simulator)
+            // Report to CallKit (device only)
+            reportOutgoingCallConnected(callUUID: call.id)
+            #endif
         }
     }
     
@@ -129,7 +134,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             .failed
         }
         
-        endCall(call, reason: cxReason)
+        cleanUpCall(call, reason: cxReason)
     }
     
     // MARK: - Optional Delegate Methods
@@ -169,6 +174,11 @@ extension VoiceClientManager: VGVoiceClientDelegate {
                   call.callId == callId else { return }
             call.updateState(.active)
         }
+        
+        #if !targetEnvironment(simulator)
+        // Report to CallKit (device only)
+        reportOutgoingCallConnected(callUUID: call.id)
+        #endif
     }
     
     func voiceClient(_ client: VGVoiceClient, didReceiveMediaDisconnectForCall callId: VGCallId, reason: VGCallDisconnectReason) {
@@ -177,7 +187,7 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         guard let call = context.activeCall, call.callId == callId else { return }
         
         // Clean up the call - it's been disconnected
-        endCall(call, reason: .failed)
+        cleanUpCall(call, reason: .failed)
     }
     
     func voiceClient(_ client: VGVoiceClient, didReceiveMediaReconnectingForCall callId: VGCallId) {

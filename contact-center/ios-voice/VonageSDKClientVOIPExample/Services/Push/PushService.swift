@@ -27,8 +27,8 @@ class PushService: NSObject {
     /// Publishes the user notification token when registered
     let notificationToken = CurrentValueSubject<Data?, Never>(nil)
     
-    /// Publishes incoming VoIP push payloads
-    let voipPush = PassthroughSubject<PKPushPayload, Never>()
+    /// Publishes incoming VoIP push payloads with their completion handlers
+    let voipPush = PassthroughSubject<(payload: PKPushPayload, completion: () -> Void), Never>()
 
     override init() {
         super.init()
@@ -84,7 +84,7 @@ extension PushService: PKPushRegistryDelegate {
             return
         }
         
-        voipPush.send(payload)
-        completion()
+        // Pass completion along with payload - it will be called after CallKit reports the call
+        voipPush.send((payload: payload, completion: completion))
     }
 }

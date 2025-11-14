@@ -44,7 +44,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // This must be done early so we can handle incoming calls
         do {
             try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .voiceChat, options: [])
+            
+            #if targetEnvironment(simulator)
+            // On simulator: activate audio session immediately since no CallKit
             try AVAudioSession.sharedInstance().setActive(true)
+            #endif
             print("✅ Audio session configured")
         } catch {
             print("❌ Failed to configure audio session: \(error)")
