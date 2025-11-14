@@ -54,14 +54,23 @@ class VoiceClientManager(private val context: Context) {
                 SessionErrorReason.TransportClosed -> "Socket connection has been closed"
                 SessionErrorReason.PingTimeout -> "Ping timeout"
             }
+            println("❌ Session error: $message")
             showToast(context, "Session Error: $message")
-            // When the Socket Connection is closed
-            // Reset sessionId & current user
+            
+            // Clear session state
             _sessionId.value = null
             _currentUser.value = null
-            // And try to log in again using last valid credentials
-            val token = coreContext.authToken ?: return@setSessionErrorListener
-            login(token,
+            
+            // Try to reconnect if we have a valid token
+            val token = coreContext.authToken ?: run {
+                println("⚠️ No auth token for session restoration")
+                return@setSessionErrorListener
+            }
+
+            // Skip device cleanup - this is reconnection, not user switching
+            login(
+                token = token,
+                isUserInitiated = false,
                 onErrorCallback = {
                     // Cleanup any active call upon login failure
                     coreContext.activeCall.value?.run {
@@ -73,6 +82,7 @@ class VoiceClientManager(private val context: Context) {
         }
 
         client.setCallInviteListener { callId, from, type ->
+            println("📞 Incoming call from: $from")
             // Reject incoming calls when there is already an active one
             coreContext.activeCall.value?.let { return@setCallInviteListener }
             placeIncomingCall(callId, from, type)
@@ -81,7 +91,7 @@ class VoiceClientManager(private val context: Context) {
         }
 
         client.setOnLegStatusUpdate { callId, legId, status ->
-            println("Call $callId has received status update $status for leg $legId")
+            println("🔄 Call status updated: $callId, status: $status")
             takeIfActive(callId)?.apply {
                 if(status == LegStatus.answered){
                     setAnswered()
@@ -90,7 +100,7 @@ class VoiceClientManager(private val context: Context) {
         }
 
         client.setOnCallHangupListener { callId, callQuality, reason ->
-            println("Call $callId has been hung up with reason: ${reason.name} and quality: $callQuality")
+            println("📴 Call ended: $callId, reason: ${reason.name}")
             takeIfActive(callId)?.apply {
                 val cause = when(reason) {
                     HangupReason.remoteReject -> DisconnectCause.REJECTED
@@ -104,28 +114,28 @@ class VoiceClientManager(private val context: Context) {
         }
 
         client.setOnCallMediaDisconnectListener { callId, reason ->
-            println("Call $callId has been disconnected with reason: ${reason.name}")
+            println("❌ Media disconnected - Call: $callId, Reason: ${reason.name}")
             takeIfActive(callId)?.apply {
                 cleanUp(DisconnectCause(DisconnectCause.ERROR))
             }
         }
         
         client.setOnCallMediaReconnectingListener { callId ->
-            println("Call $callId is reconnecting")
+            println("🔄 Media reconnecting - Call: $callId")
             takeIfActive(callId)?.apply {
                 setInitializing()
             }
         }
 
         client.setOnCallMediaReconnectionListener { callId ->
-            println("Call $callId has successfully reconnected")
+            println("✅ Media reconnected - Call: $callId")
             takeIfActive(callId)?.apply {
                 setActive()
             }
         }
 
         client.setCallInviteCancelListener { callId, reason ->
-            println("Invite to Call $callId has been canceled with reason: ${reason.name}")
+            println("📴 Call invite cancelled: $callId, reason: ${reason.name}")
             takeIfActive(callId)?.apply {
                 val cause = when(reason){
                     VoiceInviteCancelReason.AnsweredElsewhere -> DisconnectCause(DisconnectCause.ANSWERED_ELSEWHERE)
@@ -138,15 +148,16 @@ class VoiceClientManager(private val context: Context) {
         }
 
         client.setCallTransferListener { callId, conversationId ->
-            println("Call $callId has been transferred to conversation $conversationId")
+            println("🔀 Call transferred - Call: $callId, Conversation: $conversationId")
             takeIfActive(callId)?.apply {
                 setAnswered()
             }
         }
 
         client.setOnMutedListener { callId, legId, isMuted ->
-            println("LegId $legId for Call $callId has been ${if(isMuted) "muted" else "unmuted"}")
+            println("🔇 Mute status changed - Call: $callId, Leg: $legId, Muted: $isMuted")
             val call = takeIfActive(callId) ?: return@setOnMutedListener
+            // Only update our call state if this is for our own leg (callId == legId)
             takeIf { callId == legId } ?: return@setOnMutedListener
             if (call.isMuted.value != isMuted) {
                 call.toggleMute()
@@ -154,10 +165,25 @@ class VoiceClientManager(private val context: Context) {
         }
 
         client.setOnDTMFListener { callId, legId, digits ->
-            println("LegId $legId has sent DTMF digits '$digits' to Call $callId")
+            println("🔢 DTMF received - Call: $callId, Leg: $legId, Digits: '$digits'")
         }
     }
-    fun login(token: String, onErrorCallback: ((Exception) -> Unit)? = null, onSuccessCallback: ((String) -> Unit)? = null){
+    fun login(token: String, isUserInitiated: Boolean = true, onErrorCallback: ((Exception) -> Unit)? = null, onSuccessCallback: ((String) -> Unit)? = null){
+        if (isUserInitiated) {
+            // Clean up any existing device registration before logging in (user-initiated login)
+            unregisterExistingDeviceIfNeeded {
+                createSession(token, onErrorCallback, onSuccessCallback)
+            }
+        } else {
+            // Skip cleanup for session restoration (same user, just reconnecting)
+            createSession(token, onErrorCallback, onSuccessCallback)
+        }
+    }
+
+    /**
+     * Creates a new session with the given token
+     */
+    private fun createSession(token: String, onErrorCallback: ((Exception) -> Unit)? = null, onSuccessCallback: ((String) -> Unit)? = null){
         client.createSession(token){ error, sessionId ->
             sessionId?.let { sid ->
                 registerDevicePushToken()
@@ -186,7 +212,7 @@ class VoiceClientManager(private val context: Context) {
         customRepository.login(code){ err, res ->
             res?.let {
                 coreContext.refreshToken = it.refreshToken
-                this.login(it.vonageToken, onErrorCallback, onSuccessCallback)
+                this.login(it.vonageToken, true, onErrorCallback, onSuccessCallback)
             } ?: err?.let {
                 onErrorCallback?.invoke(it)
             }
@@ -194,17 +220,204 @@ class VoiceClientManager(private val context: Context) {
     }
 
     fun logout(onSuccessCallback: (() -> Unit)? = null){
-        unregisterDevicePushToken()
-        client.deleteSession { error ->
-            error?.let {
-                showToast(context, "Error Logging Out: ${error.message}")
-            } ?: run {
-                _sessionId.value = null
-                _currentUser.value = null
-                coreContext.authToken = null
-                coreContext.refreshToken = null
-                onSuccessCallback?.invoke()
+        // Always unregister push tokens on explicit logout
+        // User won't receive calls after logging out
+        unregisterDeviceToken {
+            // Delete session
+            client.deleteSession { error ->
+                error?.let {
+                    showToast(context, "Error Logging Out: ${error.message}")
+                } ?: run {
+                    // Clear state
+                    _sessionId.value = null
+                    _currentUser.value = null
+                    coreContext.authToken = null
+                    coreContext.refreshToken = null
+                    coreContext.activeCall.value?.run {
+                        cleanUp(DisconnectCause(DisconnectCause.LOCAL))
+                    }
+                    onSuccessCallback?.invoke()
+                }
             }
+        }
+    }
+
+    // MARK: - Push Token Management
+
+    /**
+     * Unregisters the current device token if a device ID exists
+     */
+    private fun unregisterDeviceToken(completion: () -> Unit) {
+        val deviceId = coreContext.deviceId ?: run {
+            println("✅ No device ID to unregister")
+            completion()
+            return
+        }
+
+        client.unregisterDevicePushToken(deviceId) { error ->
+            error?.let {
+                println("❌ Failed to unregister push token: $it")
+            } ?: run {
+                println("✅ Push tokens unregistered for device: $deviceId")
+            }
+
+            // Clear deviceId regardless of success/failure
+            coreContext.deviceId = null
+            completion()
+        }
+    }
+
+    /**
+     * Unregisters any existing device before login to prevent token accumulation
+     * This creates a temporary session with stored credentials if needed
+     */
+    private fun unregisterExistingDeviceIfNeeded(completion: () -> Unit) {
+        // Check if we have a previously registered device
+        val existingDeviceId = coreContext.deviceId ?: run {
+            println("✅ No existing device ID - skipping cleanup")
+            completion()
+            return
+        }
+
+        // Check if we have a valid auth token to perform cleanup
+        val authToken = coreContext.authToken ?: run {
+            println("⚠️ No auth token for cleanup - clearing stale device ID $existingDeviceId")
+            coreContext.deviceId = null
+            completion()
+            return
+        }
+
+        println("🧹 Cleaning up existing device: $existingDeviceId")
+
+        // Create temporary session to unregister the old device
+        client.createSession(authToken) { error, sessionId ->
+            error?.let {
+                println("⚠️ Cleanup session failed: ${error.message}")
+                // Clear stale device ID and continue
+                coreContext.deviceId = null
+                completion()
+                return@createSession
+            }
+
+            sessionId ?: run {
+                println("⚠️ No session ID for cleanup")
+                coreContext.deviceId = null
+                completion()
+                return@createSession
+            }
+
+            println("✅ Cleanup session created: $sessionId")
+
+            // Unregister the old device using the reusable method
+            unregisterDeviceToken {
+                // Delete the cleanup session
+                client.deleteSession { error ->
+                    error?.let {
+                        println("⚠️ Failed to delete cleanup session: ${it.message}")
+                    } ?: run {
+                        println("✅ Cleanup session deleted")
+                    }
+                    completion()
+                }
+            }
+        }
+    }
+
+    // MARK: - Session Restoration
+
+    /**
+     * Restores session using stored credentials if no active session exists
+     * Completion handler receives sessionId if successful, null otherwise
+     */
+    private fun restoreSessionIfNeeded(completion: (String?) -> Unit) {
+        val currentSessionId = _sessionId.value
+        currentSessionId?.let {
+            println("✅ Active session exists: $it")
+            completion(it)
+            return
+        }
+
+        println("⚠️ No active session - attempting restoration")
+
+        // Try auth token first, then refresh token
+        val token = coreContext.authToken
+        token?.let {
+            restoreSessionWithToken(it, completion)
+        } ?: run {
+            val refreshToken = coreContext.refreshToken
+            refreshToken?.let {
+                restoreSessionWithRefreshToken(it, completion)
+            } ?: run {
+                println("⚠️ No stored credentials for session restoration")
+                completion(null)
+            }
+        }
+    }
+
+    /**
+     * Restores session using stored auth token
+     */
+    private fun restoreSessionWithToken(token: String, completion: (String?) -> Unit) {
+        println("🔄 Restoring session with auth token")
+        // Skip device cleanup - this is session restoration, not user switching
+        login(
+            token = token,
+            isUserInitiated = false,
+            onErrorCallback = { error ->
+                println("❌ Failed to restore session: $error")
+                completion(null)
+            },
+            onSuccessCallback = { sessionId ->
+                println("✅ Session restored: $sessionId")
+                completion(sessionId)
+            }
+        )
+    }
+
+    /**
+     * Restores session by refreshing expired token
+     */
+    private fun restoreSessionWithRefreshToken(refreshToken: String, completion: (String?) -> Unit) {
+        println("🔄 Refreshing expired token")
+
+        customRepository.refresh(refreshToken) { error, response ->
+            error?.let {
+                println("❌ Token refresh failed: $it")
+                completion(null)
+                return@refresh
+            }
+
+            response?.let { tokenResponse ->
+                // Update stored tokens
+                coreContext.refreshToken = tokenResponse.refreshToken
+
+                // Restore session with new token
+                restoreSessionWithToken(tokenResponse.vonageToken, completion)
+            } ?: run {
+                println("❌ No response from token refresh")
+                completion(null)
+            }
+        }
+    }
+
+    // MARK: - Push Notifications
+
+    /**
+     * Processes VoIP push notification
+     * Restores session if needed, then processes the incoming call invite
+     */
+    fun processVoipPush(remoteMessage: RemoteMessage) {
+        println("📨 Processing VoIP push notification")
+
+        // Restore session if needed
+        // This will be needed to trigger the delegates for incoming call invites
+        restoreSessionIfNeeded { sessionId ->
+            sessionId ?: run {
+                println("❌ Failed to restore session - cannot process incoming push")
+                return@restoreSessionIfNeeded
+            }
+            // Process the push with active session
+            processIncomingPush(remoteMessage)
         }
     }
 
@@ -242,10 +455,10 @@ class VoiceClientManager(private val context: Context) {
         val registerTokenCallback : (String) -> Unit = { token ->
             client.registerDevicePushToken(token) { err, deviceId ->
                 err?.let {
-                    println("Error in registering Device Push Token: $err")
+                    println("❌ Failed to register push token: $err")
                 } ?: deviceId?.let {
                     coreContext.deviceId = deviceId
-                    println("Device Push Token successfully registered with Device ID: $deviceId")
+                    println("✅ Registered push token with device ID: $deviceId")
                 }
             }
         }
@@ -253,16 +466,6 @@ class VoiceClientManager(private val context: Context) {
             registerTokenCallback(it)
         } ?: PushNotificationService.requestToken {
             registerTokenCallback(it)
-        }
-    }
-
-    private fun unregisterDevicePushToken(){
-        coreContext.deviceId?.let {
-            client.unregisterDevicePushToken(it) { err ->
-                err?.let {
-                    println("Error in unregistering Device Push Token: $err")
-                }
-            }
         }
     }
 

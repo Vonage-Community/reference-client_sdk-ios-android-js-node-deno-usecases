@@ -75,7 +75,7 @@ class LoginActivity : ComponentActivity() {
             // Navigation handled by observeSessionId() observer
         }
         if (isToken) {
-            clientManager.login(token = tokenOrCode, onErrorCallback, onSuccessCallback)
+            clientManager.login(token = tokenOrCode, true, onErrorCallback, onSuccessCallback)
         } else {
             clientManager.loginWithCode(code = tokenOrCode, onErrorCallback, onSuccessCallback)
         }

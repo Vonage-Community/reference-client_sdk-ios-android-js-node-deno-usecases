@@ -27,26 +27,8 @@ class PushNotificationService : FirebaseMessagingService() {
         App.coreContext.pushToken = token
     }
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // Whenever a Push Notification comes in
-        // If there is no active session then
-        // Create one using the latest valid Auth Token and notify the ClientManager
-        // Else notify the ClientManager directly
-        App.coreContext.run {
-            if (clientManager.sessionId.value == null) {
-                val token = authToken ?: return@run
-                clientManager.login(
-                    token = token,
-                    onErrorCallback = { error ->
-                        println("Failed to login on push notification: ${error.message}")
-                    },
-                    onSuccessCallback = { sessionId ->
-                        println("Successfully logged in on push notification: $sessionId")
-                        clientManager.processIncomingPush(remoteMessage)
-                    }
-                )
-            } else {
-                clientManager.processIncomingPush(remoteMessage)
-            }
-        }
+        // Process VoIP push through VoiceClientManager
+        // It will handle session restoration if needed
+        App.coreContext.clientManager.processVoipPush(remoteMessage)
     }
 }
