@@ -40,19 +40,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     private func setupAudioSession() {
-        // Configure audio session for VoIP
-        // This must be done early so we can handle incoming calls
+        #if targetEnvironment(simulator)
+        // SIMULATOR ONLY — no CallKit, so we must configure audio manually
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .voiceChat, options: [])
-            
-            #if targetEnvironment(simulator)
-            // On simulator: activate audio session immediately since no CallKit
+            try AVAudioSession.sharedInstance().setCategory(.playAndRecord,
+                                                            mode: .voiceChat,
+                                                            options: [])
             try AVAudioSession.sharedInstance().setActive(true)
-            #endif
-            print("✅ Audio session configured")
+            print("🎧 Simulator audio session configured")
         } catch {
-            print("❌ Failed to configure audio session: \(error)")
+            print("❌ Simulator audio session setup failed: \(error)")
         }
+        #else
+        // REAL DEVICE — CallKit MUST handle all audio session configuration
+        print("📱 Real device: skipping audio session setup (CallKit will handle it)")
+        #endif
     }
     
     // MARK: Notifications
