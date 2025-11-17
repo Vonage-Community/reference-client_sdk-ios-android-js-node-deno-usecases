@@ -54,12 +54,6 @@ class VoiceClientManager: NSObject, ObservableObject {
         
         self.client = VGVoiceClient(config)
         
-        #if targetEnvironment(simulator)
-        VGVoiceClient.isUsingCallKit = false
-        #else
-        VGVoiceClient.isUsingCallKit = true
-        #endif
-        
         #if !targetEnvironment(simulator)
         // Configure CallKit provider (device only)
         let providerConfig = CXProviderConfiguration()
