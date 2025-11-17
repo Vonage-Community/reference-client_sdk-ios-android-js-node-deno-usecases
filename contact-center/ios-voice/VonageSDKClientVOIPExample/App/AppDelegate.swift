@@ -14,10 +14,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var coreContext: CoreContext?
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Setup microphone permissions and audio session early
-        // This is critical for handling VoIP calls when app is not running
+
         requestMicrophonePermission()
-        setupAudioSession()
         
         return true
     }
@@ -37,24 +35,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         @unknown default:
             break
         }
-    }
-    
-    private func setupAudioSession() {
-        #if targetEnvironment(simulator)
-        // SIMULATOR ONLY — no CallKit, so we must configure audio manually
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playAndRecord,
-                                                            mode: .voiceChat,
-                                                            options: [])
-            try AVAudioSession.sharedInstance().setActive(true)
-            print("🎧 Simulator audio session configured")
-        } catch {
-            print("❌ Simulator audio session setup failed: \(error)")
-        }
-        #else
-        // REAL DEVICE — CallKit MUST handle all audio session configuration
-        print("📱 Real device: skipping audio session setup (CallKit will handle it)")
-        #endif
     }
     
     // MARK: Notifications
