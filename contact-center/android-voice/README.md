@@ -54,12 +54,12 @@ To manually add these properties, follow these steps:
 VONAGE_API_TOKEN=<YOUR_API_TOKEN>
 API_LOGIN_URL=<YOUR_API_LOGIN_URL>
 API_REFRESH_URL=<YOUR_API_REFRESH_URL>
+API_KEY=<YOUR_API_KEY>
 ```
 
 Alternatively, you can run the following command in the project root folder to automatically add the lines:
 ```bash
-echo "VONAGE_API_TOKEN=<YOUR_API_TOKEN>\nAPI_LOGIN_URL=<YOUR_API_LOGIN_URL>\n
-API_REFRESH_URL=<YOUR_API_REFRESH_URL>" >> local.properties
+echo "VONAGE_API_TOKEN=<YOUR_API_TOKEN>\nAPI_LOGIN_URL=<YOUR_API_LOGIN_URL>\nAPI_REFRESH_URL=<YOUR_API_REFRESH_URL>\nAPI_KEY=<YOUR_API_KEY>" >> local.properties
 ```
 
 **Note:** Make sure not to enclose the property values in double quotes (`"`), angular brackets (`<>`) or any other symbols.
