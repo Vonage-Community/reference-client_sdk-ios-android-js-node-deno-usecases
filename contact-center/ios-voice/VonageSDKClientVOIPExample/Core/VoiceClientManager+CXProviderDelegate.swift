@@ -23,8 +23,12 @@ extension VoiceClientManager: CXProviderDelegate {
             return
         }
         
-        answerCall(call) {
-            action.fulfill()
+        answerCall(call) { error in
+            if let error {
+                action.fail()
+            } else {
+                action.fulfill()
+            }
         }
     }
     
@@ -35,12 +39,20 @@ extension VoiceClientManager: CXProviderDelegate {
         }
         
         if call.isInbound && call.state == .ringing {
-            rejectCall(call) {
-                action.fulfill()
+            rejectCall(call) { error in
+                if let error {
+                    action.fail()
+                } else {
+                    action.fulfill()
+                }
             }
         } else {
-            hangupCall(call) {
-                action.fulfill()
+            hangupCall(call) { error in
+                if let error {
+                    action.fail()
+                } else {
+                    action.fulfill()
+                }
             }
         }
     }

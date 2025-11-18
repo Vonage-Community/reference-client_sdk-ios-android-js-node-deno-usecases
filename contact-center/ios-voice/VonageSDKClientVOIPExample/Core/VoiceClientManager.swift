@@ -440,85 +440,73 @@ class VoiceClientManager: NSObject, ObservableObject {
         }
     }
     
-    func answerCall(_ call: VGCallWrapper, completion: (() -> Void)? = nil) {
+    func answerCall(_ call: VGCallWrapper, completion: ((Error?) -> Void)? = nil) {
         let callId = call.callId
         client.answer(callId) { [weak self] error in
-            guard let self else { 
-                completion?()
-                return 
-            }
+            completion?(error)
+            
+            guard let self else { return }
             
             if let error {
                 print("❌ Failed to answer call: \(error)")
                 if let call = self.context.activeCall, call.callId == callId {
                     self.cleanUpCall(call, reason: .failed)
                 }
-                completion?()
                 return
             }
             
             print("✅ Answered call: \(callId)")
-            
             // Update state to active for both simulator and device
             // The delegate method is only called for the remote leg, not for our answer
             Task { @MainActor [weak self] in
                 guard let self = self,
                       let call = self.context.activeCall,
-                      call.callId == callId else { 
-                    completion?()
-                    return 
-                }
+                      call.callId == callId else { return }
                 call.updateState(.active)
-                completion?()
             }
         }
     }
     
-    func rejectCall(_ call: VGCallWrapper, completion: (() -> Void)? = nil) {
+    func rejectCall(_ call: VGCallWrapper, completion: ((Error?) -> Void)? = nil) {
         let callId = call.callId
         client.reject(callId) { [weak self] error in
-            guard let self else { 
-                completion?()
-                return 
-            }
+            completion?(error)
+            
+            guard let self else { return }
             
             if let error {
                 print("❌ Failed to reject call: \(error)")
                 if let call = self.context.activeCall, call.callId == callId {
                     self.cleanUpCall(call, reason: .failed)
                 }
-                completion?()
                 return
             }
             
             print("✅ Rejected call: \(callId)")
+            // Update State
             if let call = self.context.activeCall, call.callId == callId {
                 self.cleanUpCall(call, reason: .remoteEnded)
             }
-            completion?()
         }
     }
     
-    func hangupCall(_ call: VGCallWrapper, completion: (() -> Void)? = nil) {
+    func hangupCall(_ call: VGCallWrapper, completion: ((Error?) -> Void)? = nil) {
         let callId = call.callId
         client.hangup(callId) { [weak self] error in
-            guard let self else { 
-                completion?()
-                return 
-            }
+            completion?(error)
+            
+            guard let self else { return }
             
             if let error {
                 print("❌ Failed to hangup call: \(error)")
                 if let call = self.context.activeCall, call.callId == callId {
                     self.cleanUpCall(call, reason: .failed)
                 }
-                completion?()
                 return
             }
             
             print("✅ Hung up call: \(callId)")
             // State will be updated via didReceiveHangupForCall delegate for both simulator and device
-            completion?()
         }
     }
     
