@@ -32,5 +32,7 @@ enum Configuration {
         return url
     }
     
+    static let apiKey: String = value(for: "API_KEY") ?? ""
+    
     static let defaultToken: String = value(for: "VONAGE_API_TOKEN") ?? ""
 }

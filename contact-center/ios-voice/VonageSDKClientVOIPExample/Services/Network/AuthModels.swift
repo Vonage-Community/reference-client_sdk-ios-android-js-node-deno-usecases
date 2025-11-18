@@ -20,6 +20,7 @@ protocol ApiType {
 extension ApiType {
     var headers: [String: String] {
         [
+            "Authorization": "Bearer \(Configuration.apiKey)",
             "Content-Type": "application/json"
         ]
     }
