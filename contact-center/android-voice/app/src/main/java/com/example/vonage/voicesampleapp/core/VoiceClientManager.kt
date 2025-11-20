@@ -51,34 +51,14 @@ class VoiceClientManager(private val context: Context) {
         client.setSessionErrorListener { err ->
             val message = when(err){
                 SessionErrorReason.TokenExpired -> "Token has expired"
-                SessionErrorReason.TransportClosed -> "Socket connection has been closed"
-                SessionErrorReason.PingTimeout -> "Ping timeout"
+                SessionErrorReason.TransportClosed -> "Connection closed"
+                SessionErrorReason.PingTimeout -> "Connection timeout"
             }
+            
             println("❌ Session error: $message")
-            showToast(context, "Session Error: $message")
             
-            // Clear session state
-            _sessionId.value = null
-            _currentUser.value = null
-            
-            // Try to reconnect if we have a valid token
-            val token = coreContext.authToken ?: run {
-                println("⚠️ No auth token for session restoration")
-                return@setSessionErrorListener
-            }
-
-            // Skip device cleanup - this is reconnection, not user switching
-            login(
-                token = token,
-                isUserInitiated = false,
-                onErrorCallback = {
-                    // Cleanup any active call upon login failure
-                    coreContext.activeCall.value?.run {
-                        cleanUp(DisconnectCause(DisconnectCause.MISSED))
-                    }
-                    // Navigation to LoginActivity is handled by observeSessionId() in activities
-                }
-            )
+            // Attempt restoration with appropriate strategy based on error type
+            attemptSessionRestoration(skipAuthToken = err == SessionErrorReason.TokenExpired)
         }
 
         client.setCallInviteListener { callId, from, type ->
@@ -229,13 +209,7 @@ class VoiceClientManager(private val context: Context) {
                     showToast(context, "Error Logging Out: ${error.message}")
                 } ?: run {
                     // Clear state
-                    _sessionId.value = null
-                    _currentUser.value = null
-                    coreContext.authToken = null
-                    coreContext.refreshToken = null
-                    coreContext.activeCall.value?.run {
-                        cleanUp(DisconnectCause(DisconnectCause.LOCAL))
-                    }
+                    clearSession()
                     onSuccessCallback?.invoke()
                 }
             }
@@ -397,6 +371,48 @@ class VoiceClientManager(private val context: Context) {
                 println("❌ No response from token refresh")
                 completion(null)
             }
+        }
+    }
+
+    /**
+     * Attempts session restoration with fallback logic
+     */
+    private fun attemptSessionRestoration(skipAuthToken: Boolean = false) {
+        val handleFailure = {
+            println("❌ All reconnection attempts failed - clearing session")
+            clearSession()
+            showToast(context, "Session expired - please log in again")
+        }
+        
+        val fallbackToRefresh = {
+            coreContext.refreshToken?.let { refreshToken ->
+                restoreSessionWithRefreshToken(refreshToken) { sessionId ->
+                    sessionId ?: handleFailure()
+                }
+            } ?: handleFailure()
+        }
+        
+        if (!skipAuthToken) {
+            coreContext.authToken?.let { token ->
+                restoreSessionWithToken(token) { sessionId ->
+                    sessionId ?: fallbackToRefresh()
+                }
+            } ?: fallbackToRefresh()
+        } else {
+            fallbackToRefresh()
+        }
+    }
+
+    /**
+     * Clears session state - generic method for reuse throughout the app
+     */
+    private fun clearSession() {
+        _sessionId.value = null
+        _currentUser.value = null
+        coreContext.authToken = null
+        coreContext.refreshToken = null
+        coreContext.activeCall.value?.run {
+            cleanUp(DisconnectCause(DisconnectCause.MISSED))
         }
     }
 
