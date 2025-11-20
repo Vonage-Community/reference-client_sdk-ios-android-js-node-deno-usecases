@@ -8,8 +8,13 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject private var viewModel = LoginViewModel()
+    @StateObject private var viewModel: LoginViewModel
     @EnvironmentObject private var coreContext: CoreContext
+    
+    init() {
+        let manager = CoreContext.shared.voiceClientManager
+        _viewModel = StateObject(wrappedValue: LoginViewModel(clientManager: manager))
+    }
     
     var body: some View {
         NavigationStack {
@@ -123,9 +128,6 @@ struct LoginView: View {
                     .padding(.horizontal, AppSpacing.extraLarge)
                 }
             }
-        }
-        .onAppear {
-            viewModel.setup(with: coreContext.voiceClientManager)
         }
     }
 }

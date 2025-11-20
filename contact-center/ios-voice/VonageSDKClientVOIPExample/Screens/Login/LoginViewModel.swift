@@ -16,14 +16,16 @@ class LoginViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
-    private weak var clientManager: VoiceClientManager?
+    private let clientManager: VoiceClientManager
     
     /// Returns the current input based on login mode
     var currentInput: String {
         loginWithToken ? token : code
     }
     
-    init() {
+    init(clientManager: VoiceClientManager) {
+        self.clientManager = clientManager
+        
         // Set default token from configuration
         let defaultToken = Configuration.defaultToken
         if !defaultToken.isEmpty {
@@ -31,19 +33,8 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    /// Sets up the view model with a reference to the client manager
-    /// - Parameter manager: The VoiceClientManager to use for authentication
-    func setup(with manager: VoiceClientManager) {
-        clientManager = manager
-    }
-    
     /// Performs login using either token or code based on current mode
     func performLogin() {
-        guard let clientManager else {
-            errorMessage = "Client manager not initialized"
-            return
-        }
-        
         isLoading = true
         errorMessage = nil
         

@@ -9,6 +9,7 @@ import Foundation
 
 /// Wrapper around Vonage call to provide convenient state management
 /// This class is ObservableObject to allow SwiftUI views to reactively update
+@MainActor
 class VGCallWrapper: ObservableObject, Identifiable {
     let id: UUID
     let callId: String
@@ -31,22 +32,18 @@ class VGCallWrapper: ObservableObject, Identifiable {
         print("🗑️ VGCallWrapper deallocated for call: \(callId)")
     }
     
-    @MainActor
     func updateState(_ newState: CallState) {
         state = newState
     }
     
-    @MainActor
     func toggleMute() {
         isMuted.toggle()
     }
     
-    @MainActor
     func toggleHold() {
         isOnHold.toggle()
     }
     
-    @MainActor
     func toggleNoiseSuppression() {
         isNoiseSuppressionEnabled.toggle()
     }

@@ -30,6 +30,7 @@ class CoreContext: ObservableObject {
     }
 
     // Last active call (computed from persisted metadata; not directly settable)
+    @MainActor
     var lastActiveCall: VGCallWrapper? {
         guard let callId = PrivatePreferences.get(PrivatePreferences.CALL_ID),
               let uuid = UUID(uuidString: callId) else { return nil }

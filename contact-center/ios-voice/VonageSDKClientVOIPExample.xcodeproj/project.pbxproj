@@ -12,6 +12,7 @@
 		57F51DEE8D6C4134AEB07C00 /* CoreContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39BFCF9809294A9EBCCAF716 /* CoreContext.swift */; };
 		60DC4418F2FD472C9DD4855F /* VoiceClientManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5B15A8D0004DAAA2679E65 /* VoiceClientManager.swift */; };
 		D1F2437C2981846E00C49B3F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D1F2437B2981846E00C49B3F /* Assets.xcassets */; };
+		FE86EACB2ECF76890017C40D /* ErrorNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE86EAC92ECF76890017C40D /* ErrorNotificationView.swift */; };
 		FEB9E7712A4CA64C003C2B62 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEB9E7702A4CA64C003C2B62 /* Configuration.swift */; };
 		FED917D32EC3843700F972F4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917D02EC3843700F972F4 /* AppDelegate.swift */; };
 		FED917D42EC3843700F972F4 /* VonageVoiceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917D12EC3843700F972F4 /* VonageVoiceApp.swift */; };
@@ -45,6 +46,7 @@
 		D1F2437B2981846E00C49B3F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D1F243802981846E00C49B3F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D1F2438D298553B800C49B3F /* VonageSDKClientVOIPExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VonageSDKClientVOIPExample.entitlements; sourceTree = "<group>"; };
+		FE86EAC92ECF76890017C40D /* ErrorNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorNotificationView.swift; sourceTree = "<group>"; };
 		FEB9E7702A4CA64C003C2B62 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		FEB9E7792A4CB7B4003C2B62 /* secrets.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = secrets.xcconfig; sourceTree = SOURCE_ROOT; };
 		FED917D02EC3843700F972F4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -152,6 +154,14 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		FE86EACA2ECF76890017C40D /* Error */ = {
+			isa = PBXGroup;
+			children = (
+				FE86EAC92ECF76890017C40D /* ErrorNotificationView.swift */,
+			);
+			path = Error;
+			sourceTree = "<group>";
+		};
 		FEB9E76F2A4CA5CB003C2B62 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
@@ -235,6 +245,7 @@
 			children = (
 				FED917DE2EC3853F00F972F4 /* Call */,
 				FED917E02EC3853F00F972F4 /* Dialer */,
+				FE86EACA2ECF76890017C40D /* Error */,
 				FED917E32EC3853F00F972F4 /* Login */,
 				FED917E52EC3853F00F972F4 /* Main */,
 			);
@@ -353,9 +364,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -392,9 +407,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -410,6 +429,7 @@
 			files = (
 				57F51DEE8D6C4134AEB07C00 /* CoreContext.swift in Sources */,
 				FED917E72EC3853F00F972F4 /* DialerView.swift in Sources */,
+				FE86EACB2ECF76890017C40D /* ErrorNotificationView.swift in Sources */,
 				FED917E82EC3853F00F972F4 /* CallActionButton.swift in Sources */,
 				FED917E92EC3853F00F972F4 /* CallView.swift in Sources */,
 				FED917EA2EC3853F00F972F4 /* MainView.swift in Sources */,

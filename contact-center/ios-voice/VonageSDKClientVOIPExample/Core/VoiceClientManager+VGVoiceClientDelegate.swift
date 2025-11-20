@@ -28,19 +28,8 @@ extension VoiceClientManager: VGVoiceClientDelegate {
         
         print("❌ Session error: \(message)")
         
-        Task { @MainActor [weak self] in
-            self?.errorMessage = "Session error: \(message)"
-        }
-        // Try to reconnect if we have a valid token
-        if let token = self.context.authToken {
-            self.login(token: token)
-        } else {
-            // Clear session if no token available
-            Task { @MainActor [weak self] in
-                self?.sessionId = nil
-                self?.currentUser = nil
-            }
-        }
+        // Attempt restoration with appropriate strategy based on error type
+        attemptSessionRestoration(skipAuthToken: reason == .tokenExpired)
     }
     
     func voiceClient(_ client: VGVoiceClient, didReceiveInviteForCall callId: VGCallId, from caller: String, with type: VGVoiceChannelType) {
@@ -51,15 +40,14 @@ extension VoiceClientManager: VGVoiceClientDelegate {
             return
         }
 
-        let call = VGCallWrapper(
-            id: callUUID,
-            callId: callId,
-            callerDisplayName: caller,
-            isInbound: true
-        )
-        
         Task { @MainActor [weak self] in
             guard let self = self else { return }
+            let call = VGCallWrapper(
+                id: callUUID,
+                callId: callId,
+                callerDisplayName: caller,
+                isInbound: true
+            )
             self.context.activeCall = call
         }
         

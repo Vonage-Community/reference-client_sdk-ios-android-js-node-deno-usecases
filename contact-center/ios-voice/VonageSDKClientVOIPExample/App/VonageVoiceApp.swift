@@ -27,6 +27,7 @@ struct VonageVoiceApp: App {
 struct ContentView: View {
     @EnvironmentObject private var coreContext: CoreContext
     @State private var isLoggedIn = false
+    @State private var errorMessage: String?
     
     var body: some View {
         NavigationStack {
@@ -38,6 +39,16 @@ struct ContentView: View {
         }
         .onReceive(coreContext.voiceClientManager.$sessionId) { sessionId in
             isLoggedIn = sessionId != nil
+        }
+        .onReceive(coreContext.voiceClientManager.$errorMessage) { message in
+            errorMessage = message
+        }
+        .overlay(alignment: .top) {
+            if let errorMessage {
+                ErrorNotificationView(message: errorMessage) {
+                    coreContext.voiceClientManager.errorMessage = nil
+                }
+            }
         }
     }
 }
