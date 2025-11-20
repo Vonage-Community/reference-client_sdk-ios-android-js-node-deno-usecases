@@ -8,17 +8,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -46,6 +47,8 @@ class ChatActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Enable edge-to-edge and handle IME insets properly
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         subscribeToEvents()
         setContent {
             ChatSampleAppTheme {
@@ -68,9 +71,12 @@ class ChatActivity : ComponentActivity() {
         newEventsList: List<ConversationEvent>
     ){
         Scaffold(
+            modifier = Modifier.fillMaxSize(),
             topBar = { TopAppBar(conversationName, hasJoinedConversation) },
-            content = { padding -> ChatView(padding, hasJoinedConversation, username, eventsList, newEventsList) },
-        )
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { padding -> 
+            ChatView(padding, hasJoinedConversation, username, eventsList, newEventsList)
+        }
     }
 
     @Composable
@@ -89,7 +95,9 @@ class ChatActivity : ComponentActivity() {
             modifier = Modifier
                 .padding(padding)
                 .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .imePadding()
+                .navigationBarsPadding(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             EventsList(
@@ -113,7 +121,7 @@ class ChatActivity : ComponentActivity() {
                     maxLines = 6,
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Send,
+                            imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = stringResource(R.string.send_message_text),
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -157,6 +165,7 @@ class ChatActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TopAppBar(conversationName: String, hasJoinedConversation: Boolean){
         var showMenu by remember { mutableStateOf(false) }
@@ -170,7 +179,7 @@ class ChatActivity : ComponentActivity() {
             },
             navigationIcon = {
                 TopAppBarActionButton(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     description = stringResource(R.string.arrow_back_description)
                 ) { finish() }
             },
@@ -185,16 +194,18 @@ class ChatActivity : ComponentActivity() {
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
-                    DropdownMenuItem(onClick = {
-                        navigateToDetailsActivity(viewModel.intentExtras())
-                        showMenu = false
-                    }) {
-                        Text(stringResource(R.string.conversation_details_text))
-                    }
-                    if(hasJoinedConversation){
-                        DropdownMenuItem(onClick = { showDialog = true }) {
-                            Text(stringResource(R.string.leave_conversation_text))
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.conversation_details_text)) },
+                        onClick = {
+                            navigateToDetailsActivity(viewModel.intentExtras())
+                            showMenu = false
                         }
+                    )
+                    if(hasJoinedConversation){
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.leave_conversation_text)) },
+                            onClick = { showDialog = true }
+                        )
                     }
                 }
                 if(showDialog){

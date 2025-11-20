@@ -3,7 +3,7 @@ package com.example.vonage.chatsampleapp.view.ui.composables
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Visibility
@@ -50,7 +50,7 @@ fun CustomOutlinedTextField(
                     Icon(
                         imageVector = leadingIconImageVector,
                         contentDescription = leadingIconDescription,
-                        tint = if (showError) MaterialTheme.colors.error else MaterialTheme.colors.onSurface
+                        tint = if (showError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                     )
                 }
             },
@@ -78,8 +78,8 @@ fun CustomOutlinedTextField(
         if(showError){
             Text(
                 text = errorMessage,
-                color = MaterialTheme.colors.error,
-                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .padding(8.dp)

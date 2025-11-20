@@ -14,6 +14,10 @@ import java.lang.Exception
 private const val LOGIN_REQUEST_TYPE = "login"
 private const val REFRESH_REQUEST_TYPE = "refresh"
 private const val VOICE_AVAILABILITY = "VOICE"
+private const val PLACEHOLDER_BASE_URL = "http://example.com/"
+private const val AUTH_HEADER = "Bearer ${BuildConfig.API_KEY}"
+private const val ERROR_INVALID_CODE = "Invalid Code"
+private const val ERROR_INVALID_REFRESH_TOKEN = "Invalid Refresh Token"
 
 data class TokenResponse(
     val vonageToken: String,
@@ -34,14 +38,14 @@ data class RefreshRequestBody(
 private interface CustomApi {
     @POST(BuildConfig.API_LOGIN_URL)
     fun login(
-        @Body
-        request: LoginRequestBody
+        @Header("Authorization") authorization: String,
+        @Body request: LoginRequestBody
     ): Call<TokenResponse>
 
-    @POST(BuildConfig.API_LOGIN_URL)
+    @POST(BuildConfig.API_REFRESH_URL)
     fun refresh(
-        @Body
-        request: RefreshRequestBody
+        @Header("Authorization") authorization: String,
+        @Body request: RefreshRequestBody
     ): Call<TokenResponse>
 }
 
@@ -52,13 +56,13 @@ class CustomRepository {
     }
 
     fun login(deviceCode: String, onResult: (Exception?, TokenResponse?)->Unit ){
-        api.login(LoginRequestBody(deviceCode)).enqueue(
+        api.login(AUTH_HEADER,LoginRequestBody(deviceCode)).enqueue(
             object : Callback<TokenResponse> {
                 override fun onResponse(call: Call<TokenResponse>, response: Response<TokenResponse>) {
                     response.body()?.let {
                         onResult(null, it)
                     } ?: when(response.code()){
-                        403 -> onResult(Exception("Invalid Code"), null)
+                        403 -> onResult(Exception(ERROR_INVALID_CODE), null)
                         else -> onResult(Exception("${response.code()}: ${response.message()}"), null)
                     }
                 }
@@ -71,13 +75,13 @@ class CustomRepository {
     }
 
     fun refresh(refreshToken: String, onResult: (Exception?, TokenResponse?)->Unit ){
-        api.refresh(RefreshRequestBody(refreshToken)).enqueue(
+        api.refresh(AUTH_HEADER,RefreshRequestBody(refreshToken)).enqueue(
             object : Callback<TokenResponse> {
                 override fun onResponse(call: Call<TokenResponse>, response: Response<TokenResponse>) {
                     response.body()?.let {
                         onResult(null, it)
                     } ?: when(response.code()){
-                        403 -> onResult(Exception("Invalid Refresh Token"), null)
+                        403 -> onResult(Exception(ERROR_INVALID_REFRESH_TOKEN), null)
                         else -> onResult(Exception("${response.code()}: ${response.message()}"), null)
                     }
                 }
@@ -97,7 +101,7 @@ class CustomRepository {
         val retrofit = Retrofit.Builder()
             // Placeholder base URL:
             // full URLs are specified for each endpoint
-            .baseUrl("http://example.com/")
+            .baseUrl(PLACEHOLDER_BASE_URL)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
 

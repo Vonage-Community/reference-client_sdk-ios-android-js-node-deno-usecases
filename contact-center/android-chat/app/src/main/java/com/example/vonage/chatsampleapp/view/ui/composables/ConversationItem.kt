@@ -3,7 +3,7 @@ package com.example.vonage.chatsampleapp.view.ui.composables
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
@@ -32,7 +32,7 @@ fun ConversationItem(
     var showDialog by remember { mutableStateOf(false) }
 
     Card(
-        elevation = 4.dp,
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier
             .padding(6.dp)
             .clickable(onClick = onClick)
@@ -52,11 +52,11 @@ fun ConversationItem(
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Text(
                     text = conversationName,
-                    style = MaterialTheme.typography.h6
+                    style = MaterialTheme.typography.titleLarge
                 )
                 Text(
                     text = conversationId,
-                    style = MaterialTheme.typography.overline
+                    style = MaterialTheme.typography.labelSmall
                 )
                 MemberStateLabel(
                     modifier = Modifier.padding(top = 4.dp),
