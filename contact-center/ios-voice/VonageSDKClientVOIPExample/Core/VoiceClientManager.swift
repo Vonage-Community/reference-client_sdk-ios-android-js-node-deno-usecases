@@ -312,8 +312,8 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     /// Restores session using stored credentials if no active session exists
     private func restoreSessionIfNeeded() {
-        guard sessionId == nil else {
-            print("✅ Active session exists: \(sessionId!)")
+        if let sessionId {
+            print("✅ Active session exists: \(sessionId)")
             return
         }
         
