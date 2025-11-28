@@ -177,8 +177,8 @@ struct CallView: View {
                     onHangup()
                 }
                 
-                // Spacer for balance
-                Color.clear
+                // Audio Route Picker (Speaker)
+                AudioRoutePickerButton()
                     .frame(width: 64, height: 64)
             }
         }
@@ -224,7 +224,6 @@ struct CallView: View {
         #else
         coreContext.voiceClientManager.requestEndCallTransaction(call)
         #endif
-        
     }
     
     private func onAnswer() {
@@ -247,7 +246,6 @@ struct CallView: View {
 // MARK: - Preview
 struct CallView_Previews: PreviewProvider {
     static var previews: some View {
-        // Setup mock call for preview
         let call = VGCallWrapper(
             id: UUID(),
             callId: "test-call-id",

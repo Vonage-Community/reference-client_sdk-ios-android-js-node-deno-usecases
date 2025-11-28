@@ -523,37 +523,23 @@ class VoiceClientManager: NSObject, ObservableObject {
     
     func muteCall(_ call: VGCallWrapper) {
         let callId = call.callId
-        client.mute(callId) { [weak self] error in
+        client.mute(callId) { error in
             if let error {
                 print("❌ Failed to mute call: \(error)")
                 return
             }
-            
             print("✅ Muted call: \(callId)")
-            Task { @MainActor [weak self] in
-                guard let self = self,
-                      let call = self.context.activeCall,
-                      call.callId == callId else { return }
-                call.toggleMute()
-            }
         }
     }
     
     func unmuteCall(_ call: VGCallWrapper) {
         let callId = call.callId
-        client.unmute(callId) { [weak self] error in
+        client.unmute(callId) { error in
             if let error {
                 print("❌ Failed to unmute call: \(error)")
                 return
             }
-            
             print("✅ Unmuted call: \(callId)")
-            Task { @MainActor [weak self] in
-                guard let self = self,
-                      let call = self.context.activeCall,
-                      call.callId == callId else { return }
-                call.toggleMute()
-            }
         }
     }
     
@@ -568,49 +554,50 @@ class VoiceClientManager: NSObject, ObservableObject {
                 return
             }
             
-            self.client.mute(callId) { [weak self] error in
-                if let error {
-                    print("❌ Failed to mute for hold: \(error)")
-                    return
-                }
-                
-                print("✅ Call on hold: \(callId)")
-                Task { @MainActor [weak self] in
-                    guard let self = self,
-                          let call = self.context.activeCall,
-                          call.callId == callId else { return }
-                    call.toggleHold()
-                    call.updateState(.holding)
-                }
+            // Update hold state first, then mute
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
+                call.toggleHold()
+                call.updateState(.holding)
             }
+            
+            print("✅ Call on hold: \(callId)")
+            
+            #if targetEnvironment(simulator)
+            self.muteCall(call)
+            #else
+            self.requestMuteCallTransaction(call, isMuted: true)
+            #endif
         }
     }
     
     func unholdCall(_ call: VGCallWrapper) {
-        // Unhold = unmute + disable earmuff
+        // Unhold = disable earmuff + unmute
         let callId = call.callId
-        client.unmute(callId) { [weak self] error in
+        client.disableEarmuff(callId) { [weak self] error in
             guard let self else { return }
             
             if let error {
-                print("❌ Failed to unmute for unhold: \(error)")
+                print("❌ Failed to disable earmuff: \(error)")
                 return
             }
             
-            self.client.disableEarmuff(callId) { [weak self] error in
-                if let error {
-                    print("❌ Failed to disable earmuff: \(error)")
-                    return
-                }
-                
-                print("✅ Call resumed: \(callId)")
-                Task { @MainActor [weak self] in
-                    guard let self = self,
-                          let call = self.context.activeCall,
-                          call.callId == callId else { return }
-                    call.toggleHold()
-                    call.updateState(.active)
-                }
+            // Unmute first, then update hold state after delegate confirms unmute
+            #if targetEnvironment(simulator)
+            self.unmuteCall(call)
+            #else
+            self.requestMuteCallTransaction(call, isMuted: false)
+            #endif
+            
+            print("✅ Call resumed: \(callId)")
+            Task { @MainActor [weak self] in
+                guard let self = self,
+                      let call = self.context.activeCall,
+                      call.callId == callId else { return }
+                call.toggleHold()
+                call.updateState(.active)
             }
         }
     }
@@ -785,6 +772,18 @@ extension VoiceClientManager {
                 print("❌ Error requesting hold call transaction: \(error)")
             } else {
                 print("✅ Hold call transaction requested successfully (onHold: \(isOnHold))")
+            }
+        }
+    }
+    
+    func requestDTMFTransaction(_ call: VGCallWrapper, digits: String) {
+        let dtmfAction = CXPlayDTMFCallAction(call: call.id, digits: digits, type: .singleTone)
+        let transaction = CXTransaction(action: dtmfAction)
+        callController.request(transaction) { error in
+            if let error {
+                print("❌ Error requesting DTMF transaction: \(error)")
+            } else {
+                print("✅ DTMF transaction requested successfully (digits: \(digits))")
             }
         }
     }

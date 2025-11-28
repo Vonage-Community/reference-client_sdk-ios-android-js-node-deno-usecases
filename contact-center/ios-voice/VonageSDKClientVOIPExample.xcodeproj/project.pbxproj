@@ -33,6 +33,7 @@
 		FED918012EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */; };
 		FED918022EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */; };
 		FED918042EC40F8B00F972F4 /* PrivatePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */; };
+		FEF9D8E52ED9D2DA00C7D2FB /* AudioRoutePickerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEF9D8E42ED9D2DA00C7D2FB /* AudioRoutePickerButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +69,7 @@
 		FED917FF2EC39CF300F972F4 /* VoiceClientManager+CXProviderDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+CXProviderDelegate.swift"; sourceTree = "<group>"; };
 		FED918002EC39CF300F972F4 /* VoiceClientManager+VGVoiceClientDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VoiceClientManager+VGVoiceClientDelegate.swift"; sourceTree = "<group>"; };
 		FED918032EC40F8B00F972F4 /* PrivatePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivatePreferences.swift; sourceTree = "<group>"; };
+		FEF9D8E42ED9D2DA00C7D2FB /* AudioRoutePickerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRoutePickerButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -201,6 +203,7 @@
 		FED917DC2EC3853F00F972F4 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				FEF9D8E42ED9D2DA00C7D2FB /* AudioRoutePickerButton.swift */,
 				FED917DB2EC3853F00F972F4 /* CallActionButton.swift */,
 			);
 			path = Components;
@@ -364,9 +367,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -403,9 +410,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -419,6 +430,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FEF9D8E52ED9D2DA00C7D2FB /* AudioRoutePickerButton.swift in Sources */,
 				57F51DEE8D6C4134AEB07C00 /* CoreContext.swift in Sources */,
 				FED917E72EC3853F00F972F4 /* DialerView.swift in Sources */,
 				FE86EACB2ECF76890017C40D /* ErrorNotificationView.swift in Sources */,

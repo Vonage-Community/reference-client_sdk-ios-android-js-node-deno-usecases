@@ -13,6 +13,7 @@ struct MainView: View {
     @State private var callInput: String = ""
     @State private var navigateToCall: Bool = false
     @State private var currentUser: VGUser?
+    @FocusState private var isInputFocused: Bool
     
     var body: some View {
         VStack(spacing: 0) {
@@ -52,11 +53,17 @@ struct MainView: View {
                                 RoundedRectangle(cornerRadius: AppCornerRadius.medium)
                                     .stroke(Color.divider, lineWidth: 1)
                             )
-                            .autocapitalization(.none)
+                            .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .submitLabel(.done)
+                            .focused($isInputFocused)
+                            .onSubmit { makeCall() }
                         
                         // Call Button
-                        Button(action: makeCall) {
+                        Button(action: {
+                            isInputFocused = false
+                            makeCall()
+                        }) {
                             HStack(spacing: AppSpacing.small) {
                                 Image(systemName: "phone.fill")
                                     .font(.system(size: 18))
@@ -71,6 +78,8 @@ struct MainView: View {
                 }
             }
             .background(Color.backgroundLight)
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture { isInputFocused = false }
         }
         .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToCall) {

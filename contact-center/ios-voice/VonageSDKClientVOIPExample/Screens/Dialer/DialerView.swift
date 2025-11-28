@@ -130,7 +130,11 @@ struct DialerView: View {
         
         // Send DTMF to active call
         guard let activeCall = coreContext.activeCall else { return }
+        #if targetEnvironment(simulator)
         coreContext.voiceClientManager.sendDTMF(activeCall, digit: digit)
+        #else
+        coreContext.voiceClientManager.requestDTMFTransaction(activeCall, digits: digit)
+        #endif
     }
     
     private func clearDigits() {

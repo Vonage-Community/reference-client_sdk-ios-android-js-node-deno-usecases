@@ -24,11 +24,7 @@ extension VoiceClientManager: CXProviderDelegate {
         }
         
         answerCall(call) { error in
-            if let error {
-                action.fail()
-            } else {
-                action.fulfill()
-            }
+            error != nil ? action.fail() : action.fulfill()
         }
     }
     
@@ -38,22 +34,14 @@ extension VoiceClientManager: CXProviderDelegate {
             return
         }
         
+        let completion: (Error?) -> Void = { error in
+            error != nil ? action.fail() : action.fulfill()
+        }
+        
         if call.isInbound && call.state == .ringing {
-            rejectCall(call) { error in
-                if let error {
-                    action.fail()
-                } else {
-                    action.fulfill()
-                }
-            }
+            rejectCall(call, completion: completion)
         } else {
-            hangupCall(call) { error in
-                if let error {
-                    action.fail()
-                } else {
-                    action.fulfill()
-                }
-            }
+            hangupCall(call, completion: completion)
         }
     }
     
@@ -98,6 +86,16 @@ extension VoiceClientManager: CXProviderDelegate {
             unholdCall(call)
         }
         
+        action.fulfill()
+    }
+    
+    func provider(_ provider: CXProvider, perform action: CXPlayDTMFCallAction) {
+        guard let call = context.activeCall, call.id == action.callUUID else {
+            action.fail()
+            return
+        }
+        
+        sendDTMF(call, digit: action.digits)
         action.fulfill()
     }
     
