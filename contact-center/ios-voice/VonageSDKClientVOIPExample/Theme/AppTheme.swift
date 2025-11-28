@@ -22,12 +22,12 @@ extension Color {
     static let errorRed = Color(red: 0.957, green: 0.263, blue: 0.212) // #F44336
     static let warningOrange = Color(red: 1.0, green: 0.596, blue: 0.0) // #FF9800
     
-    // Neutral colors
-    static let backgroundLight = Color(red: 0.980, green: 0.980, blue: 0.980) // #FAFAFA
-    static let surfaceLight = Color.white
-    static let textPrimary = Color(red: 0.129, green: 0.129, blue: 0.129) // #212121
-    static let textSecondary = Color(red: 0.459, green: 0.459, blue: 0.459) // #757575
-    static let divider = Color(red: 0.741, green: 0.741, blue: 0.741) // #BDBDBD
+    // Neutral colors (adaptive for light/dark mode)
+    static let backgroundLight = Color(uiColor: .systemBackground)
+    static let surfaceLight = Color(uiColor: .secondarySystemBackground)
+    static let textPrimary = Color(uiColor: .label)
+    static let textSecondary = Color(uiColor: .secondaryLabel)
+    static let divider = Color(uiColor: .separator)
     
     // Call state colors
     static let callRinging = primaryPurple
