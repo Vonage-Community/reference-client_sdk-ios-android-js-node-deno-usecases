@@ -4,8 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +30,7 @@ fun MemberStateLabel(
     }
     Text(
         text = state.name,
-        style = MaterialTheme.typography.caption,
+        style = MaterialTheme.typography.bodySmall,
         modifier = modifier
             .border(BorderStroke(1.dp, color), shape = CircleShape)
             .padding(horizontal = 8.dp, vertical = 4.dp),
