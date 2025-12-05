@@ -268,7 +268,14 @@ class VoiceClientManager: NSObject, ObservableObject {
             return
         }
         
-        client.registerVoipToken(voipData, isSandbox: true) { [weak self] error, deviceId in
+        // Xcode builds use sandbox APNS; TestFlight/App Store use production
+        #if DEBUG
+        let isSandbox = true
+        #else
+        let isSandbox = false
+        #endif
+        
+        client.registerVoipToken(voipData, isSandbox: isSandbox) { [weak self] error, deviceId in
             guard let self else { return }
             
             if let error {
