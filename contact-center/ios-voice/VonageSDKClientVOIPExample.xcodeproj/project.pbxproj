@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -106,7 +106,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		FE3E9C6B2F8D47E4005030D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		FE3E9C6B2F8D47E4005030D8 /* Exceptions for "TestWidgetExtension" folder in "TestWidgetExtensionExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -116,7 +116,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		FE3E9C5A2F8D47E2005030D8 /* TestWidgetExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (FE3E9C6B2F8D47E4005030D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = TestWidgetExtension; sourceTree = "<group>"; };
+		FE3E9C5A2F8D47E2005030D8 /* TestWidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FE3E9C6B2F8D47E4005030D8 /* Exceptions for "TestWidgetExtension" folder in "TestWidgetExtensionExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = TestWidgetExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -393,8 +404,6 @@
 				FE3E9C5A2F8D47E2005030D8 /* TestWidgetExtension */,
 			);
 			name = TestWidgetExtensionExtension;
-			packageProductDependencies = (
-			);
 			productName = TestWidgetExtensionExtension;
 			productReference = FE3E9C552F8D47E2005030D8 /* TestWidgetExtensionExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -463,13 +472,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -506,13 +511,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VonageSDKClientVOIPExample/Pods-VonageSDKClientVOIPExample-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
