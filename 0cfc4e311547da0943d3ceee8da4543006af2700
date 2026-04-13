@@ -1,0 +1,24 @@
+contact-center/ios-voice/VonageSDKClientVOIPExample.xcodeproj/project.pbxproj
+  fd393a3a865fc155 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "0cfc4e311547da0943d3ceee8da4543006af2700",
+  "prompts": {
+    "fd393a3a865fc155": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2783ec5baffe1QRzMGvM2cID4T",
+        "model": "github-copilot/gpt-5.4"
+      },
+      "human_author": "Salvatore Di Cara",
+      "messages": [],
+      "total_additions": 879,
+      "total_deletions": 3,
+      "accepted_lines": 878,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/1a5b00974d3c4a603696a3bfe250744867b65fe8762fa60002bf76f637ff775d"
+    }
+  }
+}
