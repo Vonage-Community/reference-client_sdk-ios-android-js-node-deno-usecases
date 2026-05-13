@@ -1,0 +1,19 @@
+contact-center/ios-voice/VonageSDKClientVOIPExample/Core/VoiceClientManager.swift
+  s_4fdf77c47834c8::t_44b4dc6454a81e 309-310,313-336,339-342,345,353-356,358-361,364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "d244c0c43328e076918cb39e3ee97a6c496f9d7f",
+  "prompts": {},
+  "sessions": {
+    "s_4fdf77c47834c8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1dfb96431ffeUXy8PLH10G6xx7",
+        "model": "claude-sonnet-4.6"
+      },
+      "human_author": "Salvatore Di Cara <salvodicara@gmail.com>"
+    }
+  }
+}
