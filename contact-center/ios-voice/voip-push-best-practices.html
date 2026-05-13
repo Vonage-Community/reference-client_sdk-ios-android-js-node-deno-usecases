@@ -1,0 +1,1808 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iOS VoIP — PushKit + CallKit + Vonage SDK Integration Guide</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #f3f5fb;
+        --card: #ffffff;
+        --border: #dde2f0;
+        --text: #1a1d2e;
+        --muted: #5c6380;
+        --navy: #0d2a52;
+        --blue: #1558c0;
+        --teal: #0b7285;
+        --green: #1a7a4a;
+        --red: #b71a2a;
+        --amber: #8a5c00;
+        --purple: #6030a0;
+        --code-bg: #131825;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+          sans-serif;
+        font-size: 14.5px;
+        line-height: 1.7;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      /* ── Nav ── */
+      nav {
+        background: var(--navy);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0;
+      }
+      nav a {
+        color: #8aaad4;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 11px 11px;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition:
+          color 0.15s,
+          border-color 0.15s;
+      }
+      nav a:hover {
+        color: #fff;
+        border-bottom-color: #4a90d9;
+      }
+
+      /* ── Page ── */
+      .page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 100px;
+      }
+
+      /* ── Header ── */
+      header {
+        background: linear-gradient(
+          140deg,
+          #071828 0%,
+          #0d2a52 50%,
+          #1255a0 100%
+        );
+        border-radius: 14px;
+        padding: 48px 52px 44px;
+        margin-bottom: 40px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+      }
+      header::before {
+        content: "";
+        position: absolute;
+        right: -60px;
+        bottom: -60px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      header::after {
+        content: "";
+        position: absolute;
+        right: 60px;
+        bottom: -20px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .header-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 20px;
+      }
+      .chip {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #a8c8f0;
+      }
+      header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.15;
+        margin-bottom: 16px;
+      }
+      header p {
+        font-size: 14.5px;
+        color: #8aaad4;
+        max-width: 560px;
+        line-height: 1.65;
+      }
+
+      /* ── Cards ── */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 30px 34px;
+        margin-bottom: 30px;
+      }
+      .card-hd {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .card-hd h2 {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 20px;
+        flex-shrink: 0;
+      }
+      .b-red {
+        background: #fde8ea;
+        color: var(--red);
+      }
+      .b-blue {
+        background: #e6effe;
+        color: var(--blue);
+      }
+      .b-green {
+        background: #e6faf0;
+        color: var(--green);
+      }
+      .b-amber {
+        background: #fdf5e6;
+        color: var(--amber);
+      }
+      .b-purple {
+        background: #f2eafd;
+        color: var(--purple);
+      }
+      .b-gray {
+        background: #edf0f7;
+        color: #4a5568;
+      }
+
+      /* ── Typography ── */
+      h3 {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        margin: 24px 0 10px;
+      }
+      h3:first-child {
+        margin-top: 0;
+      }
+      p {
+        font-size: 14px;
+        color: #28304e;
+        margin-bottom: 10px;
+        line-height: 1.7;
+      }
+      p:last-child {
+        margin-bottom: 0;
+      }
+      a {
+        color: var(--blue);
+      }
+      strong {
+        color: var(--text);
+      }
+
+      ul,
+      ol {
+        padding-left: 20px;
+      }
+      li {
+        font-size: 14px;
+        color: #28304e;
+        margin-bottom: 6px;
+        line-height: 1.65;
+      }
+      li strong {
+        color: var(--text);
+      }
+
+      /* ── Code ── */
+      pre {
+        background: var(--code-bg);
+        border-radius: 9px;
+        padding: 20px 22px;
+        font-size: 12.5px;
+        line-height: 1.68;
+        overflow-x: auto;
+        margin: 14px 0;
+        position: relative;
+      }
+      pre .label {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: #3a4a6a;
+      }
+      code {
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      }
+      pre code {
+        color: #cdd6f4;
+      }
+      p code,
+      li code,
+      td code {
+        background: #eef1fa;
+        color: #0d2a52;
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      }
+
+      /* syntax */
+      .kw {
+        color: #c792ea;
+      }
+      .ty {
+        color: #82aaff;
+      }
+      .fn {
+        color: #82aaff;
+      }
+      .st {
+        color: #c3e88d;
+      }
+      .cm {
+        color: #42546a;
+        font-style: italic;
+      }
+      .nu {
+        color: #f78c6c;
+      }
+      .pp {
+        color: #89ddff;
+      } /* preprocessor / punctuation */
+      .at {
+        color: #ffcb6b;
+      } /* attribute */
+
+      /* ── Callouts ── */
+      .callout {
+        border-left: 4px solid var(--blue);
+        background: #f0f5ff;
+        border-radius: 0 7px 7px 0;
+        padding: 13px 17px;
+        margin: 14px 0;
+        font-size: 13.5px;
+        color: #1a244e;
+        line-height: 1.6;
+      }
+      .callout.red {
+        border-color: var(--red);
+        background: #fff2f3;
+        color: #4a0d12;
+      }
+      .callout.green {
+        border-color: var(--green);
+        background: #f0fdf6;
+        color: #0a3020;
+      }
+      .callout.amber {
+        border-color: #c88000;
+        background: #fffcf0;
+        color: #3a2800;
+      }
+      .callout strong {
+        color: inherit;
+        font-weight: 700;
+      }
+
+      /* ── Flow diagram ── */
+      .flow {
+        margin: 4px 0 0;
+      }
+      .fstep {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin-bottom: 0;
+      }
+      .fspine {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: 36px;
+      }
+      .fdot {
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border: 2.5px solid #b0bcd8;
+        background: #fff;
+        flex-shrink: 0;
+        margin-top: 17px;
+        z-index: 1;
+      }
+      .fline {
+        width: 2px;
+        flex: 1;
+        background: var(--border);
+        min-height: 14px;
+      }
+      .fstep:last-child .fline {
+        display: none;
+      }
+      .fbody {
+        flex: 1;
+        padding: 12px 0 18px 10px;
+        min-width: 0;
+      }
+      .ftitle {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+      .fdesc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .fdesc code {
+        background: #eef1fa;
+        color: #0d2a52;
+        font-size: 11.5px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      }
+      .fref {
+        font-size: 11px;
+        color: #9ba3c2;
+        margin-top: 3px;
+        font-family: "SF Mono", Menlo, monospace;
+      }
+
+      /* coloured dots */
+      .fd-blue .fdot {
+        border-color: var(--blue);
+      }
+      .fd-teal .fdot {
+        border-color: var(--teal);
+      }
+      .fd-green .fdot {
+        border-color: var(--green);
+      }
+      .fd-amber .fdot {
+        border-color: #c88000;
+      }
+      .fd-purple .fdot {
+        border-color: var(--purple);
+      }
+      .fd-red .fdot {
+        border-color: var(--red);
+      }
+
+      /* actor pills */
+      .actor {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      .a-sys {
+        background: #edf0f7;
+        color: #4a5568;
+      }
+      .a-push {
+        background: #e6effe;
+        color: var(--blue);
+      }
+      .a-sdk {
+        background: #fdf5e6;
+        color: var(--amber);
+      }
+      .a-ck {
+        background: #e6faf0;
+        color: var(--green);
+      }
+      .a-app {
+        background: #f2eafd;
+        color: var(--purple);
+      }
+
+      /* fork block */
+      .fork-body {
+        padding: 10px 0 18px 46px;
+      }
+      .fork-lbl {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .fork-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 540px) {
+        .fork-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fork-card {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 1.5px dashed;
+      }
+      .fork-card.fc-app {
+        border-color: var(--purple);
+        background: #faf5ff;
+      }
+      .fork-card.fc-sdk {
+        border-color: #c88000;
+        background: #fffdf5;
+      }
+      .fork-card .fc-hd {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .fork-card .fc-body {
+        font-size: 12.5px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .fork-card .fc-body code {
+        background: #eef1fa;
+        color: #0d2a52;
+        font-size: 11.5px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-family: "SF Mono", Menlo, monospace;
+      }
+
+      /* ── 2-col compare ── */
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 14px 0;
+      }
+      @media (max-width: 560px) {
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cmp {
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 13px;
+      }
+      .cmp-bad {
+        background: #fff2f3;
+        border: 1.5px solid #f0b0b5;
+      }
+      .cmp-good {
+        background: #f0fdf6;
+        border: 1.5px solid #90d4b0;
+      }
+      .cmp .lbl {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .cmp-bad .lbl {
+        color: var(--red);
+      }
+      .cmp-good .lbl {
+        color: var(--green);
+      }
+      .cmp p {
+        font-size: 13px;
+        color: #28304e;
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      /* ── Priority table ── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+        margin: 12px 0;
+      }
+      th {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--muted);
+        padding: 8px 12px;
+        border-bottom: 2px solid var(--border);
+        text-align: left;
+      }
+      td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        color: #28304e;
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      td:first-child {
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      /* ── Checklist ── */
+      .checklist {
+        list-style: none;
+        padding: 0;
+      }
+      .checklist li {
+        padding: 8px 0 8px 30px;
+        position: relative;
+        border-bottom: 1px solid #f0f2fa;
+        font-size: 13.5px;
+        color: #28304e;
+      }
+      .checklist li:last-child {
+        border-bottom: none;
+      }
+      .checklist li::before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 12px;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #bec7df;
+        border-radius: 3px;
+      }
+      .checklist li .note {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      /* ── Footer ── */
+      footer {
+        text-align: center;
+        margin-top: 60px;
+        font-size: 12px;
+        color: #9ba3c2;
+      }
+      footer a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+      footer p + p {
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#setup">Setup</a>
+      <a href="#pushkit">PushKit</a>
+      <a href="#session">Session</a>
+      <a href="#processing">Processing Push</a>
+      <a href="#callkit">CallKit</a>
+      <a href="#delegate">SDK Delegate</a>
+      <a href="#outbound">Outbound</a>
+      <a href="#errors">Errors</a>
+      <a href="#simulator">Simulator</a>
+      <a href="#pitfalls">Pitfalls</a>
+      <a href="#checklist">Checklist</a>
+    </nav>
+
+    <div class="page">
+      <!-- HEADER -->
+      <header>
+        <div class="header-chips">
+          <span class="chip">PushKit</span>
+          <span class="chip">CallKit</span>
+          <span class="chip">Vonage Client SDK</span>
+          <span class="chip">Swift</span>
+        </div>
+        <h1>iOS VoIP Push Integration<br />Best Practices</h1>
+        <p>
+          A complete guide to integrating PushKit, CallKit, and the Vonage Voice
+          Client SDK in a production iOS application — from token registration
+          to call teardown.
+        </p>
+      </header>
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="card" id="overview">
+        <div class="card-hd">
+          <span class="badge b-gray">Overview</span>
+          <h2>Why PushKit + CallKit?</h2>
+        </div>
+
+        <p>
+          VoIP push notifications delivered via <strong>PushKit</strong> wake
+          the app regardless of its state (foreground, background, or killed).
+          Unlike standard APNs notifications, VoIP pushes have higher priority
+          and are guaranteed to reach the device even in low-power modes.
+        </p>
+        <p>
+          <strong>CallKit</strong> is the mandatory companion: Apple requires
+          that any app receiving VoIP pushes integrates with CallKit to display
+          native call UI (lock screen, in-call screen, call log). An app that
+          receives VoIP pushes without reporting them to CallKit is considered
+          abusive — PushKit will silently stop delivering pushes to it.
+        </p>
+        <p>
+          The <strong>Vonage Voice Client SDK</strong> sits between the two: it
+          decodes incoming push payloads into call invites, manages the WebRTC
+          session, and provides the <code>answer</code> / <code>reject</code> /
+          <code>hangup</code> verbs that close the loop.
+        </p>
+
+        <h3>High-level component responsibilities</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Responsibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>PushKit (PKPushRegistry)</td>
+              <td>
+                Receive VoIP push tokens and incoming push payloads from APNs
+              </td>
+            </tr>
+            <tr>
+              <td>Vonage SDK (VGVoiceClient)</td>
+              <td>
+                Register tokens, decode push payloads, manage WebRTC session,
+                answer/reject/hangup
+              </td>
+            </tr>
+            <tr>
+              <td>CallKit (CXProvider)</td>
+              <td>
+                Display native call UI, manage audio session, receive user
+                actions (answer, end)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ══ SETUP ══ -->
+      <div class="card" id="setup">
+        <div class="card-hd">
+          <span class="badge b-amber">Setup</span>
+          <h2>Project Configuration</h2>
+        </div>
+
+        <h3>1 — Xcode capabilities</h3>
+        <p>Under your target's <em>Signing &amp; Capabilities</em>, add:</p>
+        <ul>
+          <li>
+            <strong>Push Notifications</strong> — required for APNs
+            registration.
+          </li>
+          <li>
+            <strong>Background Modes</strong> → check <em>Voice over IP</em> and
+            <em>Background processing</em>.
+          </li>
+        </ul>
+        <p>
+          Xcode automatically adds
+          <code>com.apple.developer.pushkit.unrestricted-voip</code> to your
+          <code>.entitlements</code> file when you enable the VoIP background
+          mode.
+        </p>
+
+        <h3>2 — Push certificate</h3>
+        <ul>
+          <li>
+            In the Apple Developer portal, create an
+            <strong
+              >Apple Push Notification service SSL (Sandbox &amp;
+              Production)</strong
+            >
+            certificate for your App ID.
+          </li>
+          <li>
+            Export it as a <code>.p12</code> from Keychain Access and upload it
+            to the <strong>Vonage API Dashboard</strong> under your
+            application's push settings.
+          </li>
+          <li>
+            Certificates expire annually — track the expiry date. Expiry causes
+            all VoIP pushes to fail silently with no error surfaced to your app.
+          </li>
+        </ul>
+
+        <div class="callout amber">
+          <strong>Sandbox vs Production:</strong> Xcode debug builds use the
+          sandbox APNs environment; TestFlight and App Store builds use
+          production. Upload <em>separate certificates</em> for each environment
+          and always set the <code>isSandbox</code> flag at compile time using
+          <code>#if DEBUG</code> — never hardcode it.
+        </div>
+
+        <h3>3 — Frameworks</h3>
+        <p>
+          Add <code>CallKit</code> under
+          <em>Frameworks, Libraries, and Embedded Content</em> in your target's
+          General tab. Import as needed:
+        </p>
+        <pre><code><span class="kw">import</span> PushKit
+<span class="kw">import</span> CallKit
+<span class="kw">import</span> VonageClientSDKVoice
+<span class="kw">import</span> AVFoundation</code></pre>
+
+        <h3>4 — SDK initialisation</h3>
+        <p>
+          Initialise <code>VGVoiceClient</code> once, early in the app lifecycle
+          (e.g. in your AppDelegate or a singleton manager). Set its delegate
+          before registering for push or creating sessions:
+        </p>
+        <pre><code><span class="kw">let</span> config = <span class="ty">VGClientInitConfig</span>(loggingLevel: .info)
+<span class="kw">let</span> client = <span class="ty">VGVoiceClient</span>(config)
+client.delegate = <span class="kw">self</span></code></pre>
+      </div>
+
+      <!-- ══ PUSHKIT ══ -->
+      <div class="card" id="pushkit">
+        <div class="card-hd">
+          <span class="badge b-blue">PushKit</span>
+          <h2>PushKit Registration &amp; Token Handling</h2>
+        </div>
+
+        <h3>Register for VoIP pushes</h3>
+        <p>
+          Create a <code>PKPushRegistry</code> and set its desired push types.
+          Do this at app launch, before any call can arrive.
+        </p>
+        <pre><code><span class="kw">class</span> <span class="ty">AppDelegate</span>: <span class="ty">UIResponder</span>, <span class="ty">UIApplicationDelegate</span> {
+
+    <span class="kw">private let</span> voipRegistry = <span class="ty">PKPushRegistry</span>(queue: <span class="kw">nil</span>)
+
+    <span class="kw">func</span> <span class="fn">application</span>(<span class="ty">_</span> application: <span class="ty">UIApplication</span>,
+                     didFinishLaunchingWithOptions launchOptions: [<span class="ty">UIApplication.LaunchOptionsKey</span>: <span class="ty">Any</span>]?) -> <span class="ty">Bool</span> {
+
+        <span class="cm">// Request microphone permission early</span>
+        <span class="ty">AVAudioSession</span>.sharedInstance().<span class="fn">requestRecordPermission</span> { granted <span class="kw">in</span>
+            <span class="fn">print</span>(<span class="st">"Microphone permission: \(granted)"</span>)
+        }
+
+        voipRegistry.delegate = <span class="kw">self</span>
+        voipRegistry.desiredPushTypes = [.voIP]
+
+        <span class="kw">return true</span>
+    }
+}</code></pre>
+
+        <h3>PKPushRegistryDelegate</h3>
+        <p>
+          Implement the three delegate methods. The third —
+          <code>didReceiveIncomingPushWith</code> — is the most critical:
+        </p>
+        <pre><code><span class="kw">extension</span> <span class="ty">AppDelegate</span>: <span class="ty">PKPushRegistryDelegate</span> {
+
+    <span class="cm">// Called when a new VoIP token is issued or rotated</span>
+    <span class="kw">func</span> <span class="fn">pushRegistry</span>(<span class="ty">_</span> registry: <span class="ty">PKPushRegistry</span>,
+                      didUpdate pushCredentials: <span class="ty">PKPushCredentials</span>,
+                      for type: <span class="ty">PKPushType</span>) {
+        <span class="kw">guard</span> type == .voIP <span class="kw">else</span> { <span class="kw">return</span> }
+        <span class="cm">// Store token; register with Vonage only when a session is active</span>
+        CallManager.shared.voipTokenDidUpdate(pushCredentials.token)
+    }
+
+    <span class="cm">// Called when the token is invalidated (e.g. app reinstall)</span>
+    <span class="kw">func</span> <span class="fn">pushRegistry</span>(<span class="ty">_</span> registry: <span class="ty">PKPushRegistry</span>,
+                      didInvalidatePushTokenFor type: <span class="ty">PKPushType</span>) {
+        CallManager.shared.unregisterDeviceToken()
+    }
+
+    <span class="cm">// Called when an inbound VoIP push is received</span>
+    <span class="kw">func</span> <span class="fn">pushRegistry</span>(<span class="ty">_</span> registry: <span class="ty">PKPushRegistry</span>,
+                      didReceiveIncomingPushWith payload: <span class="ty">PKPushPayload</span>,
+                      for type: <span class="ty">PKPushType</span>,
+                      completion: <span class="pp">@escaping</span> () -> <span class="ty">Void</span>) {
+        <span class="kw">guard</span> type == .voIP <span class="kw">else</span> { completion(); <span class="kw">return</span> }
+        CallManager.shared.handleIncomingPush(payload: payload, completion: completion)
+    }
+}</code></pre>
+
+        <h3>Registering the token with Vonage</h3>
+        <p>
+          Register with <code>client.registerVoipToken(_:isSandbox:)</code> only
+          when a Vonage session exists. Store the returned
+          <code>deviceId</code> — you need it to unregister on logout. Do not
+          call <code>registerVoipToken</code> on every session restore; once
+          registered, the token remains valid until it rotates or the user logs
+          out.
+        </p>
+        <pre><code><span class="kw">func</span> <span class="fn">registerVoipToken</span>(<span class="ty">_</span> token: <span class="ty">Data</span>) {
+    <span class="pp">#if</span> DEBUG
+    <span class="kw">let</span> isSandbox = <span class="kw">true</span>     <span class="cm">// Xcode / development → sandbox APNs</span>
+    <span class="pp">#else</span>
+    <span class="kw">let</span> isSandbox = <span class="kw">false</span>    <span class="cm">// TestFlight / App Store → production APNs</span>
+    <span class="pp">#endif</span>
+
+    client.<span class="fn">registerVoipToken</span>(token, isSandbox: isSandbox) { [<span class="kw">weak self</span>] error, deviceId <span class="kw">in</span>
+        <span class="kw">if let</span> error {
+            <span class="fn">print</span>(<span class="st">"❌ Token registration failed: \(error)"</span>)
+            <span class="kw">return</span>
+        }
+        <span class="cm">// Persist deviceId — needed for unregistration on logout</span>
+        <span class="ty">UserDefaults</span>.standard.<span class="fn">set</span>(deviceId, forKey: <span class="st">"vonage_device_id"</span>)
+        <span class="fn">print</span>(<span class="st">"✅ Token registered: \(deviceId ?? "")"</span>)
+    }
+}
+
+<span class="kw">func</span> <span class="fn">unregisterDeviceToken</span>(completion: (() -> <span class="ty">Void</span>)? = <span class="kw">nil</span>) {
+    <span class="kw">guard let</span> deviceId = <span class="ty">UserDefaults</span>.standard.<span class="fn">string</span>(forKey: <span class="st">"vonage_device_id"</span>) <span class="kw">else</span> {
+        completion?(); <span class="kw">return</span>
+    }
+    client.<span class="fn">unregisterDeviceTokens</span>(byDeviceId: deviceId) { _ <span class="kw">in</span>
+        <span class="ty">UserDefaults</span>.standard.<span class="fn">removeObject</span>(forKey: <span class="st">"vonage_device_id"</span>)
+        completion?()
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ SESSION ══ -->
+      <div class="card" id="session">
+        <div class="card-hd">
+          <span class="badge b-red">Critical</span>
+          <h2>Session Management &amp; JWT Strategy</h2>
+        </div>
+
+        <p>
+          A Vonage session (<code>client.createSession(jwt)</code>) is required
+          before the SDK can process call invites or perform call actions. When
+          a VoIP push arrives and the app is killed or the session has expired,
+          the session must be recreated. How fast this happens directly
+          determines whether users can successfully answer calls.
+        </p>
+
+        <h3>The most common production failure</h3>
+        <p>
+          If you fetch a fresh JWT from your backend
+          <em>at push-receipt time</em>, you are adding an uncached network
+          round-trip — potentially 500 ms to 3 s on a mobile connection — before
+          <code>createSession</code> can even start. The user sees the CallKit
+          screen, taps Answer before the session is ready, and the call fails
+          silently.
+        </p>
+
+        <div class="compare">
+          <div class="cmp cmp-bad">
+            <div class="lbl">✗ Avoid</div>
+            <p>
+              On push receipt: call your auth server → get fresh JWT → call
+              <code>createSession</code>. Two serial network hops in a
+              background execution window with poor signal.
+            </p>
+          </div>
+          <div class="cmp cmp-good">
+            <div class="lbl">✓ Recommended</div>
+            <p>
+              At user login: persist the JWT (and a refresh token) locally. On
+              push receipt: call <code>createSession</code> with the stored JWT
+              directly. Zero backend calls on the fast path.
+            </p>
+          </div>
+        </div>
+
+        <h3>Session creation</h3>
+        <pre><code><span class="kw">func</span> <span class="fn">createSession</span>(jwt: <span class="ty">String</span>,
+                    onSuccess: ((<span class="ty">String</span>) -> <span class="ty">Void</span>)? = <span class="kw">nil</span>,
+                    onError: ((<span class="ty">Error</span>) -> <span class="ty">Void</span>)? = <span class="kw">nil</span>) {
+    client.<span class="fn">createSession</span>(jwt) { [<span class="kw">weak self</span>] error, sessionId <span class="kw">in</span>
+        <span class="kw">if let</span> error { onError?(error); <span class="kw">return</span> }
+        <span class="kw">guard let</span> sessionId <span class="kw">else</span> { <span class="kw">return</span> }
+
+        <span class="kw">self</span>?.activeSessionId = sessionId
+        <span class="cm">// Persist token for future session restores</span>
+        <span class="ty">UserDefaults</span>.standard.<span class="fn">set</span>(jwt, forKey: <span class="st">"vonage_jwt"</span>)
+        onSuccess?(sessionId)
+    }
+}</code></pre>
+
+        <h3>Session restoration on push receipt</h3>
+        <p>Follow a priority chain — use the fastest available path:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Condition</th>
+              <th>Action</th>
+              <th>Typical latency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1st</td>
+              <td>Active session exists</td>
+              <td>Return immediately — no work needed</td>
+              <td>0 ms</td>
+            </tr>
+            <tr>
+              <td>2nd</td>
+              <td>Stored JWT is valid</td>
+              <td><code>client.createSession(storedJWT)</code></td>
+              <td>100–400 ms</td>
+            </tr>
+            <tr>
+              <td>3rd</td>
+              <td>JWT expired, refresh token available</td>
+              <td>Refresh endpoint → new JWT → <code>createSession</code></td>
+              <td>300–1000 ms</td>
+            </tr>
+            <tr>
+              <td>4th</td>
+              <td>No credentials</td>
+              <td>
+                Log warning; push still processed — call cannot be answered
+              </td>
+              <td>0 ms</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code><span class="kw">func</span> <span class="fn">restoreSessionIfNeeded</span>() {
+    <span class="kw">guard</span> activeSessionId == <span class="kw">nil else</span> {
+        <span class="fn">print</span>(<span class="st">"✅ Session already active"</span>)
+        <span class="kw">return</span>
+    }
+
+    <span class="kw">if let</span> jwt = <span class="ty">UserDefaults</span>.standard.<span class="fn">string</span>(forKey: <span class="st">"vonage_jwt"</span>) {
+        <span class="cm">// Fast path — use stored JWT directly</span>
+        <span class="fn">createSession</span>(jwt: jwt)
+    } <span class="kw">else if let</span> refreshToken = storedRefreshToken {
+        <span class="cm">// Slow path — exchange refresh token for a new JWT first</span>
+        <span class="fn">refreshJWT</span>(refreshToken) { [<span class="kw">weak self</span>] newJWT <span class="kw">in</span>
+            <span class="kw">self</span>?.<span class="fn">createSession</span>(jwt: newJWT)
+        }
+    } <span class="kw">else</span> {
+        <span class="fn">print</span>(<span class="st">"⚠️ No credentials available for session restoration"</span>)
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ PROCESSING ══ -->
+      <div class="card" id="processing">
+        <div class="card-hd">
+          <span class="badge b-red">Critical</span>
+          <h2>Handling an Incoming VoIP Push</h2>
+        </div>
+
+        <p>
+          This is the most timing-sensitive piece of the integration. Two
+          operations must happen from <code>handleIncomingPush</code>, and the
+          order relationship between them is non-obvious.
+        </p>
+
+        <h3>The concurrent pattern (required)</h3>
+
+        <div class="flow">
+          <div class="fstep fd-blue">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-sys">PushKit</span> delivers push —
+                background budget begins
+              </div>
+              <div class="fdesc">
+                <code>didReceiveIncomingPushWith</code> is called. A background
+                execution window opens. <code>reportNewIncomingCall</code> must
+                be called promptly.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-purple">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-app">App</span> validates push type &amp;
+                stores completion
+              </div>
+              <div class="fdesc">
+                Check <code>VGVoiceClient.vonagePushType()</code>. Store the
+                PushKit <code>completion</code> block — it will be called only
+                <em>after</em> <code>reportNewIncomingCall</code> has fired.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-purple">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-app">App</span> fires session restore +
+                push processing <em>concurrently</em>
+              </div>
+              <div class="fdesc">
+                <code>restoreSessionIfNeeded()</code> and
+                <code>client.processCallInvitePushData()</code> are called
+                without awaiting each other. Session restore is a background
+                concern; it must never block push processing.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-amber">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-sdk">Vonage SDK</span> decodes payload →
+                fires <code>didReceiveInviteForCall</code>
+              </div>
+              <div class="fdesc">
+                <code>processCallInvitePushData</code> parses the push and
+                triggers the <code>VGVoiceClientDelegate</code> callback with
+                <code>callId</code>, <code>caller</code>, and channel type.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-green">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-ck">CallKit</span>
+                <code>reportNewIncomingCall</code> → then PushKit completion
+              </div>
+              <div class="fdesc">
+                Inside the delegate: call
+                <code>provider.reportNewIncomingCall</code>. Inside
+                <em>its</em> async callback, call the stored PushKit completion.
+                This sequence is mandatory and must never be reversed.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout red" style="margin-top: 16px">
+          <strong
+            >Never await session restoration before calling
+            <code>processCallInvitePushData</code>.</strong
+          >
+          Gating push processing behind <code>createSession</code> delays
+          <code>reportNewIncomingCall</code> by a full network round-trip. Apple
+          treats this as a failure to handle the push — PushKit silently stops
+          delivering future pushes to the device.
+        </div>
+
+        <h3>Implementation</h3>
+        <pre><code><span class="cm">// Stored PushKit completion — held until CallKit reports the call</span>
+<span class="kw">private var</span> pendingPushCompletion: (() -> <span class="ty">Void</span>)?
+
+<span class="kw">func</span> <span class="fn">handleIncomingPush</span>(payload: <span class="ty">PKPushPayload</span>, completion: <span class="pp">@escaping</span> () -> <span class="ty">Void</span>) {
+
+    <span class="cm">// 1. Validate: only handle Vonage incoming-call pushes</span>
+    <span class="kw">let</span> pushType = <span class="ty">VGVoiceClient</span>.<span class="fn">vonagePushType</span>(payload.dictionaryPayload)
+    <span class="kw">guard</span> pushType == .incomingCall <span class="kw">else</span> {
+        <span class="cm">// Must still report to CallKit — failing to do so breaks future push delivery.</span>
+        <span class="cm">// Report a call then immediately end it.</span>
+        <span class="kw">let</span> fakeUUID = <span class="ty">UUID</span>()
+        callProvider.<span class="fn">reportNewIncomingCall</span>(with: fakeUUID, update: <span class="ty">CXCallUpdate</span>()) { _ <span class="kw">in</span>
+            self.callProvider.<span class="fn">reportCall</span>(with: fakeUUID, endedAt: .now, reason: .failed)
+            completion()
+        }
+        <span class="kw">return</span>
+    }
+
+    <span class="cm">// 2. Store completion — will be called after reportNewIncomingCall</span>
+    pendingPushCompletion = completion
+
+    <span class="cm">// 3a. Restore session concurrently — non-blocking, runs in background</span>
+    <span class="fn">restoreSessionIfNeeded</span>()
+
+    <span class="cm">// 3b. Process the push immediately — triggers didReceiveInviteForCall</span>
+    client.<span class="fn">processCallInvitePushData</span>(payload.dictionaryPayload)
+}</code></pre>
+      </div>
+
+      <!-- ══ CALLKIT ══ -->
+      <div class="card" id="callkit">
+        <div class="card-hd">
+          <span class="badge b-green">CallKit</span>
+          <h2>CallKit Integration</h2>
+        </div>
+
+        <h3>CXProvider setup</h3>
+        <p>
+          Create <code>CXProvider</code> and <code>CXCallController</code> once
+          and keep them for the lifetime of your manager. Do not recreate them
+          on each call or push.
+        </p>
+        <pre><code><span class="kw">class</span> <span class="ty">CallManager</span>: <span class="ty">NSObject</span> {
+
+    <span class="kw">static let</span> shared = <span class="ty">CallManager</span>()
+
+    <span class="kw">private let</span> callProvider: <span class="ty">CXProvider</span>
+    <span class="kw">private let</span> callController = <span class="ty">CXCallController</span>()
+
+    <span class="kw">private override init</span>() {
+        <span class="kw">let</span> config = <span class="ty">CXProviderConfiguration</span>()
+        config.supportsVideo            = <span class="kw">false</span>
+        config.maximumCallGroups        = <span class="nu">1</span>
+        config.maximumCallsPerCallGroup = <span class="nu">1</span>
+        <span class="cm">// Use .phoneNumber only for E.164-formatted callers</span>
+        config.supportedHandleTypes     = [.generic]
+        config.supportsDTMF             = <span class="kw">true</span>
+        config.supportsHolding          = <span class="kw">true</span>
+
+        callProvider = <span class="ty">CXProvider</span>(configuration: config)
+        <span class="kw">super</span>.<span class="fn">init</span>()
+        callProvider.<span class="fn">setDelegate</span>(<span class="kw">self</span>, queue: <span class="kw">nil</span>)
+    }
+}</code></pre>
+
+        <h3>Reporting an incoming call to CallKit</h3>
+        <p>
+          Called from <code>didReceiveInviteForCall</code> (see SDK Delegate
+          section). The PushKit completion must be invoked inside the
+          <code>reportNewIncomingCall</code> callback — never before it.
+        </p>
+        <pre><code><span class="kw">func</span> <span class="fn">reportIncomingCall</span>(callUUID: <span class="ty">UUID</span>,
+                        caller: <span class="ty">String</span>,
+                        type: <span class="ty">VGVoiceChannelType</span>,
+                        pushCompletion: <span class="pp">@escaping</span> () -> <span class="ty">Void</span>) {
+    <span class="kw">let</span> update = <span class="ty">CXCallUpdate</span>()
+    update.remoteHandle  = <span class="ty">CXHandle</span>(type: type == .phone ? .phoneNumber : .generic,
+                                     value: caller)
+    update.hasVideo      = <span class="kw">false</span>
+    update.supportsDTMF  = <span class="kw">true</span>
+    update.supportsHolding = <span class="kw">true</span>
+    update.localizedCallerName = caller
+
+    callProvider.<span class="fn">reportNewIncomingCall</span>(with: callUUID, update: update) { error <span class="kw">in</span>
+        <span class="kw">if let</span> error {
+            <span class="fn">print</span>(<span class="st">"❌ CallKit rejected incoming call: \(error)"</span>)
+        } <span class="kw">else</span> {
+            <span class="fn">print</span>(<span class="st">"✅ CallKit notified of incoming call"</span>)
+        }
+        <span class="cm">// ← This is the ONLY correct place to call the PushKit completion.</span>
+        <span class="cm">//   Calling it here guarantees reportNewIncomingCall always fires first.</span>
+        pushCompletion()
+    }
+}</code></pre>
+
+        <h3>CXProviderDelegate — user actions</h3>
+        <pre><code><span class="kw">extension</span> <span class="ty">CallManager</span>: <span class="ty">CXProviderDelegate</span> {
+
+    <span class="kw">func</span> <span class="fn">providerDidReset</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>) {
+        <span class="cm">// Called when CallKit resets (e.g. app backgrounded after a failed call).</span>
+        <span class="cm">// Clean up any active call state here.</span>
+        activeCall = <span class="kw">nil</span>
+    }
+
+    <span class="cm">// User tapped Answer</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, perform action: <span class="ty">CXAnswerCallAction</span>) {
+        <span class="kw">guard let</span> callId = activeCallId <span class="kw">else</span> { action.<span class="fn">fail</span>(); <span class="kw">return</span> }
+
+        client.<span class="fn">answer</span>(callId) { error <span class="kw">in</span>
+            <span class="kw">if</span> error == <span class="kw">nil</span> {
+                action.<span class="fn">fulfill</span>()
+            } <span class="kw">else</span> {
+                action.<span class="fn">fail</span>()
+            }
+        }
+    }
+
+    <span class="cm">// User tapped End (covers both Reject while ringing and Hang up during call)</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, perform action: <span class="ty">CXEndCallAction</span>) {
+        <span class="kw">guard let</span> callId = activeCallId <span class="kw">else</span> { action.<span class="fn">fail</span>(); <span class="kw">return</span> }
+
+        <span class="kw">let</span> complete: (<span class="ty">Error</span>?) -> <span class="ty">Void</span> = { error <span class="kw">in</span>
+            error == <span class="kw">nil</span> ? action.<span class="fn">fulfill</span>() : action.<span class="fn">fail</span>()
+        }
+
+        <span class="kw">if</span> isCallRinging {
+            client.<span class="fn">reject</span>(callId, callback: complete)
+        } <span class="kw">else</span> {
+            client.<span class="fn">hangup</span>(callId, callback: complete)
+        }
+    }
+
+    <span class="cm">// CallKit activates audio — enable SDK audio here, not before</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, didActivate audioSession: <span class="ty">AVAudioSession</span>) {
+        <span class="ty">VGVoiceClient</span>.<span class="fn">enableAudio</span>(audioSession)
+    }
+
+    <span class="cm">// CallKit deactivates audio — disable SDK audio here</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, didDeactivate audioSession: <span class="ty">AVAudioSession</span>) {
+        <span class="ty">VGVoiceClient</span>.<span class="fn">disableAudio</span>(audioSession)
+    }
+
+    <span class="cm">// Mute toggle (e.g. from CarPlay or lock screen)</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, perform action: <span class="ty">CXSetMutedCallAction</span>) {
+        <span class="kw">guard let</span> callId = activeCallId <span class="kw">else</span> { action.<span class="fn">fail</span>(); <span class="kw">return</span> }
+
+        <span class="kw">if</span> action.isMuted {
+            client.<span class="fn">mute</span>(callId) { _ <span class="kw">in</span> action.<span class="fn">fulfill</span>() }
+        } <span class="kw">else</span> {
+            client.<span class="fn">unmute</span>(callId) { _ <span class="kw">in</span> action.<span class="fn">fulfill</span>() }
+        }
+    }
+
+    <span class="cm">// Hold toggle</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, perform action: <span class="ty">CXSetHeldCallAction</span>) {
+        <span class="kw">guard let</span> callId = activeCallId <span class="kw">else</span> { action.<span class="fn">fail</span>(); <span class="kw">return</span> }
+
+        <span class="kw">if</span> action.isOnHold {
+            client.<span class="fn">enableEarmuff</span>(callId) { _ <span class="kw">in</span> action.<span class="fn">fulfill</span>() }
+        } <span class="kw">else</span> {
+            client.<span class="fn">disableEarmuff</span>(callId) { _ <span class="kw">in</span> action.<span class="fn">fulfill</span>() }
+        }
+    }
+
+    <span class="cm">// DTMF (dialpad input from CarPlay or lock screen)</span>
+    <span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, perform action: <span class="ty">CXPlayDTMFCallAction</span>) {
+        <span class="kw">guard let</span> callId = activeCallId <span class="kw">else</span> { action.<span class="fn">fail</span>(); <span class="kw">return</span> }
+        client.<span class="fn">sendDTMF</span>(callId, withDigits: action.digits) { _ <span class="kw">in</span> action.<span class="fn">fulfill</span>() }
+    }
+}</code></pre>
+
+        <div class="callout">
+          <strong>Audio session rule:</strong> always enable and disable Vonage
+          audio exclusively inside <code>didActivate</code> /
+          <code>didDeactivate</code>. Enabling audio before CallKit activates
+          the session, or from a UI button handler, leads to audio routing bugs
+          — especially with Bluetooth and CarPlay.
+        </div>
+      </div>
+
+      <!-- ══ SDK DELEGATE ══ -->
+      <div class="card" id="delegate">
+        <div class="card-hd">
+          <span class="badge b-amber">SDK Delegate</span>
+          <h2>VGVoiceClientDelegate — Inbound Call Events</h2>
+        </div>
+
+        <h3>Incoming call invite</h3>
+        <pre><code><span class="kw">extension</span> <span class="ty">CallManager</span>: <span class="ty">VGVoiceClientDelegate</span> {
+
+    <span class="kw">func</span> <span class="fn">voiceClient</span>(<span class="ty">_</span> client: <span class="ty">VGVoiceClient</span>,
+                     didReceiveInviteForCall callId: <span class="ty">VGCallId</span>,
+                     from caller: <span class="ty">String</span>,
+                     with type: <span class="ty">VGVoiceChannelType</span>) {
+
+        <span class="kw">guard let</span> callUUID = <span class="ty">UUID</span>(uuidString: callId) <span class="kw">else</span> { <span class="kw">return</span> }
+
+        activeCallId  = callId
+        activeCallUUID = callUUID
+        isCallRinging = <span class="kw">true</span>
+
+        <span class="cm">// Report to CallKit, then — inside the callback — call the PushKit completion</span>
+        <span class="fn">reportIncomingCall</span>(callUUID: callUUID, caller: caller, type: type,
+                           pushCompletion: pendingPushCompletion ?? {})
+        pendingPushCompletion = <span class="kw">nil</span>
+    }
+
+    <span class="cm">// Remote party hung up or the call timed out</span>
+    <span class="kw">func</span> <span class="fn">voiceClient</span>(<span class="ty">_</span> client: <span class="ty">VGVoiceClient</span>,
+                     didReceiveHangupForCall callId: <span class="ty">VGCallId</span>,
+                     withQuality callQuality: <span class="ty">VGRTCQuality</span>,
+                     reason: <span class="ty">VGHangupReason</span>) {
+
+        <span class="kw">guard let</span> uuid = activeCallUUID <span class="kw">else</span> { <span class="kw">return</span> }
+
+        <span class="kw">let</span> cxReason: <span class="ty">CXCallEndedReason</span> = <span class="kw">switch</span> reason {
+            <span class="kw">case</span> .remoteReject:           .declinedElsewhere
+            <span class="kw">case</span> .remoteHangup,
+                 .localHangup:             .remoteEnded
+            <span class="kw">case</span> .remoteNoAnswerTimeout:   .unanswered
+            <span class="kw">default</span>:                      .failed
+        }
+
+        callProvider.<span class="fn">reportCall</span>(with: uuid, endedAt: .now, reason: cxReason)
+        <span class="fn">cleanUpCallState</span>()
+    }
+
+    <span class="cm">// Caller cancelled the invite before it was answered</span>
+    <span class="kw">func</span> <span class="fn">voiceClient</span>(<span class="ty">_</span> client: <span class="ty">VGVoiceClient</span>,
+                     didReceiveInviteCancelForCall callId: <span class="ty">VGCallId</span>,
+                     with reason: <span class="ty">VGVoiceInviteCancelReason</span>) {
+
+        <span class="kw">guard let</span> uuid = activeCallUUID <span class="kw">else</span> { <span class="kw">return</span> }
+
+        <span class="kw">let</span> cxReason: <span class="ty">CXCallEndedReason</span> = <span class="kw">switch</span> reason {
+            <span class="kw">case</span> .answeredElsewhere:   .answeredElsewhere
+            <span class="kw">case</span> .rejectedElsewhere:   .declinedElsewhere
+            <span class="kw">case</span> .remoteCancel:        .remoteEnded
+            <span class="kw">case</span> .remoteTimeout:       .unanswered
+            <span class="kw">default</span>:                   .failed
+        }
+
+        callProvider.<span class="fn">reportCall</span>(with: uuid, endedAt: .now, reason: cxReason)
+        <span class="fn">cleanUpCallState</span>()
+    }
+
+    <span class="kw">private func</span> <span class="fn">cleanUpCallState</span>() {
+        activeCallId   = <span class="kw">nil</span>
+        activeCallUUID = <span class="kw">nil</span>
+        isCallRinging  = <span class="kw">false</span>
+    }
+}</code></pre>
+
+        <div class="callout">
+          Always call
+          <code>callProvider.reportCall(with:endedAt:reason:)</code> for every
+          termination path — remote hangup, remote cancel, media timeout, local
+          reject. Missing any of these leaves CallKit in an inconsistent state
+          and can break the call log and future call reporting.
+        </div>
+      </div>
+
+      <!-- ══ OUTBOUND ══ -->
+      <div class="card" id="outbound">
+        <div class="card-hd">
+          <span class="badge b-purple">Outbound</span>
+          <h2>Outbound Calls with CallKit</h2>
+        </div>
+
+        <p>
+          For outbound calls the flow is reversed: your app initiates the call
+          via the SDK, then uses <code>CXCallController</code> to inform
+          CallKit. Use <code>reportOutgoingCall</code> to track connection
+          state.
+        </p>
+
+        <pre><code><span class="cm">// 1. Initiate the call via the SDK</span>
+<span class="kw">func</span> <span class="fn">startCall</span>(to callee: <span class="ty">String</span>) {
+    <span class="kw">let</span> callContext = [<span class="st">"callee"</span>: callee]
+
+    client.<span class="fn">serverCall</span>(callContext) { [<span class="kw">weak self</span>] error, callId <span class="kw">in</span>
+        <span class="kw">guard let</span> callId,
+              <span class="kw">let</span> callUUID = <span class="ty">UUID</span>(uuidString: callId) <span class="kw">else</span> { <span class="kw">return</span> }
+
+        <span class="kw">self</span>?.activeCallId   = callId
+        <span class="kw">self</span>?.activeCallUUID = callUUID
+
+        <span class="cm">// 2. Notify CallKit so the in-call UI appears</span>
+        <span class="kw">let</span> handle = <span class="ty">CXHandle</span>(type: .generic, value: callee)
+        <span class="kw">let</span> action = <span class="ty">CXStartCallAction</span>(call: callUUID, handle: handle)
+        <span class="kw">let</span> transaction = <span class="ty">CXTransaction</span>(action: action)
+
+        <span class="kw">self</span>?.callController.<span class="fn">request</span>(transaction) { [<span class="kw">weak self</span>] error <span class="kw">in</span>
+            <span class="kw">guard</span> error == <span class="kw">nil else</span> { <span class="kw">return</span> }
+            <span class="cm">// Report that we've started connecting</span>
+            <span class="kw">self</span>?.callProvider.<span class="fn">reportOutgoingCall</span>(with: callUUID, startedConnectingAt: .now)
+        }
+    }
+}
+
+<span class="cm">// 3. CXStartCallAction — CallKit confirming the transaction</span>
+<span class="kw">func</span> <span class="fn">provider</span>(<span class="ty">_</span> provider: <span class="ty">CXProvider</span>, perform action: <span class="ty">CXStartCallAction</span>) {
+    <span class="cm">// Call was already started above; just fulfill</span>
+    action.<span class="fn">fulfill</span>()
+}
+
+<span class="cm">// 4. When the remote side answers — fired via VGVoiceClientDelegate</span>
+<span class="kw">func</span> <span class="fn">voiceClient</span>(<span class="ty">_</span> client: <span class="ty">VGVoiceClient</span>,
+                 didReceiveLegStatusUpdateForCall callId: <span class="ty">VGCallId</span>,
+                 withLegId legId: <span class="ty">String</span>,
+                 andStatus status: <span class="ty">VGLegStatus</span>) {
+    <span class="kw">guard</span> status == .answered, <span class="kw">let</span> uuid = activeCallUUID <span class="kw">else</span> { <span class="kw">return</span> }
+    callProvider.<span class="fn">reportOutgoingCall</span>(with: uuid, connectedAt: .now)
+}</code></pre>
+      </div>
+
+      <!-- ══ ERRORS ══ -->
+      <div class="card" id="errors">
+        <div class="card-hd">
+          <span class="badge b-red">Resilience</span>
+          <h2>Session Error Handling</h2>
+        </div>
+
+        <p>
+          The SDK fires <code>didReceiveSessionErrorWith(reason:)</code> when
+          the underlying WebSocket is disrupted during an active session. Always
+          attempt to restore the session automatically.
+        </p>
+
+        <pre><code><span class="kw">func</span> <span class="fn">client</span>(<span class="ty">_</span> client: <span class="ty">VGBaseClient</span>,
+            didReceiveSessionErrorWith reason: <span class="ty">VGSessionErrorReason</span>) {
+    <span class="fn">print</span>(<span class="st">"⚠️ Session error: \(reason)"</span>)
+
+    <span class="kw">switch</span> reason {
+    <span class="kw">case</span> .tokenExpired:
+        <span class="cm">// The stored JWT is now invalid — skip it, go straight to refresh token</span>
+        <span class="fn">refreshAndRestoreSession</span>()
+
+    <span class="kw">case</span> .pingTimeout, .transportClosed:
+        <span class="cm">// Transient network issue — try the stored JWT first</span>
+        <span class="fn">restoreSessionIfNeeded</span>()
+
+    <span class="kw">default</span>:
+        <span class="fn">restoreSessionIfNeeded</span>()
+    }
+}
+
+<span class="kw">private func</span> <span class="fn">refreshAndRestoreSession</span>() {
+    <span class="kw">guard let</span> refreshToken = storedRefreshToken <span class="kw">else</span> {
+        <span class="cm">// No refresh token — user must log in again</span>
+        <span class="fn">clearSession</span>()
+        <span class="kw">return</span>
+    }
+    <span class="fn">refreshJWT</span>(refreshToken) { [<span class="kw">weak self</span>] result <span class="kw">in</span>
+        <span class="kw">switch</span> result {
+        <span class="kw">case</span> .success(<span class="kw">let</span> newJWT):
+            <span class="kw">self</span>?.<span class="fn">createSession</span>(jwt: newJWT)
+        <span class="kw">case</span> .failure:
+            <span class="kw">self</span>?.<span class="fn">clearSession</span>()
+        }
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ SIMULATOR ══ -->
+      <div class="card" id="simulator">
+        <div class="card-hd">
+          <span class="badge b-gray">Simulator</span>
+          <h2>Simulator Support</h2>
+        </div>
+
+        <p>
+          PushKit and CallKit are unavailable on the iOS Simulator. Wrap all
+          CallKit code in compile-time guards and use the SDK's WebSocket invite
+          mode for development.
+        </p>
+
+        <pre><code><span class="cm">// SDK initialisation</span>
+<span class="kw">let</span> config = <span class="ty">VGClientInitConfig</span>(loggingLevel: .info)
+
+<span class="pp">#if</span> targetEnvironment(simulator)
+config.enableWebsocketInvites = <span class="kw">true</span>   <span class="cm">// receive invites over WebSocket — no push needed</span>
+<span class="pp">#endif</span>
+
+<span class="kw">let</span> client = <span class="ty">VGVoiceClient</span>(config)</code></pre>
+
+        <pre><code><span class="cm">// Call answer — simulator path bypasses CallKit transactions</span>
+<span class="kw">func</span> <span class="fn">answerCall</span>(callId: <span class="ty">String</span>) {
+<span class="pp">#if</span> targetEnvironment(simulator)
+    client.<span class="fn">answer</span>(callId) { error <span class="kw">in</span> <span class="fn">print</span>(<span class="st">"Answer: \(error?.localizedDescription ?? "OK")"</span>) }
+<span class="pp">#else</span>
+    <span class="kw">guard let</span> uuid = activeCallUUID <span class="kw">else</span> { <span class="kw">return</span> }
+    <span class="kw">let</span> action = <span class="ty">CXAnswerCallAction</span>(call: uuid)
+    callController.<span class="fn">request</span>(<span class="ty">CXTransaction</span>(action: action)) { _ <span class="kw">in</span> }
+<span class="pp">#endif</span>
+}</code></pre>
+
+        <div class="callout amber">
+          <strong
+            >Always test the full push path on a physical device before
+            release.</strong
+          >
+          The simulator cannot exercise the killed-app wakeup, session
+          restoration under a real background budget, or CallKit lock-screen UI.
+        </div>
+      </div>
+
+      <!-- ══ PITFALLS ══ -->
+      <div class="card" id="pitfalls">
+        <div class="card-hd">
+          <span class="badge b-red">Pitfalls</span>
+          <h2>Common Mistakes</h2>
+        </div>
+
+        <h3>
+          1 — Calling the PushKit completion before
+          <code>reportNewIncomingCall</code>
+        </h3>
+        <p>
+          The completion block must be called only after
+          <code>reportNewIncomingCall</code> has been invoked. Calling it before
+          — or forgetting to call it at all — causes PushKit to stop delivering
+          future pushes. Store the completion and invoke it exclusively inside
+          <code>reportNewIncomingCall</code>'s async callback.
+        </p>
+
+        <h3>
+          2 — Skipping <code>reportNewIncomingCall</code> for invalid or
+          duplicate pushes
+        </h3>
+        <p>
+          Even if you determine the push is malformed, expired, or a duplicate,
+          you must still call <code>reportNewIncomingCall</code> and immediately
+          end the call. Skipping it breaks push delivery just as reliably as
+          calling the completion early.
+        </p>
+
+        <h3>3 — Awaiting session restoration before processing the push</h3>
+        <p>
+          Chaining <code>processCallInvitePushData</code> after
+          <code>createSession</code> delays
+          <code>reportNewIncomingCall</code> by a network round-trip. In
+          background conditions this is too slow. Fire session restoration and
+          push processing concurrently — always.
+        </p>
+
+        <h3>4 — Fetching a JWT from your backend on push receipt</h3>
+        <p>
+          Adding a backend call before <code>createSession</code> turns the
+          session restoration into two serial network hops. Persist the JWT at
+          login time so the fast path needs only one hop.
+        </p>
+
+        <h3>5 — Hardcoding <code>isSandbox: true</code></h3>
+        <p>
+          TestFlight uses production APNs. Hardcoding sandbox breaks all
+          TestFlight push delivery. Use <code>#if DEBUG</code> unconditionally.
+        </p>
+
+        <h3>6 — Re-registering the push token on every session restore</h3>
+        <p>
+          Registering on each <code>createSession</code> accumulates device
+          entries on Vonage's side and can result in duplicate pushes per call.
+          Register only when the token actually changes (rotation) or on a fresh
+          user login.
+        </p>
+
+        <h3>7 — Forgetting to unregister on logout</h3>
+        <p>
+          If you skip <code>unregisterDeviceTokens(byDeviceId:)</code> on
+          logout, the device will continue receiving VoIP pushes for that user
+          indefinitely — including after a different user logs in on the same
+          device.
+        </p>
+
+        <h3>8 — Not mapping all hangup reasons to CallKit</h3>
+        <p>
+          Every call termination path — remote hangup, remote cancel, remote
+          timeout, media failure — must call
+          <code>callProvider.reportCall(with:endedAt:reason:)</code> with the
+          correct <code>CXCallEndedReason</code>. Missing a path corrupts the
+          system call log and can prevent future calls from being reported
+          correctly.
+        </p>
+
+        <h3>9 — Enabling audio outside the CallKit audio callbacks</h3>
+        <p>
+          Calling <code>VGVoiceClient.enableAudio</code> from anywhere other
+          than <code>provider(_:didActivate:)</code> causes routing issues with
+          Bluetooth, AirPods, and CarPlay. Audio session management belongs
+          exclusively to the CallKit delegate.
+        </p>
+
+        <h3>10 — Expired push certificates</h3>
+        <p>
+          VoIP certificates expire after one year. The failure mode is complete
+          and silent — no error is surfaced anywhere in the system. Renew
+          certificates proactively and verify push delivery immediately after
+          uploading a new one.
+        </p>
+      </div>
+
+      <!-- ══ CHECKLIST ══ -->
+      <div class="card" id="checklist">
+        <div class="card-hd">
+          <span class="badge b-green">Checklist</span>
+          <h2>Pre-Release Checklist</h2>
+        </div>
+        <ul class="checklist">
+          <li>
+            <strong>Xcode capabilities configured</strong>
+            <span class="note"
+              >Push Notifications enabled. Background Modes: Voice over IP +
+              Background processing both checked.</span
+            >
+          </li>
+          <li>
+            <strong
+              >VoIP push certificate uploaded to Vonage dashboard for both
+              environments</strong
+            >
+            <span class="note"
+              >Sandbox certificate for debug/development. Production certificate
+              for TestFlight and App Store.</span
+            >
+          </li>
+          <li>
+            <strong
+              ><code>isSandbox</code> flag uses <code>#if DEBUG</code> — never
+              hardcoded</strong
+            >
+          </li>
+          <li>
+            <strong
+              >JWT (and refresh token) persisted locally at login time</strong
+            >
+            <span class="note"
+              >Session restoration on push receipt must not require a backend
+              call.</span
+            >
+          </li>
+          <li>
+            <strong
+              ><code>reportNewIncomingCall</code> called for every VoIP push
+              without exception</strong
+            >
+            <span class="note"
+              >Including invalid, duplicate, or non-Vonage pushes — report and
+              immediately end if needed.</span
+            >
+          </li>
+          <li>
+            <strong
+              >PushKit completion called only inside
+              <code>reportNewIncomingCall</code>'s callback</strong
+            >
+            <span class="note">Never before it, never skipped.</span>
+          </li>
+          <li>
+            <strong
+              >Session restoration and push processing are concurrent — not
+              chained</strong
+            >
+            <span class="note"
+              ><code>restoreSessionIfNeeded()</code> and
+              <code>processCallInvitePushData()</code> fire independently.</span
+            >
+          </li>
+          <li>
+            <strong
+              >Token registration only on user login or token rotation</strong
+            >
+            <span class="note"
+              >Not on every <code>createSession</code> call.</span
+            >
+          </li>
+          <li>
+            <strong
+              ><code>unregisterDeviceTokens</code> called on explicit user
+              logout</strong
+            >
+          </li>
+          <li>
+            <strong
+              >All call termination paths call
+              <code>callProvider.reportCall(with:endedAt:reason:)</code></strong
+            >
+            <span class="note"
+              >Remote hangup, remote cancel, remote timeout, local reject, media
+              failure.</span
+            >
+          </li>
+          <li>
+            <strong
+              >Audio enabled/disabled only in <code>didActivate</code> /
+              <code>didDeactivate</code> CallKit callbacks</strong
+            >
+          </li>
+          <li>
+            <strong
+              >All CallKit code guarded with
+              <code>#if !targetEnvironment(simulator)</code></strong
+            >
+            <span class="note"
+              ><code>enableWebsocketInvites = true</code> set for simulator
+              builds.</span
+            >
+          </li>
+          <li>
+            <strong
+              >Tested on a physical device with the app fully killed before the
+              call</strong
+            >
+            <span class="note"
+              >The only way to exercise PushKit wakeup and the session
+              restoration race.</span
+            >
+          </li>
+          <li>
+            <strong
+              >Tested on a physical device with the app backgrounded (suspended)
+              before the call</strong
+            >
+          </li>
+          <li>
+            <strong
+              >Push certificate renewal date tracked — certificates expire after
+              1 year</strong
+            >
+          </li>
+        </ul>
+      </div>
+
+      <footer>
+        <p>Vonage Voice Client SDK &mdash; iOS VoIP Integration Reference</p>
+        <p>
+          <a href="https://developer.vonage.com/en/vonage-client-sdk/overview"
+            >SDK Docs</a
+          >
+          &nbsp;&middot;&nbsp;
+          <a href="https://developer.apple.com/documentation/pushkit"
+            >PushKit</a
+          >
+          &nbsp;&middot;&nbsp;
+          <a href="https://developer.apple.com/documentation/callkit"
+            >CallKit</a
+          >
+          &nbsp;&middot;&nbsp;
+          <a
+            href="https://developer.vonage.com/en/blog/handling-voip-push-notifications-with-callkit"
+            >Vonage CallKit Blog</a
+          >
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
