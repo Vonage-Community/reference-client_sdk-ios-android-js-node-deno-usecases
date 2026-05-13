@@ -306,21 +306,43 @@ class VoiceClientManager: NSObject, ObservableObject {
             return
         }
         
-        // Store the completion handler to be called after CallKit reports the call
+        // Store the completion handler - it will be called only after CallKit has reported
+        // the incoming call via reportNewIncomingCall (inside reportIncomingCall).
         self.ongoingPushKitCompletion = completion
         
-        // Restore session if needed (async - won't block)
-        // This will be needed to answer/reject the call
-        restoreSessionIfNeeded()
-        
-        // This will trigger the invite delegate, which will then report the call to CallKit
-        client.processCallInvitePushData(payload.dictionaryPayload)
+        // Restore the session first, then process the push payload.
+        //
+        // Chaining here (rather than firing both concurrently) guarantees that the Vonage
+        // session is fully established before processCallInvitePushData triggers the
+        // didReceiveInviteForCall delegate. This means that by the time CallKit shows the
+        // incoming-call UI and the user can physically tap "Answer", client.answer() will
+        // have a live session to use — eliminating the need for a deferred storedAction
+        // pattern.
+        //
+        // PushKit timing: reportNewIncomingCall must be called before our completion block,
+        // which is already guaranteed. Session restoration (createSession or token-refresh +
+        // createSession) typically completes in well under a second — far inside PushKit's
+        // practical time budget. If restoration fails we still forward the payload so that
+        // PushKit receives its required CallKit report and continues delivering future pushes.
+        restoreSessionIfNeeded { [weak self] sessionReady in
+            guard let self else { return }
+            
+            if !sessionReady {
+                print("⚠️ Session restoration failed - processing push anyway to satisfy PushKit/CallKit requirements")
+            }
+            
+            // Trigger the invite delegate → reportIncomingCall → reportNewIncomingCall → PushKit completion
+            self.client.processCallInvitePushData(payload.dictionaryPayload)
+        }
     }
     
-    /// Restores session using stored credentials if no active session exists
-    private func restoreSessionIfNeeded() {
+    /// Restores session using stored credentials if no active session exists.
+    /// - Parameter completion: Called with `true` when a session is (or was already) active,
+    ///   or `false` if restoration failed or no credentials were available.
+    private func restoreSessionIfNeeded(completion: @escaping (Bool) -> Void = { _ in }) {
         if let sessionId {
             print("✅ Active session exists: \(sessionId)")
+            completion(true)
             return
         }
         
@@ -328,11 +350,18 @@ class VoiceClientManager: NSObject, ObservableObject {
         
         // Try auth token first, then refresh token
         if let token = context.authToken {
-            restoreSessionWithToken(token)
+            restoreSessionWithToken(token,
+                onError: { _ in completion(false) },
+                onSuccess: { _ in completion(true) }
+            )
         } else if let refreshToken = context.refreshToken {
-            restoreSessionWithRefreshToken(refreshToken)
+            restoreSessionWithRefreshToken(refreshToken,
+                onError: { _ in completion(false) },
+                onSuccess: { _ in completion(true) }
+            )
         } else {
             print("⚠️ No stored credentials for session restoration")
+            completion(false)
         }
     }
     
