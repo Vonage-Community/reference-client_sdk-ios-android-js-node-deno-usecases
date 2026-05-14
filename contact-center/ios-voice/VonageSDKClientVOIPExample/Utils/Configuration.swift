@@ -35,4 +35,13 @@ enum Configuration {
     static let apiKey: String = value(for: "API_KEY") ?? ""
     
     static let defaultToken: String = value(for: "VONAGE_API_TOKEN") ?? ""
+
+    static let liveActivityChannelId: String? = {
+        guard let value = value(for: "LIVE_ACTIVITY_CHANNEL_ID"),
+              !value.isEmpty,
+              !value.hasPrefix("$(") else {
+            return nil
+        }
+        return value
+    }()
 }

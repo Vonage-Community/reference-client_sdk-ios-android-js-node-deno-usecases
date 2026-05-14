@@ -10,6 +10,7 @@ import CallKit
 import PushKit
 import VonageClientSDKVoice
 import AVFoundation
+import ActivityKit
 
 /// Modern VoiceClientManager using Combine for reactive state management
 /// This replaces the old UIKit-based CallController with a clean, SwiftUI-friendly architecture
@@ -41,7 +42,9 @@ class VoiceClientManager: NSObject, ObservableObject {
         
         // Set other config vars here
         // config.rtcStatsTelemetry = false
-        
+        config.apiUrl = "https://api-eu-2.dev.v1.vonagenetworks.net"
+        config.websocketUrl = "wss://api-eu-2.dev.v1.vonagenetworks.net"
+    
         #if targetEnvironment(simulator)
         // On simulator: disable CallKit and enable WebSocket invites
         config.enableWebsocketInvites = true
@@ -113,6 +116,7 @@ class VoiceClientManager: NSObject, ObservableObject {
             }
             
             self.fetchCurrentUser()
+            self.testBroadcastLiveActivity()
             onSuccess?(sessionId)
         }
     }
@@ -268,6 +272,8 @@ class VoiceClientManager: NSObject, ObservableObject {
             return
         }
         
+        print("🤯 VOIP TOKEN: \(voip)")
+        
         // Xcode builds use sandbox APNS; TestFlight/App Store use production
         #if DEBUG
         let isSandbox = true
@@ -300,6 +306,9 @@ class VoiceClientManager: NSObject, ObservableObject {
         
         // Only process Vonage pushes for incoming call invites
         let pushType = VGVoiceClient.vonagePushType(payload.dictionaryPayload)
+        print("PUSH TYPE: \(pushType)")
+        print("PUSH PAYLOAD")
+        print("\(payload.dictionaryPayload)")
         guard pushType == .incomingCall else {
             print("⚠️ Ignoring non-incoming call push type: \(pushType)")
             completion()
@@ -416,6 +425,51 @@ class VoiceClientManager: NSObject, ObservableObject {
     private func setErrorMessage(_ message: String) {
         Task { @MainActor [weak self] in
             self?.errorMessage = message
+        }
+    }
+    
+    // MARK: - Live Activity (Broadcast Push Testing)
+    func testBroadcastLiveActivity() {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            print("🔴 Live Activities not enabled")
+            return
+        }
+
+        guard #available(iOS 18.0, *) else {
+            print("🔴 Broadcast Live Activity channels require iOS 18 or later")
+            return
+        }
+
+        let attributes = CallActivityAttributes(callId: "test-\(UUID().uuidString.prefix(8))")
+        let state = CallActivityAttributes.ContentState(progress: 0.0)
+
+        guard let channelId = Configuration.liveActivityChannelId else {
+            print("🔴 Live Activity channel ID missing from secrets configuration")
+            return
+        }
+
+        do {
+            let activity = try Activity.request(
+                attributes: attributes,
+                content: .init(state: state, staleDate: nil),
+                pushType: .channel(channelId)
+            )
+            print("🔴 Live Activity started: \(activity.id)")
+            print("🔴 Live Activity channel: \(channelId)")
+
+            Task {
+                for await content in activity.contentUpdates {
+                    print("🔴 [BROADCAST UPDATE RECEIVED]")
+                    print("🔴 progress: \(content.state.progress)")
+                }
+            }
+            Task {
+                for await activityState in activity.activityStateUpdates {
+                    print("🔴 Activity state changed: \(activityState)")
+                }
+            }
+        } catch {
+            print("🔴 Failed to start Live Activity: \(error)")
         }
     }
     
