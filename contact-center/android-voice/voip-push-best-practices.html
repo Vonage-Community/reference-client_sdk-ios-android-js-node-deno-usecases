@@ -1,0 +1,1885 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Android VoIP — FCM + ConnectionService + Vonage SDK Integration Guide
+    </title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #f3f5fb;
+        --card: #ffffff;
+        --border: #dde2f0;
+        --text: #1a1d2e;
+        --muted: #5c6380;
+        --navy: #1a2a0d;
+        --green: #2d6a1a;
+        --teal: #0b7265;
+        --blue: #1558c0;
+        --red: #b71a2a;
+        --amber: #8a5c00;
+        --purple: #6030a0;
+        --android: #3ddc84;
+        --code-bg: #131825;
+
+        --actor-sys: #4a5568;
+        --actor-fcm: #1a7a4a;
+        --actor-app: #6030a0;
+        --actor-vcm: #0b7265;
+        --actor-sdk: #8a5c00;
+        --actor-tel: #1558c0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+          sans-serif;
+        font-size: 14.5px;
+        line-height: 1.7;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      /* ── Nav ── */
+      nav {
+        background: #0f1f08;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      nav a {
+        color: #8ab87a;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 11px 11px;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition:
+          color 0.15s,
+          border-color 0.15s;
+      }
+      nav a:hover {
+        color: #fff;
+        border-bottom-color: var(--android);
+      }
+
+      /* ── Page ── */
+      .page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 100px;
+      }
+
+      /* ── Header ── */
+      header {
+        background: linear-gradient(
+          140deg,
+          #091408 0%,
+          #1a2a0d 50%,
+          #2d4a1a 100%
+        );
+        border-radius: 14px;
+        padding: 48px 52px 44px;
+        margin-bottom: 40px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+      }
+      header::before {
+        content: "";
+        position: absolute;
+        right: -60px;
+        bottom: -60px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      header::after {
+        content: "";
+        position: absolute;
+        right: 60px;
+        bottom: -20px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(61, 220, 132, 0.05);
+      }
+      .header-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 20px;
+      }
+      .chip {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #a0c890;
+      }
+      header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.15;
+        margin-bottom: 16px;
+      }
+      header p {
+        font-size: 14.5px;
+        color: #7aac6a;
+        max-width: 580px;
+        line-height: 1.65;
+      }
+
+      /* ── Cards ── */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 30px 34px;
+        margin-bottom: 30px;
+      }
+      .card-hd {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .card-hd h2 {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 20px;
+        flex-shrink: 0;
+      }
+      .b-red {
+        background: #fde8ea;
+        color: var(--red);
+      }
+      .b-blue {
+        background: #e6effe;
+        color: var(--blue);
+      }
+      .b-green {
+        background: #e6faf0;
+        color: var(--green);
+      }
+      .b-amber {
+        background: #fdf5e6;
+        color: var(--amber);
+      }
+      .b-purple {
+        background: #f2eafd;
+        color: var(--purple);
+      }
+      .b-gray {
+        background: #edf0f7;
+        color: #4a5568;
+      }
+      .b-android {
+        background: #e6fff2;
+        color: #1a7a4a;
+      }
+
+      /* ── Typography ── */
+      h3 {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        margin: 24px 0 10px;
+      }
+      h3:first-child {
+        margin-top: 0;
+      }
+      p {
+        font-size: 14px;
+        color: #28304e;
+        margin-bottom: 10px;
+        line-height: 1.7;
+      }
+      p:last-child {
+        margin-bottom: 0;
+      }
+      a {
+        color: var(--blue);
+      }
+      strong {
+        color: var(--text);
+      }
+
+      ul,
+      ol {
+        padding-left: 20px;
+      }
+      li {
+        font-size: 14px;
+        color: #28304e;
+        margin-bottom: 6px;
+        line-height: 1.65;
+      }
+      li strong {
+        color: var(--text);
+      }
+
+      /* ── Code ── */
+      pre {
+        background: var(--code-bg);
+        border-radius: 9px;
+        padding: 20px 22px;
+        font-size: 12.5px;
+        line-height: 1.68;
+        overflow-x: auto;
+        margin: 14px 0;
+        position: relative;
+      }
+      pre .label {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: #3a4a6a;
+      }
+      code {
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      }
+      pre code {
+        color: #cdd6f4;
+      }
+      p code,
+      li code,
+      td code {
+        background: #eef1fa;
+        color: #0d2a14;
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      }
+
+      /* syntax */
+      .kw {
+        color: #c792ea;
+      }
+      .ty {
+        color: #82aaff;
+      }
+      .fn {
+        color: #82aaff;
+      }
+      .st {
+        color: #c3e88d;
+      }
+      .cm {
+        color: #42546a;
+        font-style: italic;
+      }
+      .nu {
+        color: #f78c6c;
+      }
+      .pp {
+        color: #89ddff;
+      }
+      .at {
+        color: #ffcb6b;
+      }
+
+      /* ── Callouts ── */
+      .callout {
+        border-left: 4px solid var(--blue);
+        background: #f0f5ff;
+        border-radius: 0 7px 7px 0;
+        padding: 13px 17px;
+        margin: 14px 0;
+        font-size: 13.5px;
+        color: #1a244e;
+        line-height: 1.6;
+      }
+      .callout.red {
+        border-color: var(--red);
+        background: #fff2f3;
+        color: #4a0d12;
+      }
+      .callout.green {
+        border-color: var(--green);
+        background: #f0fdf6;
+        color: #0a3020;
+      }
+      .callout.amber {
+        border-color: #c88000;
+        background: #fffcf0;
+        color: #3a2800;
+      }
+      .callout strong {
+        color: inherit;
+        font-weight: 700;
+      }
+
+      /* ── Flow diagram ── */
+      .flow {
+        margin: 4px 0 0;
+      }
+      .fstep {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin-bottom: 0;
+      }
+      .fspine {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: 36px;
+      }
+      .fdot {
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border: 2.5px solid #b0bcd8;
+        background: #fff;
+        flex-shrink: 0;
+        margin-top: 17px;
+        z-index: 1;
+      }
+      .fline {
+        width: 2px;
+        flex: 1;
+        background: var(--border);
+        min-height: 14px;
+      }
+      .fstep:last-child .fline {
+        display: none;
+      }
+      .fbody {
+        flex: 1;
+        padding: 12px 0 18px 10px;
+        min-width: 0;
+      }
+      .ftitle {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+      .fdesc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .fdesc code {
+        background: #eef1fa;
+        color: #0d2a14;
+        font-size: 11.5px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+      }
+      .fref {
+        font-size: 11px;
+        color: #9ba3c2;
+        margin-top: 3px;
+        font-family: "SF Mono", Menlo, monospace;
+      }
+
+      .fd-green .fdot {
+        border-color: var(--green);
+      }
+      .fd-teal .fdot {
+        border-color: var(--teal);
+      }
+      .fd-blue .fdot {
+        border-color: var(--blue);
+      }
+      .fd-amber .fdot {
+        border-color: #c88000;
+      }
+      .fd-purple .fdot {
+        border-color: var(--purple);
+      }
+      .fd-red .fdot {
+        border-color: var(--red);
+      }
+      .fd-sys .fdot {
+        border-color: var(--actor-sys);
+      }
+
+      .actor {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      .a-sys {
+        background: #edf0f7;
+        color: var(--actor-sys);
+      }
+      .a-fcm {
+        background: #e6faf0;
+        color: var(--actor-fcm);
+      }
+      .a-app {
+        background: #f2eafd;
+        color: var(--actor-app);
+      }
+      .a-vcm {
+        background: #daf4f0;
+        color: var(--actor-vcm);
+      }
+      .a-sdk {
+        background: #fdf5e6;
+        color: var(--actor-sdk);
+      }
+      .a-tel {
+        background: #e6effe;
+        color: var(--actor-tel);
+      }
+
+      /* ── compare ── */
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 14px 0;
+      }
+      @media (max-width: 560px) {
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cmp {
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 13px;
+      }
+      .cmp-bad {
+        background: #fff2f3;
+        border: 1.5px solid #f0b0b5;
+      }
+      .cmp-good {
+        background: #f0fdf6;
+        border: 1.5px solid #90d4b0;
+      }
+      .cmp .lbl {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .cmp-bad .lbl {
+        color: var(--red);
+      }
+      .cmp-good .lbl {
+        color: var(--green);
+      }
+      .cmp p {
+        font-size: 13px;
+        color: #28304e;
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      /* ── Table ── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+        margin: 12px 0;
+      }
+      th {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--muted);
+        padding: 8px 12px;
+        border-bottom: 2px solid var(--border);
+        text-align: left;
+      }
+      td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        color: #28304e;
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      td:first-child {
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      /* ── Checklist ── */
+      .checklist {
+        list-style: none;
+        padding: 0;
+      }
+      .checklist li {
+        padding: 8px 0 8px 30px;
+        position: relative;
+        border-bottom: 1px solid #f0f2fa;
+        font-size: 13.5px;
+        color: #28304e;
+      }
+      .checklist li:last-child {
+        border-bottom: none;
+      }
+      .checklist li::before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 12px;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #bec7df;
+        border-radius: 3px;
+      }
+      .checklist li .note {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      /* ── Footer ── */
+      footer {
+        text-align: center;
+        margin-top: 60px;
+        font-size: 12px;
+        color: #9ba3c2;
+      }
+      footer a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+      footer p + p {
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#setup">Setup</a>
+      <a href="#fcm">FCM</a>
+      <a href="#session">Session</a>
+      <a href="#processing">Push Flow</a>
+      <a href="#telecom">Telecom</a>
+      <a href="#listeners">SDK Listeners</a>
+      <a href="#outbound">Outbound</a>
+      <a href="#foreground">Foreground Service</a>
+      <a href="#errors">Errors</a>
+      <a href="#pitfalls">Pitfalls</a>
+      <a href="#checklist">Checklist</a>
+    </nav>
+
+    <div class="page">
+      <!-- HEADER -->
+      <header>
+        <div class="header-chips">
+          <span class="chip">Firebase Cloud Messaging</span>
+          <span class="chip">ConnectionService</span>
+          <span class="chip">Vonage Client SDK</span>
+          <span class="chip">Kotlin</span>
+        </div>
+        <h1>Android VoIP Push Integration<br />Best Practices</h1>
+        <p>
+          A complete guide to integrating Firebase Cloud Messaging, the Android
+          Telecom framework, and the Vonage Voice Client SDK in a production
+          Android application — from token registration to call teardown.
+        </p>
+      </header>
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="card" id="overview">
+        <div class="card-hd">
+          <span class="badge b-gray">Overview</span>
+          <h2>Why FCM + ConnectionService?</h2>
+        </div>
+
+        <p>
+          <strong>Firebase Cloud Messaging (FCM)</strong> is the delivery
+          mechanism for push notifications on Android. High-priority FCM
+          messages can wake the app even in Doze mode, making them the right
+          channel for inbound VoIP call notifications.
+        </p>
+        <p>
+          The <strong>Android Telecom framework</strong> (<code
+            >ConnectionService</code
+          >
+          / <code>TelecomManager</code>) is the Android analogue of iOS CallKit.
+          It integrates your VoIP app into the system's call infrastructure —
+          providing the native incoming-call UI, system call log entries, and
+          audio focus management. Google strongly recommends all VoIP apps use
+          it.
+        </p>
+        <p>
+          The <strong>Vonage Voice Client SDK</strong> sits between the two: it
+          decodes the FCM payload into call invites, manages the WebRTC session,
+          and provides <code>answer</code> / <code>reject</code> /
+          <code>hangup</code> operations.
+        </p>
+
+        <h3>Key difference from iOS</h3>
+        <p>
+          Unlike iOS PushKit, FCM imposes
+          <strong>no strict deadline</strong> for reporting an incoming call to
+          the Telecom framework. This means you can safely chain session
+          restoration before processing the push payload — and the reference app
+          does exactly that. This is the correct approach on Android.
+        </p>
+
+        <h3>Component responsibilities</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Responsibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FirebaseMessagingService</td>
+              <td>Receive FCM tokens and incoming push payloads</td>
+            </tr>
+            <tr>
+              <td>Vonage SDK (VoiceClient)</td>
+              <td>
+                Register tokens, decode payloads, manage WebRTC session,
+                answer/reject/hangup
+              </td>
+            </tr>
+            <tr>
+              <td>TelecomHelper / TelecomManager</td>
+              <td>
+                Register the PhoneAccount, start incoming/outgoing call
+                connections
+              </td>
+            </tr>
+            <tr>
+              <td>CallConnectionService</td>
+              <td>
+                Create <code>Connection</code> objects; receive system UI events
+                (answer, reject, hold)
+              </td>
+            </tr>
+            <tr>
+              <td>CallConnection</td>
+              <td>
+                Represent a live call; bridge between the Telecom framework and
+                the SDK
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ══ SETUP ══ -->
+      <div class="card" id="setup">
+        <div class="card-hd">
+          <span class="badge b-amber">Setup</span>
+          <h2>Project Configuration</h2>
+        </div>
+
+        <h3>1 — Gradle dependencies</h3>
+        <pre><code><span class="cm">// app/build.gradle</span>
+plugins {
+    id <span class="st">'com.google.gms.google-services'</span>
+}
+
+dependencies {
+    <span class="cm">// Vonage Voice SDK</span>
+    implementation <span class="st">'com.vonage:client-sdk-voice:x.y.z'</span>
+
+    <span class="cm">// Firebase BOM — controls all Firebase library versions</span>
+    implementation platform(<span class="st">'com.google.firebase:firebase-bom:33.x.x'</span>)
+    implementation <span class="st">'com.google.firebase:firebase-messaging-ktx'</span>
+}</code></pre>
+
+        <pre><code><span class="cm">// build.gradle (project-level)</span>
+buildscript {
+    dependencies {
+        classpath <span class="st">'com.google.gms:google-services:4.x.x'</span>
+    }
+}</code></pre>
+
+        <h3>2 — google-services.json</h3>
+        <p>
+          Download <code>google-services.json</code> from the Firebase Console
+          and place it in <code>app/</code>. This file binds the app to your
+          Firebase project and must
+          <strong>never be committed to a public repository</strong> — add it to
+          <code>.gitignore</code> and distribute it through a secrets manager or
+          CI environment.
+        </p>
+
+        <h3>3 — AndroidManifest.xml — required entries</h3>
+        <pre><code><span class="cm">&lt;!-- Permissions --&gt;</span>
+&lt;uses-permission android:name=<span class="st">"android.permission.RECORD_AUDIO"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.READ_PHONE_STATE"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.ANSWER_PHONE_CALLS"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.MANAGE_OWN_CALLS"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.CALL_PHONE"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.FOREGROUND_SERVICE"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.FOREGROUND_SERVICE_MICROPHONE"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.USE_FULL_SCREEN_INTENT"</span>/&gt;
+
+<span class="cm">&lt;!-- FCM push service --&gt;</span>
+&lt;service android:name=<span class="st">".services.PushNotificationService"</span>
+         android:exported=<span class="st">"false"</span>&gt;
+    &lt;intent-filter&gt;
+        &lt;action android:name=<span class="st">"com.google.firebase.MESSAGING_EVENT"</span>/&gt;
+    &lt;/intent-filter&gt;
+&lt;/service&gt;
+
+<span class="cm">&lt;!-- Foreground service for microphone access --&gt;</span>
+&lt;service android:name=<span class="st">".services.AudioRecorderService"</span>
+         android:exported=<span class="st">"false"</span>
+         android:foregroundServiceType=<span class="st">"microphone"</span>/&gt;
+
+<span class="cm">&lt;!-- Telecom ConnectionService --&gt;</span>
+&lt;service android:name=<span class="st">".telecom.CallConnectionService"</span>
+         android:exported=<span class="st">"false"</span>
+         android:permission=<span class="st">"android.permission.BIND_TELECOM_CONNECTION_SERVICE"</span>&gt;
+    &lt;intent-filter&gt;
+        &lt;action android:name=<span class="st">"android.telecom.ConnectionService"</span>/&gt;
+    &lt;/intent-filter&gt;
+&lt;/service&gt;
+
+<span class="cm">&lt;!-- CallActivity: show on lock screen --&gt;</span>
+&lt;activity android:name=<span class="st">".activities.CallActivity"</span>
+          android:showOnLockScreen=<span class="st">"true"</span>
+          android:turnScreenOn=<span class="st">"true"</span>
+          android:showWhenLocked=<span class="st">"true"</span>/&gt;</code></pre>
+
+        <h3>4 — Runtime permissions</h3>
+        <p>
+          Request <code>RECORD_AUDIO</code> at app launch. On Android 13+, also
+          request <code>POST_NOTIFICATIONS</code> if you display standard
+          notifications alongside VoIP calls. The Telecom permissions
+          (<code>MANAGE_OWN_CALLS</code>, <code>CALL_PHONE</code>) are normal
+          permissions and do not require a runtime dialog, but must be present
+          in the manifest.
+        </p>
+
+        <h3>5 — SDK initialisation</h3>
+        <pre><code><span class="cm">// Initialise once — e.g. in Application.onCreate() or a singleton</span>
+<span class="kw">val</span> config = <span class="ty">VGClientInitConfig</span>(<span class="ty">LoggingLevel</span>.Info)
+<span class="kw">val</span> client = <span class="ty">VoiceClient</span>(context, config)
+
+<span class="cm">// Set all listeners before creating a session or processing pushes</span>
+<span class="fn">setClientListeners</span>()</code></pre>
+      </div>
+
+      <!-- ══ FCM ══ -->
+      <div class="card" id="fcm">
+        <div class="card-hd">
+          <span class="badge b-green">FCM</span>
+          <h2>Firebase Cloud Messaging Integration</h2>
+        </div>
+
+        <h3>FirebaseMessagingService</h3>
+        <p>
+          Extend <code>FirebaseMessagingService</code> and override
+          <code>onNewToken</code> and <code>onMessageReceived</code>. Keep this
+          class thin — delegate all logic to your manager.
+        </p>
+        <pre><code><span class="kw">class</span> <span class="ty">PushNotificationService</span> : <span class="ty">FirebaseMessagingService</span>() {
+
+    <span class="kw">override fun</span> <span class="fn">onNewToken</span>(token: <span class="ty">String</span>) {
+        <span class="cm">// Called when FCM issues a new token (first run or token rotation)</span>
+        <span class="cm">// Store it — it will be registered with Vonage after a session is created</span>
+        App.coreContext.pushToken = token
+    }
+
+    <span class="kw">override fun</span> <span class="fn">onMessageReceived</span>(remoteMessage: <span class="ty">RemoteMessage</span>) {
+        <span class="cm">// All inbound FCM messages arrive here, regardless of app state</span>
+        App.coreContext.clientManager.<span class="fn">processVoipPush</span>(remoteMessage)
+    }
+
+    <span class="kw">companion object</span> {
+        <span class="cm">// Request FCM token explicitly (e.g. at login time)</span>
+        <span class="kw">fun</span> <span class="fn">requestToken</span>(onSuccess: ((<span class="ty">String</span>) -> <span class="ty">Unit</span>)? = <span class="kw">null</span>) {
+            <span class="ty">FirebaseMessaging</span>.<span class="fn">getInstance</span>().token
+                .<span class="fn">addOnCompleteListener</span> { task ->
+                    <span class="kw">if</span> (task.isSuccessful) {
+                        task.result?.<span class="fn">let</span> { token ->
+                            App.coreContext.pushToken = token
+                            onSuccess?.<span class="fn">invoke</span>(token)
+                        }
+                    }
+                }
+        }
+    }
+}</code></pre>
+
+        <h3>Registering the token with Vonage</h3>
+        <p>
+          Register the FCM token with
+          <code>client.registerDevicePushToken(token)</code> immediately after a
+          session is created. Store the returned <code>deviceId</code> — you
+          will need it to unregister on logout. If the token is not yet
+          available when the session is created, request it explicitly and
+          register it as soon as it arrives.
+        </p>
+        <pre><code><span class="kw">private fun</span> <span class="fn">registerDevicePushToken</span>() {
+    <span class="kw">val</span> registerCallback: (<span class="ty">String</span>) -> <span class="ty">Unit</span> = { token ->
+        client.<span class="fn">registerDevicePushToken</span>(token) { err, deviceId ->
+            err?.<span class="fn">let</span> {
+                println(<span class="st">"❌ Failed to register push token: $err"</span>)
+            } ?: deviceId?.<span class="fn">let</span> {
+                coreContext.deviceId = deviceId   <span class="cm">// persist for later unregistration</span>
+                println(<span class="st">"✅ Push token registered, deviceId: $deviceId"</span>)
+            }
+        }
+    }
+
+    <span class="cm">// Use cached token if available, otherwise request one from Firebase</span>
+    coreContext.pushToken?.<span class="fn">let</span> { registerCallback(it) }
+        ?: <span class="ty">PushNotificationService</span>.<span class="fn">requestToken</span> { registerCallback(it) }
+}
+
+<span class="kw">fun</span> <span class="fn">unregisterDeviceToken</span>(completion: () -> <span class="ty">Unit</span>) {
+    <span class="kw">val</span> deviceId = coreContext.deviceId ?: <span class="kw">run</span> { completion(); <span class="kw">return</span> }
+
+    client.<span class="fn">unregisterDevicePushToken</span>(deviceId) { error ->
+        error?.<span class="fn">let</span> { println(<span class="st">"❌ Unregister error: $it"</span>) }
+        coreContext.deviceId = <span class="kw">null</span>
+        completion()
+    }
+}</code></pre>
+
+        <div class="callout amber">
+          <strong>Token rotation:</strong> FCM can rotate tokens at any time.
+          <code>onNewToken</code> is the only reliable notification. When it
+          fires, store the token and — if a session is already active —
+          immediately call <code>registerDevicePushToken</code> again. A stale
+          token means Vonage cannot reach the device.
+        </div>
+
+        <h3>High-priority messages and Doze mode</h3>
+        <p>
+          Android Doze mode can delay or block FCM messages. To ensure VoIP
+          pushes are delivered promptly even when the device is idle, Vonage's
+          backend sends FCM messages at <strong>high priority</strong>.
+          High-priority messages bypass Doze and immediately wake the app. You
+          do not need to configure this in your app — it is a server-side
+          setting in the Vonage platform.
+        </p>
+      </div>
+
+      <!-- ══ SESSION ══ -->
+      <div class="card" id="session">
+        <div class="card-hd">
+          <span class="badge b-red">Critical</span>
+          <h2>Session Management &amp; Credential Strategy</h2>
+        </div>
+
+        <p>
+          A Vonage session (<code>client.createSession(jwt)</code>) must be
+          active before the SDK can process call invites or perform call
+          actions. When a push arrives and the app is killed or the session has
+          expired, restoration must happen first.
+        </p>
+
+        <h3>Unlike iOS — chaining is safe on Android</h3>
+        <p>
+          Android FCM has no PushKit-style deadline for showing system UI. You
+          can safely await session restoration before calling
+          <code>client.processPushCallInvite</code>. This eliminates the race
+          condition where the user answers before a session is ready, and is the
+          approach used in the reference app.
+        </p>
+
+        <div class="compare">
+          <div class="cmp cmp-bad">
+            <div class="lbl">✗ Avoid</div>
+            <p>
+              Process the push immediately and run session restoration
+              concurrently. The user might answer before the session is ready,
+              causing <code>client.answer()</code> to fail silently.
+            </p>
+          </div>
+          <div class="cmp cmp-good">
+            <div class="lbl">✓ Recommended (Android)</div>
+            <p>
+              Restore the session first. When confirmed active, call
+              <code>processPushCallInvite</code>. The session is guaranteed to
+              exist when <code>answer()</code> / <code>reject()</code> are
+              called.
+            </p>
+          </div>
+        </div>
+
+        <h3>Session creation</h3>
+        <pre><code><span class="kw">fun</span> <span class="fn">login</span>(token: <span class="ty">String</span>, isUserInitiated: <span class="ty">Boolean</span> = <span class="kw">true</span>,
+         onError: ((<span class="ty">Exception</span>) -> <span class="ty">Unit</span>)? = <span class="kw">null</span>,
+         onSuccess: ((<span class="ty">String</span>) -> <span class="ty">Unit</span>)? = <span class="kw">null</span>) {
+    <span class="kw">if</span> (isUserInitiated) {
+        <span class="cm">// On user-initiated login: clean up any stale device registration first</span>
+        <span class="fn">unregisterExistingDeviceIfNeeded</span> {
+            <span class="fn">createSession</span>(token, onError, onSuccess)
+        }
+    } <span class="kw">else</span> {
+        <span class="cm">// Session restore: skip cleanup (same user, just reconnecting)</span>
+        <span class="fn">createSession</span>(token, onError, onSuccess)
+    }
+}
+
+<span class="kw">private fun</span> <span class="fn">createSession</span>(token: <span class="ty">String</span>,
+                           onError: ((<span class="ty">Exception</span>) -> <span class="ty">Unit</span>)? = <span class="kw">null</span>,
+                           onSuccess: ((<span class="ty">String</span>) -> <span class="ty">Unit</span>)? = <span class="kw">null</span>) {
+    client.<span class="fn">createSession</span>(token) { error, sessionId ->
+        sessionId?.<span class="fn">let</span> { sid ->
+            coreContext.authToken = token     <span class="cm">// persist for future restoration</span>
+            <span class="fn">registerDevicePushToken</span>()        <span class="cm">// register token now that session is active</span>
+            onSuccess?.<span class="fn">invoke</span>(sid)
+            _sessionId.<span class="fn">value</span> = sid
+        } ?: error?.<span class="fn">let</span> { onError?.<span class="fn">invoke</span>(it) }
+    }
+}</code></pre>
+
+        <h3>Session restoration priority chain</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Condition</th>
+              <th>Action</th>
+              <th>Typical latency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1st</td>
+              <td>Active session exists (<code>sessionId != null</code>)</td>
+              <td>Return immediately — no work needed</td>
+              <td>0 ms</td>
+            </tr>
+            <tr>
+              <td>2nd</td>
+              <td>Stored JWT available (<code>authToken</code>)</td>
+              <td><code>client.createSession(storedJWT)</code></td>
+              <td>100–400 ms</td>
+            </tr>
+            <tr>
+              <td>3rd</td>
+              <td>JWT expired, refresh token available</td>
+              <td>Refresh endpoint → new JWT → <code>createSession</code></td>
+              <td>300–1000 ms</td>
+            </tr>
+            <tr>
+              <td>4th</td>
+              <td>No credentials</td>
+              <td>Return <code>null</code> — push cannot be processed</td>
+              <td>0 ms</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code><span class="kw">private fun</span> <span class="fn">restoreSessionIfNeeded</span>(completion: (<span class="ty">String</span>?) -> <span class="ty">Unit</span>) {
+    _sessionId.value?.<span class="fn">let</span> { completion(it); <span class="kw">return</span> }  <span class="cm">// already active</span>
+
+    coreContext.authToken?.<span class="fn">let</span> { token ->
+        <span class="fn">restoreSessionWithToken</span>(token, completion)
+    } ?: coreContext.refreshToken?.<span class="fn">let</span> { refresh ->
+        <span class="fn">restoreSessionWithRefreshToken</span>(refresh, completion)
+    } ?: completion(<span class="kw">null</span>)   <span class="cm">// no credentials</span>
+}</code></pre>
+
+        <div class="callout red">
+          <strong>Persist the JWT at login time.</strong> If
+          <code>createSession</code> requires a live backend call to obtain a
+          JWT every time a push arrives, you are adding an extra network hop
+          before the session is ready. On slow connections this compounds the
+          restoration latency and degrades call answer reliability.
+        </div>
+
+        <h3>Preventing token accumulation on re-login</h3>
+        <p>
+          On a fresh user-initiated login, always unregister the previously
+          stored device before creating a new session. Skipping this causes
+          Vonage to accumulate multiple device registrations, which leads to
+          duplicate push notifications for the same call.
+        </p>
+        <pre><code><span class="kw">private fun</span> <span class="fn">unregisterExistingDeviceIfNeeded</span>(completion: () -> <span class="ty">Unit</span>) {
+    <span class="kw">val</span> existingDeviceId = coreContext.deviceId ?: <span class="kw">run</span> { completion(); <span class="kw">return</span> }
+    <span class="kw">val</span> authToken = coreContext.authToken ?: <span class="kw">run</span> {
+        coreContext.deviceId = <span class="kw">null</span>; completion(); <span class="kw">return</span>
+    }
+    <span class="cm">// Create a temporary session just to perform the unregistration, then tear it down</span>
+    client.<span class="fn">createSession</span>(authToken) { _, sessionId ->
+        sessionId ?: <span class="kw">run</span> { coreContext.deviceId = <span class="kw">null</span>; completion(); <span class="kw">return</span>@createSession }
+        <span class="fn">unregisterDeviceToken</span> {
+            client.<span class="fn">deleteSession</span> { completion() }
+        }
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ PUSH PROCESSING ══ -->
+      <div class="card" id="processing">
+        <div class="card-hd">
+          <span class="badge b-red">Core</span>
+          <h2>Handling an Incoming VoIP Push</h2>
+        </div>
+
+        <p>The full path from FCM delivery to the system incoming-call UI:</p>
+
+        <div class="flow">
+          <div class="fstep fd-green">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-fcm">FCM</span> delivers message —
+                <code>onMessageReceived</code> fires
+              </div>
+              <div class="fdesc">
+                The system invokes
+                <code>PushNotificationService.onMessageReceived</code>. Unlike
+                iOS PushKit, there is no strict deadline — the app can perform
+                async work before showing the call UI.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-purple">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-app">App</span> delegates to
+                <code>VoiceClientManager.processVoipPush</code>
+              </div>
+              <div class="fdesc">
+                The service stays thin. All logic lives in the manager.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-teal">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-vcm">VoiceClientManager</span> restores
+                session (awaited)
+              </div>
+              <div class="fdesc">
+                <code>restoreSessionIfNeeded</code> is called and its completion
+                is awaited. Processing only continues once a
+                <code>sessionId</code> is confirmed. If restoration fails, the
+                push is dropped — the call cannot be answered without a session.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-amber">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-sdk">Vonage SDK</span>
+                <code>client.processPushCallInvite(data)</code>
+              </div>
+              <div class="fdesc">
+                Validates the payload type via
+                <code>VoiceClient.getPushNotificationType</code>. If it's an
+                <code>INCOMING_CALL</code>, decodes it and fires the
+                <code>setCallInviteListener</code> callback.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-amber">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-sdk">Vonage SDK</span>
+                <code>setCallInviteListener</code> fires
+              </div>
+              <div class="fdesc">
+                Callback delivers <code>callId</code>, <code>from</code>, and
+                channel <code>type</code>. The app creates its call state and
+                forwards to the Telecom framework.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-blue">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-tel">Telecom</span>
+                <code>TelecomManager.addNewIncomingCall</code>
+              </div>
+              <div class="fdesc">
+                Triggers
+                <code>CallConnectionService.onCreateIncomingConnection</code>. A
+                <code>CallConnection</code> is created, set to ringing, and
+                attached to <code>CoreContext.activeCall</code>.
+              </div>
+            </div>
+          </div>
+          <div class="fstep fd-sys">
+            <div class="fspine">
+              <div class="fdot"></div>
+              <div class="fline"></div>
+            </div>
+            <div class="fbody">
+              <div class="ftitle">
+                <span class="actor a-sys">System</span> shows native incoming
+                call UI
+              </div>
+              <div class="fdesc">
+                The OS displays the full-screen incoming call notification or
+                heads-up notification depending on device state and lock screen.
+                The user can answer, decline, or ignore.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Implementation</h3>
+        <pre><code><span class="cm">// VoiceClientManager.kt</span>
+<span class="kw">fun</span> <span class="fn">processVoipPush</span>(remoteMessage: <span class="ty">RemoteMessage</span>) {
+    <span class="cm">// Step 1: ensure a session exists before touching the push payload</span>
+    <span class="fn">restoreSessionIfNeeded</span> { sessionId ->
+        sessionId ?: <span class="kw">run</span> {
+            println(<span class="st">"❌ Session restoration failed — cannot process push"</span>)
+            <span class="kw">return</span>@restoreSessionIfNeeded
+        }
+        <span class="cm">// Step 2: now safe to process — session is guaranteed active</span>
+        <span class="fn">processIncomingPush</span>(remoteMessage)
+    }
+}
+
+<span class="kw">fun</span> <span class="fn">processIncomingPush</span>(remoteMessage: <span class="ty">RemoteMessage</span>) {
+    <span class="kw">val</span> dataString = remoteMessage.data.<span class="fn">toString</span>()
+    <span class="kw">val</span> type = <span class="ty">VoiceClient</span>.<span class="fn">getPushNotificationType</span>(dataString)
+    <span class="kw">if</span> (type == <span class="ty">PushType</span>.INCOMING_CALL) {
+        <span class="cm">// Triggers setCallInviteListener callback</span>
+        client.<span class="fn">processPushCallInvite</span>(dataString)
+    }
+}
+
+<span class="cm">// In setClientListeners()</span>
+client.<span class="fn">setCallInviteListener</span> { callId, from, type ->
+    <span class="cm">// Reject if another call is already active</span>
+    coreContext.activeCall.value?.<span class="fn">let</span> { <span class="kw">return</span>@setCallInviteListener }
+    <span class="fn">placeIncomingCall</span>(callId, from, type)
+    <span class="fn">startForegroundService</span>(context)   <span class="cm">// required for background audio recording</span>
+}
+
+<span class="kw">private fun</span> <span class="fn">placeIncomingCall</span>(callId: <span class="ty">CallId</span>, caller: <span class="ty">String</span>, type: <span class="ty">VoiceChannelType</span>) {
+    <span class="kw">try</span> {
+        coreContext.telecomHelper.<span class="fn">startIncomingCall</span>(callId, caller, type)
+        <span class="fn">navigateToMainActivity</span>(context)   <span class="cm">// bring app to foreground</span>
+    } <span class="kw">catch</span> (e: <span class="ty">Exception</span>) {
+        <span class="cm">// Telecom permission denied or phone account not enabled</span>
+        client.<span class="fn">reject</span>(callId) {}
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ TELECOM ══ -->
+      <div class="card" id="telecom">
+        <div class="card-hd">
+          <span class="badge b-blue">Telecom</span>
+          <h2>Telecom Framework Integration</h2>
+        </div>
+
+        <h3>PhoneAccount registration</h3>
+        <p>
+          A <code>PhoneAccount</code> must be registered with
+          <code>TelecomManager</code> before any call can be placed or received.
+          Registration is idempotent — do it on every app start. The user must
+          <em>enable</em> the account in system settings the first time; if it
+          is not enabled, prompt them with the system enable-account activity.
+        </p>
+        <pre><code><span class="kw">class</span> <span class="ty">TelecomHelper</span>(<span class="kw">private val</span> context: <span class="ty">Context</span>) {
+    <span class="kw">private val</span> telecomManager = context.<span class="fn">getSystemService</span>(<span class="ty">Context</span>.TELECOM_SERVICE) <span class="kw">as</span> <span class="ty">TelecomManager</span>
+    <span class="kw">private val</span> phoneAccountHandle: <span class="ty">PhoneAccountHandle</span>
+
+    init {
+        <span class="kw">val</span> componentName = <span class="ty">ComponentName</span>(context, <span class="ty">CallConnectionService</span>::<span class="kw">class</span>.java)
+        phoneAccountHandle = <span class="ty">PhoneAccountHandle</span>(componentName, <span class="st">"YourAppVoIP"</span>)
+        <span class="fn">registerPhoneAccount</span>()
+    }
+
+    <span class="kw">private fun</span> <span class="fn">registerPhoneAccount</span>() {
+        telecomManager.<span class="fn">getPhoneAccount</span>(phoneAccountHandle)
+            ?: <span class="ty">PhoneAccount</span>
+                .<span class="fn">builder</span>(phoneAccountHandle, <span class="st">"Your App VoIP Calling"</span>)
+                .<span class="fn">setCapabilities</span>(<span class="ty">PhoneAccount</span>.CAPABILITY_CALL_PROVIDER)
+                .<span class="fn">build</span>()
+                .<span class="fn">also</span> { telecomManager.<span class="fn">registerPhoneAccount</span>(it) }
+
+        <span class="kw">if</span> (!telecomManager.<span class="fn">getPhoneAccount</span>(phoneAccountHandle).isEnabled) {
+            <span class="fn">promptUserToEnableAccount</span>()
+        }
+    }
+}</code></pre>
+
+        <div class="callout amber">
+          <strong>Samsung and some OEM devices</strong> have known issues where
+          <code>ConnectionService.onCreateOutgoingConnection</code> is never
+          called. Implement a fallback timer (e.g. 3 s) that mocks the outgoing
+          connection directly if the ConnectionService does not respond,
+          allowing the call to proceed without the Telecom framework.
+        </div>
+
+        <h3>Starting an incoming call</h3>
+        <pre><code><span class="kw">fun</span> <span class="fn">startIncomingCall</span>(callId: <span class="ty">CallId</span>, from: <span class="ty">String</span>, type: <span class="ty">VoiceChannelType</span>) {
+    <span class="kw">val</span> extras = <span class="ty">Bundle</span>()
+    extras.<span class="fn">putString</span>(<span class="st">"EXTRA_CALL_ID"</span>, callId)
+    extras.<span class="fn">putString</span>(<span class="st">"EXTRA_FROM"</span>, from)
+    <span class="cm">// This triggers CallConnectionService.onCreateIncomingConnection</span>
+    telecomManager.<span class="fn">addNewIncomingCall</span>(phoneAccountHandle, extras)
+}</code></pre>
+
+        <h3>CallConnectionService</h3>
+        <p>
+          Extend <code>ConnectionService</code> to create
+          <code>Connection</code> objects for both incoming and outgoing calls.
+          Extract the call metadata from the <code>Bundle</code> passed via
+          extras.
+        </p>
+        <pre><code><span class="kw">class</span> <span class="ty">CallConnectionService</span> : <span class="ty">ConnectionService</span>() {
+
+    <span class="kw">override fun</span> <span class="fn">onCreateIncomingConnection</span>(
+        phoneAccount: <span class="ty">PhoneAccountHandle</span>?, request: <span class="ty">ConnectionRequest</span>?
+    ): <span class="ty">Connection</span> {
+        <span class="kw">val</span> extras = request!!.extras
+        <span class="kw">val</span> callId = extras.<span class="fn">getString</span>(<span class="st">"EXTRA_CALL_ID"</span>)!!
+        <span class="kw">val</span> from   = extras.<span class="fn">getString</span>(<span class="st">"EXTRA_FROM"</span>)
+
+        <span class="kw">return</span> <span class="ty">CallConnection</span>(callId).<span class="fn">apply</span> {
+            <span class="fn">setAddress</span>(<span class="ty">Uri</span>.<span class="fn">parse</span>(from), <span class="ty">TelecomManager</span>.PRESENTATION_ALLOWED)
+            <span class="fn">setCallerDisplayName</span>(from, <span class="ty">TelecomManager</span>.PRESENTATION_ALLOWED)
+            <span class="fn">setRinging</span>()   <span class="cm">// shows system incoming-call UI</span>
+        }
+    }
+
+    <span class="kw">override fun</span> <span class="fn">onCreateOutgoingConnection</span>(
+        phoneAccount: <span class="ty">PhoneAccountHandle</span>?, request: <span class="ty">ConnectionRequest</span>?
+    ): <span class="ty">Connection</span> {
+        <span class="kw">val</span> extras = request!!.extras
+        <span class="kw">val</span> callId = extras.<span class="fn">getString</span>(<span class="st">"EXTRA_CALL_ID"</span>)!!
+        <span class="kw">val</span> to     = extras.<span class="fn">getString</span>(<span class="st">"EXTRA_TO"</span>)
+
+        <span class="kw">return</span> <span class="ty">CallConnection</span>(callId).<span class="fn">apply</span> {
+            <span class="fn">setAddress</span>(<span class="ty">Uri</span>.<span class="fn">parse</span>(to), <span class="ty">TelecomManager</span>.PRESENTATION_ALLOWED)
+            <span class="fn">setCallerDisplayName</span>(to, <span class="ty">TelecomManager</span>.PRESENTATION_ALLOWED)
+            <span class="fn">setDialing</span>()
+        }
+    }
+}</code></pre>
+
+        <h3>CallConnection — user action callbacks</h3>
+        <p>
+          Override <code>Connection</code> callbacks to bridge system UI actions
+          to the Vonage SDK. Keep the connection class decoupled from business
+          logic — delegate everything to your manager.
+        </p>
+        <pre><code><span class="kw">class</span> <span class="ty">CallConnection</span>(<span class="kw">val</span> callId: <span class="ty">CallId</span>) : <span class="ty">Connection</span>() {
+    <span class="kw">private val</span> clientManager = App.coreContext.clientManager
+
+    init {
+        connectionProperties  = connectionProperties <span class="kw">or</span> PROPERTY_SELF_MANAGED
+        connectionCapabilities = connectionCapabilities <span class="kw">or</span>
+            CAPABILITY_MUTE <span class="kw">or</span> CAPABILITY_SUPPORT_HOLD <span class="kw">or</span> CAPABILITY_HOLD
+        audioModeIsVoip = <span class="kw">true</span>
+    }
+
+    <span class="cm">// User tapped Answer on the system UI</span>
+    <span class="kw">override fun</span> <span class="fn">onAnswer</span>() { clientManager.<span class="fn">answerCall</span>(<span class="kw">this</span>) }
+
+    <span class="cm">// User tapped Decline on the system UI</span>
+    <span class="kw">override fun</span> <span class="fn">onReject</span>() { clientManager.<span class="fn">rejectCall</span>(<span class="kw">this</span>) }
+
+    <span class="cm">// User tapped End during an active call</span>
+    <span class="kw">override fun</span> <span class="fn">onDisconnect</span>() { clientManager.<span class="fn">hangupCall</span>(<span class="kw">this</span>) }
+
+    <span class="cm">// Mute toggled from system UI (e.g. Android Auto, wear OS)</span>
+    <span class="kw">override fun</span> <span class="fn">onMuteStateChanged</span>(isMuted: <span class="ty">Boolean</span>) {
+        <span class="kw">if</span> (isMuted) clientManager.<span class="fn">muteCall</span>(<span class="kw">this</span>)
+        <span class="kw">else</span> clientManager.<span class="fn">unmuteCall</span>(<span class="kw">this</span>)
+    }
+
+    <span class="cm">// Hold toggled from system UI</span>
+    <span class="kw">override fun</span> <span class="fn">onHold</span>()   { clientManager.<span class="fn">holdCall</span>(<span class="kw">this</span>) }
+    <span class="kw">override fun</span> <span class="fn">onUnhold</span>() { clientManager.<span class="fn">unholdCall</span>(<span class="kw">this</span>) }
+
+    <span class="cm">// DTMF from system dialer</span>
+    <span class="kw">override fun</span> <span class="fn">onPlayDtmfTone</span>(c: <span class="ty">Char</span>) { clientManager.<span class="fn">sendDtmf</span>(<span class="kw">this</span>, c.<span class="fn">toString</span>()) }
+}</code></pre>
+      </div>
+
+      <!-- ══ SDK LISTENERS ══ -->
+      <div class="card" id="listeners">
+        <div class="card-hd">
+          <span class="badge b-amber">SDK Listeners</span>
+          <h2>Vonage SDK Event Listeners</h2>
+        </div>
+
+        <p>
+          Set all listeners once, immediately after initialising
+          <code>VoiceClient</code>, before creating any session. Listeners fire
+          on a background thread — update UI state on the main thread.
+        </p>
+
+        <h3>Hangup</h3>
+        <pre><code>client.<span class="fn">setOnCallHangupListener</span> { callId, quality, reason ->
+    <span class="fn">takeIfActive</span>(callId)?.<span class="fn">apply</span> {
+        <span class="kw">val</span> cause = <span class="kw">when</span> (reason) {
+            <span class="ty">HangupReason</span>.remoteReject           -> <span class="ty">DisconnectCause</span>.REJECTED
+            <span class="ty">HangupReason</span>.remoteHangup           -> <span class="ty">DisconnectCause</span>.REMOTE
+            <span class="ty">HangupReason</span>.localHangup             -> <span class="ty">DisconnectCause</span>.LOCAL
+            <span class="ty">HangupReason</span>.mediaTimeout            -> <span class="ty">DisconnectCause</span>.BUSY
+            <span class="ty">HangupReason</span>.remoteNoAnswerTimeout   -> <span class="ty">DisconnectCause</span>.CANCELED
+        }
+        <span class="fn">cleanUp</span>(<span class="ty">DisconnectCause</span>(cause))
+    }
+}</code></pre>
+
+        <h3>Invite cancelled by remote</h3>
+        <pre><code>client.<span class="fn">setCallInviteCancelListener</span> { callId, reason ->
+    <span class="fn">takeIfActive</span>(callId)?.<span class="fn">apply</span> {
+        <span class="kw">val</span> cause = <span class="kw">when</span> (reason) {
+            <span class="ty">VoiceInviteCancelReason</span>.AnsweredElsewhere -> <span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.ANSWERED_ELSEWHERE)
+            <span class="ty">VoiceInviteCancelReason</span>.RejectedElsewhere -> <span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.REJECTED)
+            <span class="ty">VoiceInviteCancelReason</span>.RemoteCancel      -> <span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.CANCELED)
+            <span class="ty">VoiceInviteCancelReason</span>.RemoteTimeout     -> <span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.MISSED)
+        }
+        <span class="fn">cleanUp</span>(cause)
+    } ?: <span class="fn">stopForegroundService</span>(context)
+}</code></pre>
+
+        <h3>Media events</h3>
+        <pre><code>client.<span class="fn">setOnCallMediaDisconnectListener</span> { callId, reason ->
+    <span class="fn">takeIfActive</span>(callId)?.<span class="fn">cleanUp</span>(<span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.ERROR))
+}
+
+client.<span class="fn">setOnCallMediaReconnectingListener</span> { callId ->
+    <span class="fn">takeIfActive</span>(callId)?.<span class="fn">setInitializing</span>()   <span class="cm">// show reconnecting UI</span>
+}
+
+client.<span class="fn">setOnCallMediaReconnectionListener</span> { callId ->
+    <span class="fn">takeIfActive</span>(callId)?.<span class="fn">setActive</span>()           <span class="cm">// resume active UI</span>
+}</code></pre>
+
+        <h3>Leg status (outbound call answered by remote)</h3>
+        <pre><code>client.<span class="fn">setOnLegStatusUpdate</span> { callId, legId, status ->
+    <span class="fn">takeIfActive</span>(callId)?.<span class="fn">apply</span> {
+        <span class="kw">if</span> (status == <span class="ty">LegStatus</span>.answered) {
+            <span class="fn">setActive</span>()   <span class="cm">// transition connection to active state</span>
+        }
+    }
+}</code></pre>
+
+        <h3>Call operations</h3>
+        <pre><code><span class="kw">fun</span> <span class="fn">answerCall</span>(call: <span class="ty">CallConnection</span>) {
+    client.<span class="fn">answer</span>(call.callId) { err ->
+        <span class="kw">if</span> (err != <span class="kw">null</span>) call.<span class="fn">cleanUp</span>(<span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.ERROR))
+        <span class="kw">else</span> call.<span class="fn">setActive</span>()
+    }
+}
+
+<span class="kw">fun</span> <span class="fn">rejectCall</span>(call: <span class="ty">CallConnection</span>) {
+    client.<span class="fn">reject</span>(call.callId) { err ->
+        <span class="kw">val</span> cause = <span class="kw">if</span> (err != <span class="kw">null</span>) <span class="ty">DisconnectCause</span>.ERROR <span class="kw">else</span> <span class="ty">DisconnectCause</span>.REJECTED
+        call.<span class="fn">cleanUp</span>(<span class="ty">DisconnectCause</span>(cause))
+    }
+}
+
+<span class="kw">fun</span> <span class="fn">hangupCall</span>(call: <span class="ty">CallConnection</span>) {
+    client.<span class="fn">hangup</span>(call.callId) { err ->
+        <span class="cm">// On error: hangup listener won't fire, so clean up manually</span>
+        err?.<span class="fn">let</span> { call.<span class="fn">cleanUp</span>(<span class="ty">DisconnectCause</span>(<span class="ty">DisconnectCause</span>.LOCAL)) }
+        <span class="cm">// On success: setOnCallHangupListener handles cleanup</span>
+    }
+}
+
+<span class="kw">fun</span> <span class="fn">holdCall</span>(call: <span class="ty">CallConnection</span>) {
+    client.<span class="fn">enableEarmuff</span>(call.callId) { err ->
+        err ?: client.<span class="fn">mute</span>(call.callId) { err2 ->
+            err2 ?: call.<span class="fn">toggleHold</span>()   <span class="cm">// updates state + calls setOnHold()</span>
+        }
+    }
+}
+
+<span class="kw">fun</span> <span class="fn">sendDtmf</span>(call: <span class="ty">CallConnection</span>, digit: <span class="ty">String</span>) {
+    client.<span class="fn">sendDTMF</span>(call.callId, digit) { err ->
+        err?.<span class="fn">let</span> { println(<span class="st">"DTMF error: $it"</span>) }
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ OUTBOUND ══ -->
+      <div class="card" id="outbound">
+        <div class="card-hd">
+          <span class="badge b-purple">Outbound</span>
+          <h2>Outbound Calls</h2>
+        </div>
+        <p>
+          For outbound calls, start the SDK call first, then notify the Telecom
+          framework. The framework creates the <code>CallConnection</code> via
+          <code>onCreateOutgoingConnection</code>.
+        </p>
+        <pre><code><span class="kw">fun</span> <span class="fn">startOutboundCall</span>(callContext: <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">String</span>&gt;? = <span class="kw">null</span>) {
+    client.<span class="fn">serverCall</span>(callContext) { err, callId ->
+        err?.<span class="fn">let</span> { println(<span class="st">"Outbound call error: $it"</span>); <span class="kw">return</span>@serverCall }
+        callId?.<span class="fn">let</span> { id ->
+            <span class="kw">val</span> callee = callContext?.get(<span class="st">"callee"</span>) ?: <span class="st">"unknown"</span>
+            <span class="fn">placeOutgoingCall</span>(id, callee)
+            <span class="fn">startForegroundService</span>(context)
+        }
+    }
+}
+
+<span class="kw">private fun</span> <span class="fn">placeOutgoingCall</span>(callId: <span class="ty">CallId</span>, to: <span class="ty">String</span>) {
+    <span class="kw">try</span> {
+        <span class="kw">val</span> extras = <span class="ty">Bundle</span>().<span class="fn">apply</span> {
+            <span class="fn">putString</span>(<span class="st">"EXTRA_TO"</span>, to)
+            <span class="fn">putString</span>(<span class="st">"EXTRA_CALL_ID"</span>, callId)
+            <span class="fn">putParcelable</span>(<span class="ty">TelecomManager</span>.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle)
+        }
+        telecomManager.<span class="fn">placeCall</span>(<span class="ty">Uri</span>.<span class="fn">parse</span>(<span class="st">"tel:$to"</span>), extras)
+
+        <span class="cm">// Fallback timer: some OEMs never call onCreateOutgoingConnection</span>
+        <span class="ty">TimerManager</span>.<span class="fn">startTimer</span>(<span class="nu">3000</span>) { <span class="fn">mockOutgoingConnection</span>(callId, to) }
+
+    } <span class="kw">catch</span> (e: <span class="ty">Exception</span>) {
+        <span class="cm">// Telecom framework unavailable — abort the call via SDK</span>
+        client.<span class="fn">hangup</span>(callId) {}
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ FOREGROUND SERVICE ══ -->
+      <div class="card" id="foreground">
+        <div class="card-hd">
+          <span class="badge b-android">Android Requirement</span>
+          <h2>Foreground Service for Audio</h2>
+        </div>
+
+        <p>
+          Since Android 14 (API 34), a foreground service of type
+          <code>microphone</code> is required to record audio, even when the app
+          is in the foreground. For API 26–33 it is required when the app is in
+          the background. Start the service when a call is initiated and stop it
+          when the call ends.
+        </p>
+
+        <pre><code><span class="cm">// Declare in AndroidManifest.xml</span>
+&lt;service
+    android:name=<span class="st">".services.AudioRecorderService"</span>
+    android:exported=<span class="st">"false"</span>
+    android:foregroundServiceType=<span class="st">"microphone"</span>/&gt;
+
+&lt;uses-permission android:name=<span class="st">"android.permission.FOREGROUND_SERVICE"</span>/&gt;
+&lt;uses-permission android:name=<span class="st">"android.permission.FOREGROUND_SERVICE_MICROPHONE"</span>/&gt;</code></pre>
+
+        <pre><code><span class="cm">// Start when call begins (inbound invite or outbound server call)</span>
+<span class="kw">fun</span> <span class="fn">startForegroundService</span>(context: <span class="ty">Context</span>) {
+    <span class="kw">val</span> intent = <span class="ty">Intent</span>(context, <span class="ty">AudioRecorderService</span>::<span class="kw">class</span>.java)
+    context.<span class="fn">startForegroundService</span>(intent)
+}
+
+<span class="cm">// Stop when call ends (every termination path)</span>
+<span class="kw">fun</span> <span class="fn">stopForegroundService</span>(context: <span class="ty">Context</span>) {
+    <span class="kw">val</span> intent = <span class="ty">Intent</span>(context, <span class="ty">AudioRecorderService</span>::<span class="kw">class</span>.java)
+    context.<span class="fn">stopService</span>(intent)
+}</code></pre>
+
+        <div class="callout red">
+          <strong
+            >The foreground service must be started before or immediately when
+            the call invite fires.</strong
+          >
+          If it is started too late — after the audio session has already been
+          requested — some devices will deny microphone access while
+          backgrounded.
+        </div>
+      </div>
+
+      <!-- ══ SESSION ERRORS ══ -->
+      <div class="card" id="errors">
+        <div class="card-hd">
+          <span class="badge b-red">Resilience</span>
+          <h2>Session Error Handling</h2>
+        </div>
+        <p>
+          The SDK fires <code>setSessionErrorListener</code> when the WebSocket
+          drops during an active session. Attempt restoration automatically,
+          using the token expiry signal to choose the right strategy.
+        </p>
+        <pre><code>client.<span class="fn">setSessionErrorListener</span> { reason ->
+    <span class="kw">when</span> (reason) {
+        <span class="ty">SessionErrorReason</span>.TokenExpired ->
+            <span class="cm">// Stored JWT is invalid — skip it, go straight to refresh token</span>
+            <span class="fn">attemptSessionRestoration</span>(skipAuthToken = <span class="kw">true</span>)
+
+        <span class="ty">SessionErrorReason</span>.TransportClosed,
+        <span class="ty">SessionErrorReason</span>.PingTimeout ->
+            <span class="cm">// Transient network issue — try stored JWT first</span>
+            <span class="fn">attemptSessionRestoration</span>(skipAuthToken = <span class="kw">false</span>)
+    }
+}
+
+<span class="kw">private fun</span> <span class="fn">attemptSessionRestoration</span>(skipAuthToken: <span class="ty">Boolean</span> = <span class="kw">false</span>) {
+    <span class="kw">val</span> handleFailure = {
+        <span class="fn">clearSession</span>()
+        <span class="cm">// Prompt user to log in again</span>
+    }
+    <span class="kw">val</span> fallbackToRefresh = {
+        coreContext.refreshToken?.<span class="fn">let</span> { token ->
+            <span class="fn">restoreSessionWithRefreshToken</span>(token) { it ?: handleFailure() }
+        } ?: handleFailure()
+    }
+
+    <span class="kw">if</span> (!skipAuthToken) {
+        coreContext.authToken?.<span class="fn">let</span> { token ->
+            <span class="fn">restoreSessionWithToken</span>(token) { it ?: fallbackToRefresh() }
+        } ?: fallbackToRefresh()
+    } <span class="kw">else</span> {
+        fallbackToRefresh()
+    }
+}</code></pre>
+      </div>
+
+      <!-- ══ PITFALLS ══ -->
+      <div class="card" id="pitfalls">
+        <div class="card-hd">
+          <span class="badge b-red">Pitfalls</span>
+          <h2>Common Mistakes</h2>
+        </div>
+
+        <h3>1 — Processing the push before session restoration</h3>
+        <p>
+          On Android, unlike iOS, you should chain session restoration before
+          calling <code>processPushCallInvite</code>. Processing the push
+          without an active session may silently fail, or the call invite
+          listener may not fire, resulting in a missed call with no UI shown.
+        </p>
+
+        <h3>2 — Fetching the JWT from your backend on every push</h3>
+        <p>
+          If session restoration requires a live backend call before
+          <code>createSession</code>, you double the latency on every cold-start
+          push. Persist the JWT at login time so restoration needs only one
+          <code>createSession</code> call.
+        </p>
+
+        <h3>3 — Not registering the push token after every session creation</h3>
+        <p>
+          Call <code>client.registerDevicePushToken</code> inside the
+          <code>createSession</code> success callback — not once at app launch.
+          The session must exist before registration. If you miss this, the
+          device will not receive VoIP pushes until the next re-login.
+        </p>
+
+        <h3>4 — Not unregistering on logout</h3>
+        <p>
+          Skipping <code>client.unregisterDevicePushToken</code> at logout
+          leaves the device registered on Vonage's servers. After a different
+          user logs in, the old user's incoming calls will still arrive as
+          pushes on this device.
+        </p>
+
+        <h3>5 — Registering multiple device tokens</h3>
+        <p>
+          Calling <code>registerDevicePushToken</code> on every
+          <code>createSession</code> call, regardless of whether the token has
+          changed, accumulates duplicate registrations. This causes Vonage to
+          deliver multiple pushes for the same call. Before re-registering,
+          compare the current token with the stored one; skip registration if
+          they are equal.
+        </p>
+
+        <h3>6 — Stale FCM token not re-registered</h3>
+        <p>
+          FCM can rotate tokens without warning. <code>onNewToken</code> is the
+          only callback for this event. When it fires with a new token,
+          immediately store it and call <code>registerDevicePushToken</code> if
+          a session is active. Failing to handle token rotation causes all
+          future pushes to be silently undeliverable.
+        </p>
+
+        <h3>7 — Missing foreground service declaration or wrong type</h3>
+        <p>
+          On API 34+ the foreground service must be declared with
+          <code>foregroundServiceType="microphone"</code>. Omitting the type, or
+          declaring it only at runtime, causes the system to deny audio
+          recording when the app is not in the foreground.
+        </p>
+
+        <h3>
+          8 — Not handling ConnectionService failures on Samsung/OEM devices
+        </h3>
+        <p>
+          Some Samsung, Xiaomi, and other OEM devices do not reliably invoke
+          <code>onCreateOutgoingConnection</code>. Without a fallback timer that
+          creates the connection directly, outbound calls silently fail on these
+          devices. Always implement a timeout fallback for outgoing connections.
+        </p>
+
+        <h3>9 — PhoneAccount not enabled</h3>
+        <p>
+          The user must explicitly enable your app's
+          <code>PhoneAccount</code> in system settings on first run. If the
+          account is not enabled, every call to
+          <code>addNewIncomingCall</code> or <code>placeCall</code> will throw.
+          Check account status before placing calls and redirect the user to the
+          system enable-account activity if needed.
+        </p>
+
+        <h3>10 — Not handling all hangup/cancel reasons</h3>
+        <p>
+          Every call termination path — remote hangup, remote cancel, remote
+          timeout, media disconnect, local error — must call
+          <code>connection.disconnect(disconnectCause)</code> followed by
+          <code>connection.destroy()</code> (or the equivalent
+          <code>cleanUp</code> helper). Missing a path leaves zombie
+          <code>Connection</code> objects in the Telecom framework, breaking
+          future calls.
+        </p>
+
+        <h3>11 — Re-creating VoiceClient on each push</h3>
+        <p>
+          Initialise <code>VoiceClient</code> once in your
+          <code>Application.onCreate()</code> or a singleton and reuse it
+          throughout the app lifecycle. Recreating it clears all listeners and
+          loses session state.
+        </p>
+      </div>
+
+      <!-- ══ CHECKLIST ══ -->
+      <div class="card" id="checklist">
+        <div class="card-hd">
+          <span class="badge b-green">Checklist</span>
+          <h2>Pre-Release Checklist</h2>
+        </div>
+        <ul class="checklist">
+          <li>
+            <strong
+              >google-services.json present in <code>app/</code> and excluded
+              from version control</strong
+            >
+          </li>
+          <li>
+            <strong
+              >All required permissions declared in AndroidManifest.xml</strong
+            >
+            <span class="note"
+              >RECORD_AUDIO, MANAGE_OWN_CALLS, CALL_PHONE, FOREGROUND_SERVICE,
+              FOREGROUND_SERVICE_MICROPHONE, READ_PHONE_STATE.</span
+            >
+          </li>
+          <li>
+            <strong
+              >RECORD_AUDIO runtime permission requested and granted before any
+              call attempt</strong
+            >
+          </li>
+          <li>
+            <strong
+              >PushNotificationService, AudioRecorderService, and
+              CallConnectionService all declared in manifest</strong
+            >
+            <span class="note"
+              >AudioRecorderService must include
+              <code>foregroundServiceType="microphone"</code>.</span
+            >
+          </li>
+          <li>
+            <strong
+              >VoiceClient initialised once (Application.onCreate or singleton)
+              with all listeners set before first session</strong
+            >
+          </li>
+          <li>
+            <strong
+              >Session restoration awaited before
+              <code>processPushCallInvite</code></strong
+            >
+            <span class="note"
+              >Android has no PushKit deadline — chaining is safe and
+              recommended.</span
+            >
+          </li>
+          <li>
+            <strong
+              >JWT (and refresh token) persisted locally at login time</strong
+            >
+            <span class="note"
+              >Session restoration on push receipt should not require a live
+              backend call.</span
+            >
+          </li>
+          <li>
+            <strong
+              ><code>registerDevicePushToken</code> called inside
+              <code>createSession</code> success callback</strong
+            >
+            <span class="note"
+              >Not at app launch and not on every session restore — only when
+              token or session changes.</span
+            >
+          </li>
+          <li>
+            <strong
+              ><code>unregisterDevicePushToken</code> called on explicit user
+              logout</strong
+            >
+          </li>
+          <li>
+            <strong
+              >FCM token rotation handled in <code>onNewToken</code></strong
+            >
+            <span class="note"
+              >Store updated token and re-register if a session is already
+              active.</span
+            >
+          </li>
+          <li>
+            <strong
+              >PhoneAccount registered on app start; user prompted to enable it
+              if disabled</strong
+            >
+          </li>
+          <li>
+            <strong
+              >OEM ConnectionService fallback timer implemented for outgoing
+              calls</strong
+            >
+            <span class="note"
+              >Handles Samsung and other devices that don't reliably invoke
+              onCreateOutgoingConnection.</span
+            >
+          </li>
+          <li>
+            <strong
+              >Foreground service started when call begins and stopped on every
+              termination path</strong
+            >
+          </li>
+          <li>
+            <strong
+              >All hangup/cancel reasons mapped to the correct
+              <code>DisconnectCause</code></strong
+            >
+          </li>
+          <li>
+            <strong
+              >Session error handling restores session automatically;
+              token-expired skips stored JWT</strong
+            >
+          </li>
+          <li>
+            <strong
+              >Tested on a physical device with app fully killed before the
+              inbound call</strong
+            >
+            <span class="note"
+              >The only way to exercise FCM wakeup and session restoration from
+              scratch.</span
+            >
+          </li>
+          <li>
+            <strong
+              >Tested on at least one Samsung or other OEM device (not just
+              Pixel/emulator)</strong
+            >
+            <span class="note"
+              >ConnectionService behaviour varies significantly across
+              manufacturers.</span
+            >
+          </li>
+        </ul>
+      </div>
+
+      <footer>
+        <p>
+          Vonage Voice Client SDK &mdash; Android VoIP Integration Reference
+        </p>
+        <p>
+          <a href="https://developer.vonage.com/en/vonage-client-sdk/overview"
+            >SDK Docs</a
+          >
+          &nbsp;&middot;&nbsp;
+          <a
+            href="https://firebase.google.com/docs/cloud-messaging/android/client"
+            >FCM Android</a
+          >
+          &nbsp;&middot;&nbsp;
+          <a
+            href="https://developer.android.com/develop/connectivity/telecom/voip-app"
+            >Android Telecom VoIP Guide</a
+          >
+          &nbsp;&middot;&nbsp;
+          <a
+            href="https://developer.android.com/reference/android/telecom/ConnectionService"
+            >ConnectionService Docs</a
+          >
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
