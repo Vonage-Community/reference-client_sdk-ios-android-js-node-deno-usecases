@@ -1,0 +1,19 @@
+contact-center/android-voice/voip-push-best-practices.html
+  s_4fdf77c47834c8::t_197e0e760490f0 1-1885
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "1a9ec1a6ea4ca93796530d99d0aae695f8f18818",
+  "prompts": {},
+  "sessions": {
+    "s_4fdf77c47834c8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1dfb96431ffeUXy8PLH10G6xx7",
+        "model": "claude-sonnet-4.6"
+      },
+      "human_author": "Salvatore Di Cara <salvodicara@gmail.com>"
+    }
+  }
+}
