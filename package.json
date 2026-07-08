@@ -32,7 +32,7 @@
     "scripts/*"
   ],
   "dependencies": {
-    "@vonage/client-sdk": "1.4.0",
+    "@vonage/client-sdk": "1.4.1",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.23",
     "ts-pattern": "^4.3.0"
