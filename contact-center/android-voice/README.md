@@ -100,10 +100,12 @@ This app is built with **Jetpack Compose** for UI and follows modern Android dev
 
 - **`VoiceClientManager`** - Manages Vonage SDK initialization, authentication, and call operations
 - **`CoreContext`** - Singleton holding global app state including the active call
+- **`ActiveCall`** - Immutable state of the in-progress call, observed by the UI and notification
 - **`LoginActivity`** - Jetpack Compose UI for user authentication
 - **`MainActivity`** - Main screen with user calling interface using Compose
-- **`CallActivity`** - Active call screen with controls (mute, hold, DTMF, etc.)
-- **`CallConnection`** - Integrates with Android Telecom framework for native call experience
+- **`CallActivity`** - Active call screen with controls (mute, hold, DTMF, audio route, etc.)
+- **`CallManager`** - Registers the call with Jetpack Core-Telecom (`CallsManager`) for native call integration
+- **`CallService`** - Owns the call notification and keeps the call alive when the app is backgrounded or swiped
 - **`PushNotificationService`** - Handles incoming call push notifications via FCM
 
 The UI is entirely built with Compose, using `StateFlow` for state management and `repeatOnLifecycle` for lifecycle-aware flow collection. This ensures proper handling of configuration changes and background/foreground transitions.

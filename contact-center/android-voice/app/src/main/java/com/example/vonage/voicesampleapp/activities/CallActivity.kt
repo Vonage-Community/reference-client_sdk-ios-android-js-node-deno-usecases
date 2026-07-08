@@ -1,7 +1,7 @@
 package com.example.vonage.voicesampleapp.activities
 
+import android.content.Intent
 import android.os.Bundle
-import android.telecom.Connection
 import android.telecom.DisconnectCause
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,8 +27,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.telecom.CallEndpointCompat
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.R
+import com.example.vonage.voicesampleapp.core.ActiveCall
+import com.example.vonage.voicesampleapp.core.CallState
+import com.example.vonage.voicesampleapp.telecom.CallNotifier
 import com.example.vonage.voicesampleapp.ui.theme.*
 import com.example.vonage.voicesampleapp.utils.showDialerFragment
 
@@ -38,6 +43,7 @@ class CallActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleIntent(intent)
 
         setContent {
             val call = coreContext.activeCall.collectAsState().value ?:
@@ -47,30 +53,40 @@ class CallActivity : FragmentActivity() {
                 return@setContent
             }
 
-            val connectionState by call.connectionState.collectAsState()
-            val isMuted by call.isMuted.collectAsState()
-            val isOnHold by call.isOnHold.collectAsState()
-            val isNoiseSuppressionEnabled by call.isNoiseSuppressionEnabled.collectAsState()
-            val disconnectCause = if (connectionState == Connection.STATE_DISCONNECTED) call.disconnectCause else null
-            val username = call.callerDisplayName ?: stringResource(R.string.caller_display_name_default)
+            val username = call.displayName.ifBlank { stringResource(R.string.caller_display_name_default) }
 
             VoiceSampleAppTheme {
                 CallScreen(
                     username = username,
-                    callState = connectionState,
-                    isMuted = isMuted,
-                    isOnHold = isOnHold,
-                    isNoiseSuppression = isNoiseSuppressionEnabled,
-                    disconnectCause = disconnectCause,
-                    onAnswer = { clientManager.answerCall(call) },
-                    onReject = { clientManager.rejectCall(call) },
-                    onHangup = { clientManager.hangupCall(call) },
-                    onMute = { if (!isMuted) clientManager.muteCall(call) else clientManager.unmuteCall(call) },
-                    onHold = { if (!isOnHold) clientManager.holdCall(call) else clientManager.unholdCall(call) },
-                    onNoiseSuppression = { if (!isNoiseSuppressionEnabled) clientManager.enableNoiseSuppression(call) else clientManager.disableNoiseSuppression(call) },
-                    onKeypad = { showDialerFragment() }
+                    callState = call.state,
+                    isMuted = call.isMuted,
+                    isOnHold = call.isOnHold,
+                    isNoiseSuppression = call.isNoiseSuppressionEnabled,
+                    disconnectCause = call.disconnectCause,
+                    currentAudioEndpoint = call.currentAudioEndpoint,
+                    audioEndpoints = call.availableAudioEndpoints,
+                    onAnswer = { clientManager.answerCall() },
+                    onReject = { clientManager.rejectCall() },
+                    onHangup = { clientManager.hangupCall() },
+                    onMute = { if (!call.isMuted) clientManager.mute() else clientManager.unmute() },
+                    onHold = { if (!call.isOnHold) clientManager.holdCall() else clientManager.unholdCall() },
+                    onNoiseSuppression = { if (!call.isNoiseSuppressionEnabled) clientManager.enableNoiseSuppression() else clientManager.disableNoiseSuppression() },
+                    onKeypad = { showDialerFragment() },
+                    onSelectAudioEndpoint = { clientManager.setAudioEndpoint(it) }
                 )
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    /** The notification's Answer action launches this activity directly (no trampoline). */
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == CallNotifier.ACTION_ANSWER) {
+            clientManager.answerCall()
         }
     }
 }
@@ -78,44 +94,46 @@ class CallActivity : FragmentActivity() {
 @Composable
 fun CallScreen(
     username: String?,
-    callState: Int?,
+    callState: CallState,
     isMuted: Boolean,
     isOnHold: Boolean,
     isNoiseSuppression: Boolean,
-    disconnectCause: DisconnectCause?,
+    disconnectCause: Int?,
+    currentAudioEndpoint: CallEndpointCompat?,
+    audioEndpoints: List<CallEndpointCompat>,
     onAnswer: () -> Unit,
     onReject: () -> Unit,
     onHangup: () -> Unit,
     onMute: () -> Unit,
     onHold: () -> Unit,
     onNoiseSuppression: () -> Unit,
-    onKeypad: () -> Unit
+    onKeypad: () -> Unit,
+    onSelectAudioEndpoint: (CallEndpointCompat) -> Unit
 ) {
-    val isRinging = callState == Connection.STATE_RINGING
-    
+    val isRinging = callState == CallState.RINGING
+
     val (gradientColors, stateLabel, stateColor) = when (callState) {
-        Connection.STATE_RINGING -> Triple(
+        CallState.RINGING -> Triple(
             listOf(Purple500, Teal200),
             R.string.call_state_ringing_label,
             Color.White
         )
-        Connection.STATE_DIALING -> Triple(
+        CallState.DIALING -> Triple(
             listOf(Purple500, Teal200),
             R.string.call_state_dialing_label,
             Color.White
         )
-        Connection.STATE_ACTIVE -> Triple(
-            listOf(Green.copy(alpha = 0.8f), Teal700.copy(alpha = 0.8f)),
-            if (isOnHold) R.string.call_state_holding_label else R.string.call_state_active_label,
-            Color.White
-        )
-        Connection.STATE_HOLDING -> Triple(
+        CallState.ACTIVE -> if (isOnHold) Triple(
             listOf(Gray, Gray.copy(alpha = 0.7f)),
             R.string.call_state_holding_label,
             Color.White
+        ) else Triple(
+            listOf(Green.copy(alpha = 0.8f), Teal700.copy(alpha = 0.8f)),
+            R.string.call_state_active_label,
+            Color.White
         )
-        Connection.STATE_DISCONNECTED -> {
-            val label = when(disconnectCause?.code) {
+        CallState.DISCONNECTED -> {
+            val label = when(disconnectCause) {
                 DisconnectCause.LOCAL -> R.string.call_state_locally_disconnected_label
                 DisconnectCause.REJECTED -> R.string.call_state_rejected_label
                 else -> R.string.call_state_remotely_disconnected_label
@@ -126,7 +144,7 @@ fun CallScreen(
                 Color.White
             )
         }
-        else -> Triple(
+        CallState.RECONNECTING -> Triple(
             listOf(Purple500.copy(alpha = 0.7f), Purple700.copy(alpha = 0.5f)),
             R.string.call_state_reconnecting_label,
             Color.White
@@ -203,7 +221,7 @@ fun CallScreen(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
 
             // Action Buttons
@@ -260,7 +278,7 @@ fun CallScreen(
                             onClick = onKeypad
                         )
                     }
-                    
+
                     // Second row - secondary controls
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -280,8 +298,12 @@ fun CallScreen(
                             onClick = onHangup,
                             size = 64.dp
                         )
-                        // Spacer for balance
-                        Spacer(modifier = Modifier.size(64.dp))
+                        // Audio output route picker (speaker / Bluetooth / wired)
+                        AudioRouteButton(
+                            current = currentAudioEndpoint,
+                            endpoints = audioEndpoints,
+                            onSelect = onSelectAudioEndpoint
+                        )
                     }
                 }
             }
@@ -310,4 +332,49 @@ fun CallActionButton(
             modifier = Modifier.size(size * 0.5f)
         )
     }
+}
+
+/**
+ * Call-audio output picker. Shows the current route's icon; tapping opens a menu
+ * of the endpoints Core-Telecom reports (earpiece / speaker / Bluetooth / wired).
+ */
+@Composable
+fun AudioRouteButton(
+    current: CallEndpointCompat?,
+    endpoints: List<CallEndpointCompat>,
+    onSelect: (CallEndpointCompat) -> Unit,
+    size: androidx.compose.ui.unit.Dp = 64.dp
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        CallActionButton(
+            icon = audioRouteIcon(current?.type),
+            contentDescription = stringResource(R.string.audio_route_button_description),
+            backgroundColor = White.copy(alpha = 0.3f),
+            onClick = { if (endpoints.isNotEmpty()) expanded = true },
+            size = size
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            endpoints.forEach { endpoint ->
+                DropdownMenuItem(
+                    text = { Text(endpoint.name.toString()) },
+                    leadingIcon = { Icon(audioRouteIcon(endpoint.type), contentDescription = null) },
+                    trailingIcon = if (endpoint.identifier == current?.identifier) {
+                        { Icon(Icons.Default.Check, contentDescription = null) }
+                    } else null,
+                    onClick = {
+                        expanded = false
+                        onSelect(endpoint)
+                    }
+                )
+            }
+        }
+    }
+}
+
+private fun audioRouteIcon(type: Int?): ImageVector = when (type) {
+    CallEndpointCompat.TYPE_SPEAKER -> Icons.AutoMirrored.Filled.VolumeUp
+    CallEndpointCompat.TYPE_BLUETOOTH -> Icons.Default.Bluetooth
+    CallEndpointCompat.TYPE_WIRED_HEADSET -> Icons.Default.Headset
+    else -> Icons.Default.PhoneInTalk
 }

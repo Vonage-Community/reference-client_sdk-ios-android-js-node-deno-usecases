@@ -64,9 +64,7 @@ class DialerFragment : DialogFragment() {
             else -> null
         } ?: return
         toneGenerator.startTone(toneType, DTMF_DURATION)
-        App.coreContext.activeCall.value?.let {
-            clientManager.sendDtmf(it, digit)
-        }
+        clientManager.sendDtmf(digit)
     }
 
     override fun onDestroy() {

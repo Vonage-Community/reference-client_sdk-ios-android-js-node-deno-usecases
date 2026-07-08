@@ -2,10 +2,10 @@ package com.example.vonage.voicesampleapp.core
 
 import android.content.Context
 import android.telecom.DisconnectCause
-import android.telecom.TelecomManager
 import com.example.vonage.voicesampleapp.App
 import com.example.vonage.voicesampleapp.services.PushNotificationService
-import com.example.vonage.voicesampleapp.telecom.CallConnection
+import com.example.vonage.voicesampleapp.telecom.CallManager
+import com.example.vonage.voicesampleapp.telecom.CallService
 import com.example.vonage.voicesampleapp.utils.*
 import com.google.firebase.messaging.RemoteMessage
 import com.vonage.android_core.PushType
@@ -13,28 +13,51 @@ import com.vonage.android_core.VGClientInitConfig
 import com.vonage.clientcore.core.api.*
 import com.vonage.clientcore.core.api.models.User
 import com.vonage.clientcore.core.conversation.VoiceChannelType
+import com.vonage.voice.api.CallId
 import com.vonage.voice.api.VoiceClient
-import java.lang.Exception
-import androidx.core.net.toUri
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import java.lang.Exception
 
 /**
- * This Class will act as an interface
- * between the App and the Voice Client SDK
+ * The interface between the app and the Vonage Voice Client SDK.
+ *
+ * It is the single source of truth for the in-progress call: SDK callbacks and
+ * user actions update [CoreContext.activeCall], which the UI and the call
+ * notification observe. OS-side call integration (foreground priority, audio,
+ * system answer/mute) is delegated to [CallManager] (Jetpack Core-Telecom).
  */
 class VoiceClientManager(private val context: Context) {
     private lateinit var client : VoiceClient
     private val coreContext = App.coreContext
     private val customRepository by lazy { CustomRepository() }
-    
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    /** Core-Telecom bridge. Fire-and-forget: it never writes back into call state. */
+    private val telecom = CallManager(
+        context,
+        onTelecomAnswer = { answerCall() },
+        onTelecomDisconnect = { hangupCall() },
+        onMuteChanged = { muted -> setMuted(muted) },
+        onEndpointsChanged = { current, available ->
+            coreContext.updateActiveCall {
+                copy(currentAudioEndpoint = current, availableAudioEndpoints = available)
+            }
+        },
+    )
+
     private val _sessionId = MutableStateFlow<String?>(null)
     val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
-    
+
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
-    
+
     init {
         initClient()
         setClientListeners()
@@ -43,6 +66,8 @@ class VoiceClientManager(private val context: Context) {
     private fun initClient(){
         val config = VGClientInitConfig(LoggingLevel.Info)
         config.rtcStatsTelemetry = false
+        config.apiUrl = "https://api-us-3.vonage.com"
+        config.websocketUrl = "wss://ws-us-3.vonage.com"
         client = VoiceClient(context, config)
     }
 
@@ -54,9 +79,9 @@ class VoiceClientManager(private val context: Context) {
                 SessionErrorReason.TransportClosed -> "Connection closed"
                 SessionErrorReason.PingTimeout -> "Connection timeout"
             }
-            
+
             println("❌ Session error: $message")
-            
+
             // Attempt restoration with appropriate strategy based on error type
             attemptSessionRestoration(skipAuthToken = err == SessionErrorReason.TokenExpired)
         }
@@ -66,22 +91,18 @@ class VoiceClientManager(private val context: Context) {
             // Reject incoming calls when there is already an active one
             coreContext.activeCall.value?.let { return@setCallInviteListener }
             placeIncomingCall(callId, from, type)
-            // NOTE: a foreground service needs to be started to record the audio when app is in the background
-            startForegroundService(context)
         }
 
         client.setOnLegStatusUpdate { callId, legId, status ->
             println("🔄 Call status updated: $callId, status: $status")
-            takeIfActive(callId)?.apply {
-                if(status == LegStatus.answered){
-                    setAnswered()
-                }
+            if (currentIfMatches(callId) != null && status == LegStatus.answered) {
+                markActive()
             }
         }
 
         client.setOnCallHangupListener { callId, callQuality, reason ->
             println("📴 Call ended: $callId, reason: ${reason.name}")
-            takeIfActive(callId)?.apply {
+            if (currentIfMatches(callId) != null) {
                 val cause = when(reason) {
                     HangupReason.remoteReject -> DisconnectCause.REJECTED
                     HangupReason.remoteHangup -> DisconnectCause.REMOTE
@@ -89,58 +110,50 @@ class VoiceClientManager(private val context: Context) {
                     HangupReason.mediaTimeout -> DisconnectCause.BUSY
                     HangupReason.remoteNoAnswerTimeout -> DisconnectCause.CANCELED
                 }
-                cleanUp(DisconnectCause(cause))
+                cleanUp(cause)
             }
         }
 
         client.setOnCallMediaDisconnectListener { callId, reason ->
             println("❌ Media disconnected - Call: $callId, Reason: ${reason.name}")
-            takeIfActive(callId)?.apply {
-                cleanUp(DisconnectCause(DisconnectCause.ERROR))
-            }
+            if (currentIfMatches(callId) != null) cleanUp(DisconnectCause.ERROR)
         }
-        
+
         client.setOnCallMediaReconnectingListener { callId ->
             println("🔄 Media reconnecting - Call: $callId")
-            takeIfActive(callId)?.apply {
-                setInitializing()
+            if (currentIfMatches(callId) != null) {
+                coreContext.updateActiveCall { copy(state = CallState.RECONNECTING) }
             }
         }
 
         client.setOnCallMediaReconnectionListener { callId ->
             println("✅ Media reconnected - Call: $callId")
-            takeIfActive(callId)?.apply {
-                setActive()
-            }
+            if (currentIfMatches(callId) != null) markActive()
         }
 
         client.setCallInviteCancelListener { callId, reason ->
             println("📴 Call invite cancelled: $callId, reason: ${reason.name}")
-            takeIfActive(callId)?.apply {
+            if (currentIfMatches(callId) != null) {
                 val cause = when(reason){
-                    VoiceInviteCancelReason.AnsweredElsewhere -> DisconnectCause(DisconnectCause.ANSWERED_ELSEWHERE)
-                    VoiceInviteCancelReason.RejectedElsewhere -> DisconnectCause(DisconnectCause.REJECTED)
-                    VoiceInviteCancelReason.RemoteCancel -> DisconnectCause(DisconnectCause.CANCELED)
-                    VoiceInviteCancelReason.RemoteTimeout -> DisconnectCause(DisconnectCause.MISSED)
+                    VoiceInviteCancelReason.AnsweredElsewhere -> DisconnectCause.ANSWERED_ELSEWHERE
+                    VoiceInviteCancelReason.RejectedElsewhere -> DisconnectCause.REJECTED
+                    VoiceInviteCancelReason.RemoteCancel -> DisconnectCause.CANCELED
+                    VoiceInviteCancelReason.RemoteTimeout -> DisconnectCause.MISSED
                 }
                 cleanUp(cause)
-            } ?: stopForegroundService(context)
+            }
         }
 
         client.setCallTransferListener { callId, conversationId ->
             println("🔀 Call transferred - Call: $callId, Conversation: $conversationId")
-            takeIfActive(callId)?.apply {
-                setAnswered()
-            }
+            if (currentIfMatches(callId) != null) markActive()
         }
 
         client.setOnMutedListener { callId, legId, isMuted ->
             println("🔇 Mute status changed - Call: $callId, Leg: $legId, Muted: $isMuted")
-            val call = takeIfActive(callId) ?: return@setOnMutedListener
-            // Only update our call state if this is for our own leg (callId == legId)
-            takeIf { callId == legId } ?: return@setOnMutedListener
-            if (call.isMuted.value != isMuted) {
-                call.toggleMute()
+            // Only mirror our own leg (callId == legId), not peer legs.
+            if (currentIfMatches(callId) != null && callId == legId) {
+                coreContext.updateActiveCall { copy(isMuted = isMuted) }
             }
         }
 
@@ -383,7 +396,7 @@ class VoiceClientManager(private val context: Context) {
             clearSession()
             showToast(context, "Session expired - please log in again")
         }
-        
+
         val fallbackToRefresh = {
             coreContext.refreshToken?.let { refreshToken ->
                 restoreSessionWithRefreshToken(refreshToken) { sessionId ->
@@ -391,7 +404,7 @@ class VoiceClientManager(private val context: Context) {
                 }
             } ?: handleFailure()
         }
-        
+
         if (!skipAuthToken) {
             coreContext.authToken?.let { token ->
                 restoreSessionWithToken(token) { sessionId ->
@@ -411,8 +424,8 @@ class VoiceClientManager(private val context: Context) {
         _currentUser.value = null
         coreContext.authToken = null
         coreContext.refreshToken = null
-        coreContext.activeCall.value?.run {
-            cleanUp(DisconnectCause(DisconnectCause.MISSED))
+        if (coreContext.activeCall.value != null) {
+            cleanUp(DisconnectCause.MISSED)
         }
     }
 
@@ -441,13 +454,11 @@ class VoiceClientManager(private val context: Context) {
         client.serverCall(callContext) { err, callId ->
             err?.let {
                 println("Error starting outbound call: $it")
+                showToast(context, "Outgoing Call Error: ${it.message}")
             } ?: callId?.let {
                 println("Outbound Call successfully started with Call ID: $it")
                 val callee = callContext?.get(Constants.CONTEXT_KEY_CALLEE) ?: Constants.DEFAULT_DIALED_NUMBER
                 placeOutgoingCall(it, callee)
-                // NOTE: since API level 34, a foreground service needs to be started to record the audio also when app is in the foreground
-                // https://developer.android.com/develop/connectivity/telecom/voip-app/telecom#foreground-support
-                startForegroundService(context)
             }
         }
     }
@@ -459,9 +470,10 @@ class VoiceClientManager(private val context: Context) {
                     showToast(context, "Error reconnecting call with $callerDisplayName: $it")
                 } ?: run {
                     showToast(context, "Call with $callerDisplayName successfully reconnected")
-                    coreContext.activeCall.value ?:
                     // Start a new Outgoing Call if there is not an active one
-                    placeOutgoingCall(this.callId, this.callerDisplayName, isReconnected = true)
+                    if (coreContext.activeCall.value == null) {
+                        placeOutgoingCall(this.callId, this.callerDisplayName, isReconnected = true)
+                    }
                 }
             }
         }
@@ -494,240 +506,180 @@ class VoiceClientManager(private val context: Context) {
         }
     }
 
-    fun answerCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            client.answer(callId) { err ->
-                if (err != null) {
-                    println("Error Answering Call: $err")
-                    cleanUp(DisconnectCause(DisconnectCause.ERROR))
-                } else {
-                    println("Answered call with id: $callId")
-                    setAnswered()
-                }
-            }
-        } ?: call.selfDestroy()
-    }
+    // MARK: - Call Actions (operate on the single active call)
 
-    fun rejectCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            client.reject(callId){ err ->
-                if (err != null) {
-                    println("Error Rejecting Call: $err")
-                    cleanUp(DisconnectCause(DisconnectCause.ERROR))
-                } else {
-                    println("Rejected call with id: $callId")
-                    cleanUp(DisconnectCause(DisconnectCause.REJECTED))
-                }
-            }
-        } ?: call.selfDestroy()
-    }
-
-    fun hangupCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            client.hangup(callId) { err ->
-                if (err != null) {
-                    println("Error Hanging Up Call: $err")
-                    // If there has been an error
-                    // the onCallHangupListener will not be invoked,
-                    // hence the Call needs to be explicitly disconnected
-                    cleanUp(DisconnectCause(DisconnectCause.LOCAL))
-                } else {
-                    println("Hung up call with id: $callId")
-                    // The onCallHangupListener will be invoked with the reason
-                }
-            }
-        } ?: call.selfDestroy()
-    }
-
-    fun muteCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            if (!isMuted.value) {
-                client.mute(callId) { err ->
-                    if (err != null) {
-                        println("Error Muting Call: $err")
-                    } else {
-                        println("Muted call with id: $callId")
-                        toggleMute()
-                    }
-                }
+    fun answerCall(){
+        val call = coreContext.activeCall.value ?: return
+        // Answer on Telecom (grants audio + background-mic) and on the SDK; they
+        // are independent. markActive() promotes state once the SDK confirms.
+        telecom.answer()
+        client.answer(call.callId) { err ->
+            if (err != null) {
+                println("Error Answering Call: $err")
+                cleanUp(DisconnectCause.ERROR)
+            } else {
+                println("Answered call with id: ${call.callId}")
+                markActive()
             }
         }
     }
 
-    fun unmuteCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            if (isMuted.value) {
-                client.unmute(callId) { err ->
-                    if (err != null) {
-                        println("Error Un-muting Call: $err")
-                    } else {
-                        println("Un-muted call with id: $callId")
-                        toggleMute()
-                    }
-                }
+    fun rejectCall(){
+        val call = coreContext.activeCall.value ?: return
+        client.reject(call.callId){ err ->
+            if (err != null) {
+                println("Error Rejecting Call: $err")
+                cleanUp(DisconnectCause.ERROR)
+            } else {
+                println("Rejected call with id: ${call.callId}")
+                cleanUp(DisconnectCause.REJECTED)
             }
         }
     }
 
-    fun enableNoiseSuppression(call: CallConnection){
-        call.takeIfActive()?.apply {
-            if (!isNoiseSuppressionEnabled.value) {
-                client.enableNoiseSuppression(callId) { err ->
-                    err?.let {
-                        println("Error enabling noise suppression on Call: $it")
-                    } ?: run {
-                        println("Enabled noise suppression on Call with id: $callId")
-                        toggleNoiseSuppression()
-                    }
-                }
+    fun hangupCall(){
+        val call = coreContext.activeCall.value ?: return
+        client.hangup(call.callId) { err ->
+            if (err != null) {
+                println("Error Hanging Up Call: $err")
+                // On error the onCallHangupListener will not fire, so clean up here.
+                cleanUp(DisconnectCause.LOCAL)
+            } else {
+                println("Hung up call with id: ${call.callId}")
+                // The onCallHangupListener will fire with the reason.
             }
         }
     }
 
-    fun disableNoiseSuppression(call: CallConnection){
-        call.takeIfActive()?.apply {
-            if (isNoiseSuppressionEnabled.value) {
-                client.disableNoiseSuppression(callId) { err ->
-                    err?.let {
-                        println("Error disabling noise suppression on Call: $it")
-                    } ?: run {
-                        println("Disabled noise suppression on Call with id: $callId")
-                        toggleNoiseSuppression()
-                    }
-                }
+    fun mute() = setMuted(true)
+    fun unmute() = setMuted(false)
+
+    private fun setMuted(target: Boolean){
+        val call = coreContext.activeCall.value ?: return
+        if (call.isMuted == target) return
+        val callback: (Exception?) -> Unit = { err ->
+            if (err != null) println("Error setting mute=$target: $err")
+            else coreContext.updateActiveCall { copy(isMuted = target) }
+        }
+        if (target) client.mute(call.callId, callback) else client.unmute(call.callId, callback)
+    }
+
+    fun enableNoiseSuppression() = setNoiseSuppression(true)
+    fun disableNoiseSuppression() = setNoiseSuppression(false)
+
+    private fun setNoiseSuppression(target: Boolean){
+        val call = coreContext.activeCall.value ?: return
+        if (call.isNoiseSuppressionEnabled == target) return
+        val callback: (Exception?) -> Unit = { err ->
+            if (err != null) println("Error setting noise suppression=$target: $err")
+            else coreContext.updateActiveCall { copy(isNoiseSuppressionEnabled = target) }
+        }
+        if (target) client.enableNoiseSuppression(call.callId, callback)
+        else client.disableNoiseSuppression(call.callId, callback)
+    }
+
+    fun holdCall(){
+        val call = coreContext.activeCall.value ?: return
+        if (call.isOnHold) return
+        // Hold = earmuff (stop hearing peer) + mute (stop sending audio).
+        client.enableEarmuff(call.callId) { e1 ->
+            if (e1 != null) { println("Error enabling earmuff: $e1"); return@enableEarmuff }
+            client.mute(call.callId) { e2 ->
+                if (e2 != null) println("Error muting on hold: $e2")
+                else coreContext.updateActiveCall { copy(isOnHold = true) }
             }
         }
     }
 
-    fun sendDtmf(call: CallConnection, digit: String){
-        call.takeIfActive()?.apply {
-            client.sendDTMF(callId, digit){ err ->
-                if (err != null) {
-                    println("Error in Sending DTMF '$digit': $err")
-                } else {
-                    println("Sent DTMF '$digit' on call with id: $callId")
-                }
+    fun unholdCall(){
+        val call = coreContext.activeCall.value ?: return
+        if (!call.isOnHold) return
+        client.unmute(call.callId) { e1 ->
+            if (e1 != null) { println("Error unmuting on unhold: $e1"); return@unmute }
+            client.disableEarmuff(call.callId) { e2 ->
+                if (e2 != null) println("Error disabling earmuff: $e2")
+                else coreContext.updateActiveCall { copy(isOnHold = false) }
             }
         }
     }
 
-    fun holdCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            if (!isOnHold.value) {
-                client.enableEarmuff(callId) { error ->
-                    error?.let {
-                        println("Error enabling earmuff in holdCall with id: $callId")
-                    } ?: run {
-                        client.mute(callId) { error2 ->
-                            error2?.let {
-                                println("Error muting in holdCall with id: $callId")
-                            } ?: run {
-                                println("Call $callId successfully put on hold")
-                                toggleHold()
-                            }
-                        }
-                    }
-                }
-            }
+    fun sendDtmf(digit: String){
+        val call = coreContext.activeCall.value ?: return
+        client.sendDTMF(call.callId, digit){ err ->
+            if (err != null) println("Error in Sending DTMF '$digit': $err")
+            else println("Sent DTMF '$digit' on call with id: ${call.callId}")
         }
     }
 
-    fun unholdCall(call: CallConnection){
-        call.takeIfActive()?.apply {
-            if (isOnHold.value) {
-                client.unmute(callId) { error ->
-                    error?.let {
-                        println("Error unmuting in unholdCall with id: $callId")
-                    } ?: run {
-                        client.disableEarmuff(callId) { error2 ->
-                            error2?.let {
-                                println("Error disabling earmuff in unholdCall with id: $callId")
-                            } ?: run {
-                                println("Call $callId successfully removed from hold")
-                                toggleHold()
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    /** Switch the call audio output (speaker / Bluetooth / wired / earpiece). */
+    fun setAudioEndpoint(endpoint: androidx.core.telecom.CallEndpointCompat){
+        telecom.setAudioEndpoint(endpoint)
     }
 
-    /*
-     * Utilities to handle errors on telecomHelper
-     */
-    private fun placeOutgoingCall(callId:CallId, callee: String, isReconnected:Boolean = false){
-        try {
-            coreContext.telecomHelper.startOutgoingCall(callId, callee, isReconnected)
-            // If ConnectionService does not respond within 3 seconds
-            // then mock an outgoing connection
-            TimerManager.startTimer(TimerManager.CONNECTION_SERVICE_TIMER, 3000){
-                mockOutgoingConnection(callId, callee, isReconnected)
-            }
-        } catch (e: Exception){
-            abortOutboundCall(callId, e.message)
-        }
-    }
+    // MARK: - Call lifecycle helpers
 
     private fun placeIncomingCall(callId: CallId, caller: String, type: VoiceChannelType){
-        try {
-            coreContext.telecomHelper.startIncomingCall(callId, caller, type)
-            // Navigate to MainActivity - it will observe active call and navigate to CallActivity
-            navigateToMainActivity(context)
-        } catch (e: Exception){
-            abortInboundCall(callId, e.message)
-        }
+        println("Call from: $caller, channel $callId, channelType: $type")
+        coreContext.setActiveCall(
+            ActiveCall(callId = callId, displayName = caller, isIncoming = true, state = CallState.RINGING)
+        )
+        // The service hosts the Telecom registration and posts the CallStyle
+        // notification (whose full-screen intent wakes CallActivity over the
+        // keyguard); a foregrounded MainActivity also observes activeCall.
+        CallService.register(context)
     }
 
-    private fun abortOutboundCall(callId: CallId, message: String?){
-        showToast(context, "Outgoing Call Error: $message")
-        client.hangup(callId){}
-        // Disconnect state is handled automatically through CallConnection StateFlow
-    }
-
-    private fun abortInboundCall(callId: CallId, message: String?){
-        showToast(context, "Incoming Call Error: $message")
-        client.reject(callId){}
-        // Disconnect state is handled automatically through CallConnection StateFlow
+    private fun placeOutgoingCall(callId: CallId, callee: String, isReconnected: Boolean = false){
+        println("Placing outgoing call $callId to $callee (reconnected=$isReconnected)")
+        coreContext.setActiveCall(
+            ActiveCall(
+                callId = callId,
+                displayName = callee,
+                isIncoming = false,
+                state = if (isReconnected) CallState.ACTIVE else CallState.DIALING,
+                connectedAtMillis = if (isReconnected) System.currentTimeMillis() else null,
+            )
+        )
+        CallService.register(context)
+        // A reconnected call is already up; promote it to active (queued until the
+        // Telecom registration binds).
+        if (isReconnected) telecom.setActive()
     }
 
     /**
-     *  ConnectionService not working on some devices (e.g. Samsung)
-     *  is a known issue.
-     *
-     *  This method will mock
-     *  `ConnectionService#onCreateOutgoingConnection`
-     *  and allow outgoing calls without interacting with the Telecom framework.
+     * Register the active call with Telecom. Called by [CallService] from its own
+     * scope so the started service anchors the registration — see
+     * [CallManager.registerCall].
      */
-    private fun mockOutgoingConnection(callId: CallId, to: String, isReconnected: Boolean) : CallConnection {
-        showToast(context, "ConnectionService Not Available")
-        val connection = CallConnection(callId).apply {
-            setAddress(to.toUri(), TelecomManager.PRESENTATION_ALLOWED)
-            setCallerDisplayName(to, TelecomManager.PRESENTATION_ALLOWED)
-            setDialing()
-            if(isReconnected){ setAnswered() }
+    suspend fun registerActiveCallWithTelecom() {
+        val call = coreContext.activeCall.value ?: return
+        telecom.registerCall(call.displayName, call.isIncoming)
+    }
+
+    /** Promote the call to active (answered / peer-answered / media reconnected). */
+    private fun markActive(){
+        coreContext.updateActiveCall {
+            copy(
+                state = CallState.ACTIVE,
+                isOnHold = false,
+                connectedAtMillis = connectedAtMillis ?: System.currentTimeMillis(),
+            )
         }
-        return connection
+        telecom.setActive()
     }
 
-    /*
-     * Utilities to filter active calls
-     */
-    private fun takeIfActive(callId: CallId) : CallConnection? {
-        return coreContext.activeCall.value?.takeIf { it.callId == callId }
-    }
-    private fun CallConnection.takeIfActive() : CallConnection? {
-        return takeIfActive(callId)
-    }
-
-    private fun CallConnection.setAnswered(){
-        // setActive() updates the connection state, which is observed via StateFlow
-        this.setActive()
+    /** End the call: tear down Telecom, show the disconnect state, then clear it. */
+    private fun cleanUp(cause: Int){
+        telecom.disconnect(cause)
+        coreContext.updateActiveCall { copy(state = CallState.DISCONNECTED, disconnectCause = cause) }
+        // Keep the disconnect state briefly so the UI can show it, then clear.
+        scope.launch {
+            delay(1000)
+            coreContext.setActiveCall(null)
+        }
     }
 
-    private fun CallConnection.cleanUp(disconnectCause: DisconnectCause){
-        // disconnect() updates the connection state, which is observed via StateFlow
-        this.disconnect(disconnectCause)
-        stopForegroundService(context)
-    }
+    /** The active call, only if its id matches [callId]. */
+    private fun currentIfMatches(callId: CallId): ActiveCall? =
+        coreContext.activeCall.value?.takeIf { it.callId == callId }
 }
