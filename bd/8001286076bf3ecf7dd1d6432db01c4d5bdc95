@@ -1,0 +1,14 @@
+contact-center/android-voice/app/build.gradle
+  h_b3ee91954e6e8e 84-88,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bd8001286076bf3ecf7dd1d6432db01c4d5bdc95",
+  "prompts": {},
+  "humans": {
+    "h_b3ee91954e6e8e": {
+      "author": "Salvatore Di Cara <salvodicara@gmail.com>"
+    }
+  }
+}
