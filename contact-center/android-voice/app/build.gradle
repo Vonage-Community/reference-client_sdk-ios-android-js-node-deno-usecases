@@ -81,8 +81,13 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging-ktx:24.1.2'
     implementation 'com.google.firebase:firebase-messaging-ktx'
 
+    // Jetpack Core-Telecom: modern VoIP call API (CallsManager) that replaces a
+    // hand-rolled self-managed ConnectionService and grants foreground execution
+    // priority + call audio while a CallStyle notification is posted.
+    implementation("androidx.core:core-telecom:1.0.1")
+
     // Vonage Client SDK
-    implementation("com.vonage:client-sdk:2.2.0-alpha.1")
+    implementation("com.vonage:client-sdk:2.5.0")
 
     // Retrofit + Moshi (HTTP Client)
     def retrofit_version = "3.0.0"

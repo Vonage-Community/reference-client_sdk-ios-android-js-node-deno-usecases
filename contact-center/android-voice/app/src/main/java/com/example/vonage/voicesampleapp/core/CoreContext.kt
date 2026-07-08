@@ -1,35 +1,40 @@
 package com.example.vonage.voicesampleapp.core
 
 import android.content.Context
-import com.example.vonage.voicesampleapp.telecom.CallConnection
-import com.example.vonage.voicesampleapp.telecom.TelecomHelper
 import com.example.vonage.voicesampleapp.utils.CallInfo
 import com.example.vonage.voicesampleapp.utils.Constants
 import com.example.vonage.voicesampleapp.utils.PrivatePreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
- * A singleton class for storing and accessing Core Application Data
+ * A singleton for storing and accessing core application data.
  */
 class CoreContext private constructor(context: Context) {
     private val applicationContext: Context = context.applicationContext
-    val telecomHelper: TelecomHelper by lazy { TelecomHelper(applicationContext) }
     val clientManager: VoiceClientManager by lazy { VoiceClientManager(applicationContext) }
-    
-    private val _activeCall = MutableStateFlow<CallConnection?>(null)
-    val activeCall: StateFlow<CallConnection?> = _activeCall.asStateFlow()
-    
-    fun setActiveCall(call: CallConnection?) {
+
+    private val _activeCall = MutableStateFlow<ActiveCall?>(null)
+
+    /** The single in-progress call, or null. Source of truth for the UI + notification. */
+    val activeCall: StateFlow<ActiveCall?> = _activeCall.asStateFlow()
+
+    /** Set (or clear) the active call and persist its identity for reconnection. */
+    fun setActiveCall(call: ActiveCall?) {
         PrivatePreferences.set(PrivatePreferences.CALL_ID, call?.callId, applicationContext)
-        PrivatePreferences.set(PrivatePreferences.CALLER_DISPLAY_NAME, call?.callerDisplayName, applicationContext)
+        PrivatePreferences.set(PrivatePreferences.CALLER_DISPLAY_NAME, call?.displayName, applicationContext)
         _activeCall.value = call
     }
 
+    /** Apply [transform] to the active call only if one exists. */
+    fun updateActiveCall(transform: ActiveCall.() -> ActiveCall) {
+        _activeCall.update { it?.transform() }
+    }
+
     /**
-     * The Last Active Call's details.
-     * We persist them for Call reconnection.
+     * The last active call's details, persisted for call reconnection.
      */
     val lastActiveCall: CallInfo?
         get() = PrivatePreferences.get(PrivatePreferences.CALL_ID, applicationContext)?.let { callId ->

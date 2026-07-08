@@ -2,6 +2,7 @@ package com.example.vonage.voicesampleapp.activities
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,14 +32,21 @@ class MainActivity : FragmentActivity() {
         private const val PERMISSIONS_REQUEST_CODE = 123
     }
 
-    private val permissions = arrayOf(
-        Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.READ_PHONE_STATE,
-        Manifest.permission.ANSWER_PHONE_CALLS,
-        Manifest.permission.MANAGE_OWN_CALLS,
-        Manifest.permission.READ_PHONE_NUMBERS,
-        Manifest.permission.CALL_PHONE
-    )
+    // Core-Telecom self-managed calling needs MANAGE_OWN_CALLS + RECORD_AUDIO;
+    // POST_NOTIFICATIONS (Android 13+) backs the CallStyle notification. Older
+    // OSes auto-grant permissions not applicable to them.
+    private val permissions = buildList {
+        add(Manifest.permission.RECORD_AUDIO)
+        add(Manifest.permission.MANAGE_OWN_CALLS)
+        add(Manifest.permission.CALL_PHONE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Needed to route call audio to a Bluetooth device and read its name.
+            add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }.toTypedArray()
 
     private val arePermissionsGranted: Boolean
         get() {
@@ -100,22 +108,9 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (arePermissionsGranted) {
-            coreContext.telecomHelper
-        }
-    }
-
     private fun checkPermissions() {
         if (!arePermissionsGranted) {
             ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE)
-        } else {
-            coreContext.telecomHelper
         }
     }
 

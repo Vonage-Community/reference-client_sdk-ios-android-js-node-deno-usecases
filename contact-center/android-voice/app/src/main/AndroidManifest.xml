@@ -3,15 +3,35 @@
           xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+
+    <!-- Audio capture + routing for VoIP -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <!-- Bluetooth SCO routing on Android 12+ -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+
+    <!-- Self-managed Telecom: MANAGE_OWN_CALLS is the canonical permission for a
+         VoIP app registering its own calls with CallsManager. CALL_PHONE is kept
+         because some OEMs still gate the outgoing-call path against it. -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
-    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
     <uses-permission android:name="android.permission.CALL_PHONE"/>
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
+    <!-- Notifications (Android 13+ runtime permission) for the CallStyle chip -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Foreground-service permissions back Core-Telecom's managed call service:
+         per CallsManager.addCall, the library gives the app foreground execution
+         priority (treated as a phoneCall|microphone foreground service) while a
+         call is registered and a CallStyle notification is posted. The app runs
+         NO foreground service of its own. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+
+    <!-- Wakes CallActivity over the keyguard when a push-delivered invite arrives
+         on a locked/dead device. Auto-granted for a CATEGORY_CALL app. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"
+                     tools:ignore="NotificationFullScreenIntent"/>
 
     <application
             android:name=".App"
@@ -26,6 +46,8 @@
             tools:targetApi="36">
         <activity
                 android:name=".activities.CallActivity"
+                android:launchMode="singleTop"
+                android:parentActivityName=".activities.MainActivity"
                 android:showOnLockScreen="true"
                 android:turnScreenOn="true"
                 android:showWhenLocked="true"
@@ -62,19 +84,21 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
+
+        <!-- Owns the call's CallStyle notification and anchors the process so the
+             call survives task removal (swipe). NOT a foreground service:
+             Core-Telecom already grants foreground execution priority while a
+             call is registered, so a manual FGS would be redundant. Derives the
+             notification from CoreContext.activeCall and stops itself when no
+             call remains, so it can never outlive the call. -->
         <service
-                android:name=".services.AudioRecorderService"
-                android:exported="false"
-                android:foregroundServiceType="microphone">
-        </service>
-        <service
-                android:name=".telecom.CallConnectionService"
-                android:exported="false"
-                android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
-            <intent-filter>
-                <action android:name="android.telecom.ConnectionService"/>
-            </intent-filter>
-        </service>
+                android:name=".telecom.CallService"
+                android:exported="false"/>
+
+        <!-- Delivers the CallStyle notification's Decline / Hang up actions. -->
+        <receiver
+                android:name=".telecom.CallActionReceiver"
+                android:exported="false"/>
     </application>
 
 </manifest>
