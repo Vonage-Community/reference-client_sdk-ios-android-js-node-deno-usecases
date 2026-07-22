@@ -1,0 +1,24 @@
+contact-center/ios-voice/VonageSDKClientVOIPExample.xcodeproj/xcshareddata/xcschemes/VonageSDKClientVOIPExample.xcscheme
+  s_6d13186cb0860e::t_46a1cab50c0e7d 1-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "a8d7bf61df32e32fbdfac931b5d25b71cc5020a7",
+  "prompts": {},
+  "humans": {
+    "h_b3ee91954e6e8e": {
+      "author": "Salvatore Di Cara <salvodicara@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_6d13186cb0860e": {
+      "agent_id": {
+        "tool": "kiro",
+        "id": "sess_88c2e3ff-a38a-435d-889d-fe955e904175",
+        "model": "auto"
+      },
+      "human_author": "Salvatore Di Cara <salvodicara@gmail.com>"
+    }
+  }
+}
